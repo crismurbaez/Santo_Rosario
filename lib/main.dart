@@ -15,6 +15,24 @@ class MyApp extends StatelessWidget {
       theme: ThemeData(
         colorScheme: ColorScheme.fromSeed(seedColor: Color(0x88BBC9D9)),
         useMaterial3: true,
+        fontFamily: 'Poppins',
+        textTheme: const TextTheme(
+          displayLarge: TextStyle(
+            fontSize: 30,
+            fontWeight: FontWeight.w700,
+            color: Color(0xFF242C3B),
+          ),
+          displayMedium: TextStyle(
+            fontSize: 24,
+            fontWeight: FontWeight.w600,
+            color: Color(0xFF242C3B),
+          ),
+          displaySmall: TextStyle(
+            fontSize: 20,
+            fontWeight: FontWeight.w500,
+            color: Color(0xFF242C3B),
+          ),
+        ),
       ),
       home: const MyHomePage(title: 'Santo Rosario'),
     );
