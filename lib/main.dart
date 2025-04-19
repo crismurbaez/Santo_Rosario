@@ -18,17 +18,17 @@ class MyApp extends StatelessWidget {
         fontFamily: 'Poppins',
         textTheme: const TextTheme(
           displayLarge: TextStyle(
-            fontSize: 30,
+            fontSize: 25,
             fontWeight: FontWeight.w700,
             color: Color(0xFF242C3B),
           ),
           displayMedium: TextStyle(
-            fontSize: 24,
+            fontSize: 20,
             fontWeight: FontWeight.w600,
             color: Color(0xFF242C3B),
           ),
           displaySmall: TextStyle(
-            fontSize: 20,
+            fontSize: 15,
             fontWeight: FontWeight.w500,
             color: Color(0xFF242C3B),
           ),
@@ -49,6 +49,7 @@ class MyHomePage extends StatefulWidget {
 
 class _MyHomePageState extends State<MyHomePage> {
   int _counter = 0;
+  String _mystery = 'gozoso';
 
   void _incrementCounter() {
     setState(() {
@@ -61,7 +62,20 @@ class _MyHomePageState extends State<MyHomePage> {
     return Scaffold(
       appBar: AppBar(
         backgroundColor: Theme.of(context).colorScheme.inversePrimary,
-        title: Text(widget.title),
+        toolbarHeight: 100.0,
+        title: Column(children: [
+          Align(alignment: Alignment.center,
+          child: Text (
+            'Misterios del ${widget.title}',
+            style: Theme.of(context).textTheme.displayLarge,
+            )),
+            Align(alignment: Alignment.center,
+          child: Text (
+            'Selecciona el misterio de acuerdo al día y presiona comenzar.',
+            softWrap: true,
+            style: Theme.of(context).textTheme.displaySmall,
+            ))
+        ],)
       ),
       body: Center(
         child: Column(
