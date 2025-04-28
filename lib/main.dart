@@ -13,24 +13,24 @@ class MyApp extends StatelessWidget {
     return MaterialApp(
       title: 'Santo Rosario',
       theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(seedColor: Color(0x88BBC9D9)),
+        colorScheme: ColorScheme.fromSeed(seedColor: const Color(0x88BBC9D9)),
         useMaterial3: true,
         fontFamily: 'Poppins',
         textTheme: const TextTheme(
           displayLarge: TextStyle(
-            fontSize: 25,
+            fontSize: 20,
             fontWeight: FontWeight.w700,
             color: Color(0xFF242C3B),
           ),
           displayMedium: TextStyle(
-            fontSize: 20,
+            fontSize: 15,
             fontWeight: FontWeight.w600,
             color: Color(0xFF242C3B),
           ),
           displaySmall: TextStyle(
-            fontSize: 15,
+            fontSize: 13,
             fontWeight: FontWeight.w500,
-            color: Color(0xFF242C3B),
+            color: Color.fromRGBO(10, 101, 172, 1),
           ),
         ),
       ),
@@ -48,14 +48,10 @@ class MyHomePage extends StatefulWidget {
 }
 
 class _MyHomePageState extends State<MyHomePage> {
-  int _counter = 0;
-  String _mystery = 'gozoso';
-
-  void _incrementCounter() {
-    setState(() {
-      _counter++;
-    });
-  }
+  bool gozoso = true;
+  bool doloroso = false;
+  bool luminoso = false;
+  bool glorioso = false;
 
   @override
   Widget build(BuildContext context) {
@@ -77,25 +73,110 @@ class _MyHomePageState extends State<MyHomePage> {
             ))
         ],)
       ),
-      body: Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: <Widget>[
-            const Text(
-              'You have pushed the button this many times:',
-            ),
-            Text(
-              '$_counter',
-              style: Theme.of(context).textTheme.headlineMedium,
-            ),
-          ],
+      body: Container(
+        decoration: BoxDecoration(color: Theme.of(context).colorScheme.inversePrimary),
+        child: Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+            mainAxisSize: MainAxisSize.max,
+            children: <Widget>[
+              const Divider(
+                color: Colors.white24,
+                thickness: 2,
+                height: 20,
+              ),
+                   ListTile(
+                    leading: Image.asset('assets/images/gozosos.png',),
+                    title: Text('MISTERIOS GOZOSOS',
+                    style: Theme.of(context).textTheme.displayMedium,),
+                    subtitle: Text(
+                      'Se rezan los días Lunes y Sábados',
+                      style: Theme.of(context).textTheme.displaySmall,
+                    ),
+                    trailing: Switch(
+                            value: gozoso, 
+                            onChanged: (bool value) {
+                              setState(() {
+                                gozoso = value;
+                              });
+                            },
+                            ),
+                  ),
+              const Divider(
+                color: Colors.white24,
+                thickness: 2,
+                height: 20,
+              ),
+                ListTile(
+                    leading: Image.asset('assets/images/gloriosos.png',),
+                    title: Text('MISTERIOS GLORIOSOS',
+                    style: Theme.of(context).textTheme.displayMedium,),
+                    subtitle: Text(
+                      'Se rezan los días Miércoles y Domingos',
+                      style: Theme.of(context).textTheme.displaySmall,
+                    ),
+                    trailing: Switch(
+                            value: glorioso, 
+                            onChanged: (bool value) {
+                              setState(() {
+                                glorioso = value;
+                              });
+                            },
+                            ),
+                  ),
+              const Divider(
+                color: Colors.white24,
+                thickness: 2,
+                height: 20,
+              ),
+               ListTile(
+                    leading: Image.asset('assets/images/dolorosos.png',),
+                    title: Text('MISTERIOS DOLOROSOS',
+                    style: Theme.of(context).textTheme.displayMedium,),
+                    subtitle: Text(
+                      'Se rezan los días Martes y Viernes',
+                      style: Theme.of(context).textTheme.displaySmall,
+                    ),
+                    trailing: Switch(
+                            value: doloroso, 
+                            onChanged: (bool value) {
+                              setState(() {
+                                doloroso = value;
+                              });
+                            },
+                            ),
+                  ),
+              const Divider(
+                color: Colors.white24,
+                thickness: 2,
+                height: 20,
+              ),
+              ListTile(
+                    leading: Image.asset('assets/images/luminosos.png',),
+                    title: Text('MISTERIOS LUMINOSOS',
+                    style: Theme.of(context).textTheme.displayMedium,),
+                    subtitle: Text(
+                      'Se rezan los días Jueves',
+                      style: Theme.of(context).textTheme.displaySmall,
+                    ),
+                    trailing: Switch(
+                            value: luminoso, 
+                            onChanged: (bool value) {
+                              setState(() {
+                                luminoso = value;
+                              });
+                            },
+                            ),
+                  ),
+              const Divider(
+                color: Colors.white24,
+                thickness: 2,
+                height: 20,
+              ),
+            ],
+          ),
         ),
       ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: _incrementCounter,
-        tooltip: 'Increment',
-        child: const Icon(Icons.add),
-      ), 
     );
   }
 }
