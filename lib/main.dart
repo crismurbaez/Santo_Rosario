@@ -35,6 +35,7 @@ class MyApp extends StatelessWidget {
         ),
       ),
       home: const MyHomePage(title: 'Santo Rosario'),
+      debugShowCheckedModeBanner: false,
     );
   }
 }
@@ -58,19 +59,23 @@ class _MyHomePageState extends State<MyHomePage> {
     return Scaffold(
       appBar: AppBar(
         backgroundColor: Theme.of(context).colorScheme.inversePrimary,
-        toolbarHeight: 100.0,
+        toolbarHeight: 70.0,
         title: Column(children: [
-          Align(alignment: Alignment.center,
-          child: Text (
-            'Misterios del ${widget.title}',
-            style: Theme.of(context).textTheme.displayLarge,
-            )),
-            Align(alignment: Alignment.center,
-          child: Text (
-            'Selecciona el misterio de acuerdo al día y presiona comenzar.',
-            softWrap: true,
-            style: Theme.of(context).textTheme.displaySmall,
-            ))
+          ListTile(
+            title: Align(alignment: Alignment.center,
+              child: Text (
+              'Misterios del ${widget.title}',
+              style: Theme.of(context).textTheme.displayLarge,
+              ),
+            ),
+            subtitle: Align(alignment: Alignment.center,
+              child: Text (
+              'Selecciona el misterio de acuerdo al día y presiona comenzar.',
+              style: Theme.of(context).textTheme.displaySmall,
+              textAlign: TextAlign.center,
+              ),
+            ),),
+
         ],)
       ),
       body: Container(
@@ -168,11 +173,6 @@ class _MyHomePageState extends State<MyHomePage> {
                             },
                             ),
                   ),
-              const Divider(
-                color: Colors.white24,
-                thickness: 2,
-                height: 20,
-              ),
             ],
           ),
         ),
