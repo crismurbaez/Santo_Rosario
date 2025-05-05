@@ -66,6 +66,9 @@ flutter:
      - assets\images\gloriosos.png
      - assets\images\VirgenLourdes.png
      - assets\images\Rosario.png
+     - assets\images\perla.png
+     - assets\images\rosa.png
+     - assets\images\medalla.png
 
   # An image asset can refer to one or more resolution-specific "variants", see
   # https://flutter.dev/assets-and-images/#resolution-aware

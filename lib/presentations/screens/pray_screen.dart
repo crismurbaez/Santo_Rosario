@@ -47,7 +47,7 @@ class PrayScreen extends StatelessWidget {
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               Container(
-                  width: 420.0, // Ejemplo de ancho
+                  width: 420.0, 
                   height: 620.0,
                   decoration: const BoxDecoration(
                   image: DecorationImage(
@@ -62,7 +62,7 @@ class PrayScreen extends StatelessWidget {
                   width: double.infinity,
                   child: ElevatedButton(
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: Color.fromRGBO(255, 192, 121, 0.5),
+                      backgroundColor: const Color.fromRGBO(255, 192, 121, 0.5),
                       padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 20.0),
                     ),
                     onPressed: () {
