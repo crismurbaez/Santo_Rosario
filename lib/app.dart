@@ -34,8 +34,11 @@ class SantoRosarioApp extends StatelessWidget {
       home: const HomeScreen(title: 'Santo Rosario'),
       debugShowCheckedModeBanner: false,
       routes: {
-        '/pray': (context) => const PrayScreen(), // Reemplazar con la pantalla real
-      },
+        '/pray': (context) {
+          final mystery = ModalRoute.of(context)?.settings.arguments as String?;
+          return PrayScreen(mystery: mystery);
+  },
+},
     );
   }
 }

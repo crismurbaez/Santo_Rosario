@@ -1,13 +1,39 @@
 import 'package:flutter/material.dart';
 
 class PrayScreen extends StatelessWidget {
-  const PrayScreen({super.key});
+  const PrayScreen({
+    super.key,
+    required this.mystery,
+  });
+    final String? mystery;
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Santo Rosario'),
+        backgroundColor: Theme.of(context).colorScheme.inversePrimary,
+        toolbarHeight: 70.0,
+        title: Column(
+          children: [
+            ListTile(
+              title: Align(
+                alignment: Alignment.center,
+                child: Text(
+                  'Santo Rosario',
+                  style: Theme.of(context).textTheme.displayLarge,
+                ),
+              ),
+              subtitle: Align(
+                alignment: Alignment.center,
+                child: Text(
+                  'Misterios $mystery',
+                  style: Theme.of(context).textTheme.displaySmall,
+                  textAlign: TextAlign.center,
+                ),
+              ),
+            ),
+          ],
+        )
       ),
       body: Container(
            decoration: const BoxDecoration(

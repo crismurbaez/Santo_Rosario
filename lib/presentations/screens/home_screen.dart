@@ -27,15 +27,30 @@ class _HomeScreenState extends State<HomeScreen> {
 
   void _navigateToPray() {
     if (gozoso) {
-      //traer datos de la base de datos
+      Navigator.pushNamed(
+        context,
+        '/pray',
+        arguments: 'gozosos', 
+      );
     } else if (glorioso) {
-      //traer datos de la base de datos
+      Navigator.pushNamed(
+        context,
+        '/pray',
+        arguments: 'gloriosos', 
+      );
     } else if (doloroso) {
-      //traer datos de la base de datos
+      Navigator.pushNamed(
+        context,
+        '/pray',
+        arguments: 'dolorosos', 
+      );
     } else if (luminoso) {
-      //traer datos de la base de datos
+      Navigator.pushNamed(
+        context,
+        '/pray',
+        arguments: 'luminosos', 
+      );
     }
-    Navigator.pushNamed(context, '/pray');
   }
 
   @override
