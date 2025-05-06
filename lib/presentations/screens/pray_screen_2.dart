@@ -104,7 +104,7 @@ class PrayScreen2 extends StatelessWidget {
           child: LayoutBuilder(
             builder: (BuildContext context, BoxConstraints constraints) {
               // Usa el menor de los dos (ancho o alto) para asegurar que el círculo quepa
-              double size = min(constraints.maxWidth, constraints.maxHeight) * 0.8;
+              double size = min(constraints.maxWidth, constraints.maxHeight) * 0.78;
               double radius = size / 2;
 
               return SizedBox(
@@ -135,19 +135,19 @@ class PerlasCircularesPainter extends CustomPainter {
   void paint(Canvas canvas, Size size) {
     final center = Offset(size.width / 2, size.height / 2);
     final numPerlas = perlas.length;
-    final initialOffset = pi / 2; // Desplazamiento para empezar en la parte inferior
+    const initialOffset = pi / 2; // Desplazamiento para empezar en la parte inferior del canvas
 
     
     // Define el tamaño estándar de las perlas
     const double standardPearlSize = 30.0;
     // Define un factor para hacer las perlas especificadas más grandes
-    const double largePearlFactor = 3.0;
+    const double largePearlFactor = 2.7;
     // Define un factor para hacer la perla en el índice 0 la más grande
     const double largestPearlFactor = 5.0;
     
-
     for (int i = 0; i < numPerlas; i++) {
-      final angle = 2 * pi * i / numPerlas + initialOffset;
+      // Calcula el ángulo en sentido contrario a las agujas del reloj
+      final angle = 2 * pi * (-i) / numPerlas + initialOffset; 
       final x = center.dx + radius * cos(angle);
       final y = center.dy + radius * sin(angle);
       Offset pearlCenter = Offset(x, y); // Inicializamos el centro
@@ -173,8 +173,8 @@ class PerlasCircularesPainter extends CustomPainter {
       );
 
       // Dibuja el círculo de fondo de la perla
-      final circlePaint = Paint()..color = const Color.fromRGBO(224, 224, 224, 0);
-      canvas.drawCircle(pearlCenter, currentPearlSize  / 2, circlePaint);
+      final circlePaint = Paint()..color = Color.fromRGBO(252, 183, 143, 0.0);
+      canvas.drawCircle(pearlCenter, currentPearlSize  / 4, circlePaint);
 
       // Carga y dibuja la imagen de la perla
       final image = AssetImage(perlas[i]);
