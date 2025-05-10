@@ -102,53 +102,71 @@ class PrayScreen2 extends StatelessWidget {
           ],
         )
       ),
-      body:  Container(
-         decoration: const BoxDecoration(
-            image: DecorationImage(
-              image: AssetImage('assets/images/VirgenLourdes.png'),
-              fit: BoxFit.cover, 
-            ),
-        ),
-        child: Center(
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              LayoutBuilder(
-                builder: (BuildContext context, BoxConstraints constraints) {
-                  // Usa el menor de los dos (ancho o alto) para asegurar que el círculo quepa
-                  double size = min(constraints.maxWidth, constraints.maxHeight) * 0.6;
-                  double radius = size / 2;
-                  // NUEVO TAMAÑO PARA LAS PERLAS ADICIONALES
-                  const double tamanoNuevaPerlaBase  = 35.0;
-                  // NUEVO ESPACIO ENTRE LAS PERLAS ADICIONALES
-                  final double espacioNuevasPerlas = tamanoNuevaPerlaBase  * 0.0000001;  //----------------------------------------
-                  // NUEVO CALCULO DE LA ALTURA TOTAL DEL CONJUNTO
-                  final double alturaTotal = radius +
-                      (tamanoNuevaPerlaBase  * 0.5) +
-                      (tamanoNuevaPerlaBase  + espacioNuevasPerlas) * nuevasPerlas.length - espacioNuevasPerlas + 50;
-
-
-                  return SizedBox(
-                    width: size,
-                    height: alturaTotal,
-                    child: CustomPaint(
-                      painter: PerlasCircularesPainter(
-                        perlas: perlas,
-                        radius: radius,
-                        // NUEVA LISTA DE PERLAS ADICIONALES PASADA AL PAINTER
-                        nuevasPerlas: nuevasPerlas,
-                        // NUEVO TAMAÑO DE PERLA ADICIONAL PASADO AL PAINTER
-                        tamanoNuevaPerlaBase : tamanoNuevaPerlaBase ,
-                        // NUEVO ESPACIO ENTRE PERLAS ADICIONALES PASADO AL PAINTER
-                        espacioNuevasPerlas: espacioNuevasPerlas,
-                      ),
-                    ),
-                  );
-                },
+      body:  Stack(
+        children: <Widget>[
+          Container(
+              color: Color(0xFF1D404C),
+          ),
+         Container(
+           decoration: const BoxDecoration(
+              image: DecorationImage(
+                image: AssetImage('assets/images/VirgenLourdes.png'),
+                fit: BoxFit.fitHeight, 
               ),
-            ],
+          ),
+          child: Center(
+            child: SizedBox(
+              height: MediaQuery.of(context).size.height * 0.8,
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  LayoutBuilder(
+                    builder: (BuildContext context, BoxConstraints constraints) {
+                        final screenHeight = MediaQuery.of(context).size.height;
+                        const double tamanoNuevaPerlaBase = 35.0;
+                        const double espacioNuevasPerlas = tamanoNuevaPerlaBase * 0.2;
+                        final int numNuevasPerlas = nuevasPerlas.length;
+                        final double alturaPerlasAdicionales = (tamanoNuevaPerlaBase + espacioNuevasPerlas) * numNuevasPerlas - espacioNuevasPerlas + (tamanoNuevaPerlaBase * 0.5);
+                        const double factorEspacioVertical = 0.7;
+                        const double factorEspacioHorizontal = 0.8;
+            
+                        final double anchoMaximoConjunto = constraints.maxWidth * factorEspacioHorizontal;
+                        final double alturaMaximaConjunto = screenHeight * factorEspacioVertical;
+            
+                        // CALCULA EL RADIO MÁXIMO BASADO EN EL ANCHO
+                        final double radioMaximoAncho = anchoMaximoConjunto / 2;
+            
+                        // CALCULA EL RADIO MÁXIMO BASADO EN LA ALTURA DISPONIBLE PARA EL CÍRCULO
+                        final double radioMaximoAltoCirculo = (alturaMaximaConjunto - alturaPerlasAdicionales - (tamanoNuevaPerlaBase * 0.5)) / 2;
+            
+                        // SELECCIONA EL RADIO QUE PERMITA QUE EL CÍRCULO Y LAS PERLAS ADICIONALES QUEPAN
+                        final double radius = min(radioMaximoAncho, max(0, radioMaximoAltoCirculo));
+                        final double size = radius * 2;
+            
+                        // CALCULA LA ALTURA TOTAL DEL CONJUNTO CON EL RADIO AJUSTADO
+                        final double alturaTotalConRadio = radius + alturaPerlasAdicionales + (tamanoNuevaPerlaBase * 0.5) + radius; // Radio arriba + adicionales + espacio + radio abajo
+            
+                      return SizedBox(
+                        width: size,
+                        height: alturaTotalConRadio,
+                        child: CustomPaint(
+                          painter: PerlasCircularesPainter(
+                            perlas: perlas,
+                            radius: radius,
+                            nuevasPerlas: nuevasPerlas,
+                            tamanoNuevaPerlaBase : tamanoNuevaPerlaBase ,
+                            espacioNuevasPerlas: espacioNuevasPerlas,
+                          ),
+                        ),
+                      );
+                    },
+                  ),
+                ],
+              ),
+            ),
           ),
         ),
+        ]
       ),
     );
   }
@@ -180,9 +198,9 @@ class PerlasCircularesPainter extends CustomPainter {
     // Define el tamaño estándar de las perlas
     const double standardPearlSize = 30.0;
     // Define un factor para hacer las perlas especificadas más grandes
-    const double largePearlFactor = 2.7;
+    const double largePearlFactor = 2;
     // Define un factor para hacer la perla en el índice 0 la más grande
-    const double largestPearlFactor = 5.0;
+    const double largestPearlFactor = 4.0;
     
     // Dibujar las perlas circulares
     for (int i = 0; i < numPerlas; i++) {
@@ -213,7 +231,7 @@ class PerlasCircularesPainter extends CustomPainter {
       );
 
       // Dibuja el círculo de fondo de la perla
-      final circlePaint = Paint()..color = Color.fromRGBO(252, 183, 143, 0.0);
+      final circlePaint = Paint()..color = const Color.fromRGBO(252, 183, 143, 0.0);
       canvas.drawCircle(pearlCenter, currentPearlSize  / 2, circlePaint);
 
       // Carga y dibuja la imagen de la perla
@@ -239,7 +257,7 @@ class PerlasCircularesPainter extends CustomPainter {
       center.dy + radius * sin(initialOffset), // Posición Y de la perla 0
     );
 
-    const double desplazarejex = 5.0; //----------------------------------------
+    const double desplazarejex = 0.0; //----------------------------------------
 
     Offset currentNuevaPerlaCenter = Offset(
       centroPerlaCero.dx - desplazarejex,  //----------------------------------------
@@ -247,7 +265,7 @@ class PerlasCircularesPainter extends CustomPainter {
     );
 
       // FACTORES DE ESCALA PARA LAS PERLAS ADICIONALES  
-      const double nuevaPerlaGrandeFactor = 2.7;  //----------------------------------------
+      const double nuevaPerlaGrandeFactor = 1.5;  //----------------------------------------
       const double nuevaPerlaMasGrandeFactor = 4.0; //----------------------------------------
 
       for (int i = 0; i < nuevasPerlas.length; i++) {
@@ -257,7 +275,7 @@ class PerlasCircularesPainter extends CustomPainter {
           tamanoActualNuevaPerla = tamanoNuevaPerlaBase * nuevaPerlaGrandeFactor;  
         } else if (i == 5) {
           tamanoActualNuevaPerla = tamanoNuevaPerlaBase * nuevaPerlaMasGrandeFactor;  
-          //TRASLADAR LA PERLA 5 (ÍNDICE 5) HACIA ABAJO LA MITAD DE SU TAMAÑO
+          //TRASLADAR LA PERLA 5 HACIA ABAJO 
           currentNuevaPerlaCenter = currentNuevaPerlaCenter.translate(desplazarejex, tamanoActualNuevaPerla / 3);
         }
 
@@ -267,7 +285,7 @@ class PerlasCircularesPainter extends CustomPainter {
           height: tamanoActualNuevaPerla ,
       );
 
-      final circlePaintAdicional = Paint()..color = const Color.fromRGBO(252, 183, 143, 0.3);
+      final circlePaintAdicional = Paint()..color = const Color.fromRGBO(252, 183, 143, 0.0);
       canvas.drawCircle(currentNuevaPerlaCenter, tamanoNuevaPerlaBase  / 2, circlePaintAdicional);
 
       final imageAdicional = AssetImage(nuevasPerlas[i]);
