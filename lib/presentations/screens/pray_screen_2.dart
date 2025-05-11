@@ -76,6 +76,9 @@ class PrayScreen2 extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+
+    const Color backgroundColor = Color(0xFF1D404C);
+
     return Scaffold(
       appBar: AppBar(
         backgroundColor: Theme.of(context).colorScheme.inversePrimary,
@@ -105,16 +108,63 @@ class PrayScreen2 extends StatelessWidget {
       body:  Stack(
         children: <Widget>[
           Container(
-              color: Color(0xFF1D404C),
+              color: backgroundColor,
           ),
-         Container(
-           decoration: const BoxDecoration(
-              image: DecorationImage(
-                image: AssetImage('assets/images/VirgenLourdes.png'),
-                fit: BoxFit.fitHeight, 
+        Positioned.fill(
+            child: ShaderMask( // Máscara para el borde inferior
+              shaderCallback: (Rect bounds) {
+                return const LinearGradient(
+                  begin: Alignment.bottomCenter,
+                  end: Alignment.topCenter,
+                  colors: [Colors.white, Colors.transparent],
+                  stops: [0.8, 1.0],
+                ).createShader(bounds);
+              },
+              blendMode: BlendMode.dstIn,
+              child: ShaderMask( // Máscara para el borde superior
+                shaderCallback: (Rect bounds) {
+                  return const LinearGradient(
+                    begin: Alignment.topCenter,
+                    end: Alignment.bottomCenter,
+                    colors: [Colors.white, Colors.transparent],
+                    stops: [0.8, 1.0],
+                  ).createShader(bounds);
+                },
+                blendMode: BlendMode.dstIn,
+                child: ShaderMask( // Máscara para el borde derecho
+                  shaderCallback: (Rect bounds) {
+                    return const LinearGradient(
+                      begin: Alignment.centerRight,
+                      end: Alignment.centerLeft,
+                      colors: [Colors.white, Colors.transparent],
+                      stops: [0.6, 0.7],
+                    ).createShader(bounds);
+                  },
+                  blendMode: BlendMode.dstIn,
+                  child: ShaderMask( // Máscara para el borde izquierdo
+                    shaderCallback: (Rect bounds) {
+                      return const LinearGradient(
+                        begin: Alignment.centerLeft,
+                        end: Alignment.centerRight,
+                        colors: [Colors.white, Colors.transparent],
+                        stops: [0.6, 0.7],
+                      ).createShader(bounds);
+                    },
+                    blendMode: BlendMode.dstIn,
+                    child: Container(
+                      decoration: const BoxDecoration(
+                        image: DecorationImage(
+                          image: AssetImage('assets/images/VirgenLourdes.png'),
+                          fit: BoxFit.fitHeight,
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
               ),
+            ),
           ),
-          child: Center(
+          Center(
             child: SizedBox(
               height: MediaQuery.of(context).size.height * 0.8,
               child: Column(
@@ -165,7 +215,6 @@ class PrayScreen2 extends StatelessWidget {
               ),
             ),
           ),
-        ),
         ]
       ),
     );
