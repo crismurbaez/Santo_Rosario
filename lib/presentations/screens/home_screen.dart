@@ -29,19 +29,19 @@ class _HomeScreenState extends State<HomeScreen> {
     if (gozoso) {
       Navigator.pushNamed(
         context,
-        '/pray',
+        '/pray_3',
         arguments: 'gozosos', 
       );
     } else if (glorioso) {
       Navigator.pushNamed(
         context,
-        '/pray_2',
+        '/pray',
         arguments: 'gloriosos', 
       );
     } else if (doloroso) {
       Navigator.pushNamed(
         context,
-        '/pray_3',
+        '/pray',
         arguments: 'dolorosos', 
       );
     } else if (luminoso) {

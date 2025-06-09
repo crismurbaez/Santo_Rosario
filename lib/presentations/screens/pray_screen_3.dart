@@ -119,6 +119,25 @@ class _PrayScreen3State extends State<PrayScreen3> {
                 );
             }),
             ),
+            Align(
+              alignment: Alignment.bottomCenter,
+              child: Padding(
+                  padding: const EdgeInsets.all(20.0),
+                  child: SizedBox(
+                    width: double.infinity,
+                    child: ElevatedButton(
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: const Color.fromRGBO(255, 192, 121, 0.5),
+                        padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 20.0),
+                      ),
+                      onPressed: () {
+                        Navigator.pop(context); 
+                      },
+                      child: const Text('Credo'),
+                    ),
+                  ),
+                ),
+            ),
         ]
       )
     );
