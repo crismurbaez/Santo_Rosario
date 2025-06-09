@@ -41,7 +41,7 @@ class _HomeScreenState extends State<HomeScreen> {
     } else if (doloroso) {
       Navigator.pushNamed(
         context,
-        '/pray',
+        '/pray_3',
         arguments: 'dolorosos', 
       );
     } else if (luminoso) {
@@ -132,7 +132,7 @@ class _HomeScreenState extends State<HomeScreen> {
               MysteryListItem(
                 title: 'MISTERIOS LUMINOSOS',
                 subtitle: 'Se rezan los días Jueves',
-                imageAsset: 'assets/images/luminosos.png',
+                imageAsset: 'assets/images/luminosos.jpg',
                 value: luminoso,
                 onChanged: (value) => _toggleMystery('luminoso', value),
               ),

@@ -1,78 +1,14 @@
 import 'package:flutter/material.dart';
 import 'dart:math';
+import '../../data/models/data.dart'; 
 
 class PrayScreen2 extends StatelessWidget {
-  PrayScreen2({
+  const PrayScreen2({
     super.key,
     required this.mystery,
   }); 
       final String? mystery;
-      final List<String> perlas = [
-    'assets/images/medalla.png', //0 la más grande de todas y desplazada hacia abajo
-    'assets/images/perla.png', //1
-    'assets/images/perla.png', //2
-    'assets/images/perla.png', // 3
-    'assets/images/perla.png', //4
-    'assets/images/perla.png', //5
-    'assets/images/perla.png', //6
-    'assets/images/perla.png', //7
-    'assets/images/perla.png', //8
-    'assets/images/perla.png',  //9
-    'assets/images/perla.png', //10
-    'assets/images/rosa.png', //11 más grande
-    'assets/images/perla.png', //1 
-    'assets/images/perla.png', //2
-    'assets/images/perla.png', //3
-    'assets/images/perla.png', //4
-    'assets/images/perla.png', //5
-    'assets/images/perla.png', //6
-    'assets/images/perla.png', //7
-    'assets/images/perla.png', //8
-    'assets/images/perla.png', //9
-    'assets/images/perla.png', //21 10
-    'assets/images/rosa.png', //22 más grande
-    'assets/images/perla.png', //1
-    'assets/images/perla.png', //2
-    'assets/images/perla.png', // 3
-    'assets/images/perla.png', //4
-    'assets/images/perla.png', //5
-    'assets/images/perla.png', //6
-    'assets/images/perla.png', //7
-    'assets/images/perla.png', //8
-    'assets/images/perla.png',  //9
-    'assets/images/perla.png', //10 32
-    'assets/images/rosa.png', //33 más grande
-    'assets/images/perla.png', //1
-    'assets/images/perla.png', //2
-    'assets/images/perla.png', // 3
-    'assets/images/perla.png', //4
-    'assets/images/perla.png', //5
-    'assets/images/perla.png', //6
-    'assets/images/perla.png', //7
-    'assets/images/perla.png', //8
-    'assets/images/perla.png',  //9
-    'assets/images/perla.png', //10 43
-    'assets/images/rosa.png', //44 más grande
-    'assets/images/perla.png', //1
-    'assets/images/perla.png', //2
-    'assets/images/perla.png', // 3
-    'assets/images/perla.png', //4
-    'assets/images/perla.png', //5
-    'assets/images/perla.png', //6
-    'assets/images/perla.png', //7
-    'assets/images/perla.png', //8
-    'assets/images/perla.png',  //9
-    'assets/images/perla.png', //10 54
-  ]; 
 
-    final List<String> nuevasPerlas  = [
-    'assets/images/rosa.png',  //0
-    'assets/images/perla.png', //1 (más grande)
-    'assets/images/perla.png',  //2
-    'assets/images/perla.png', //3
-    'assets/images/rosa.png', //4 (más grande)
-    'assets/images/cruz.png',   //5 (la más grande)
-  ];
 
   @override
   Widget build(BuildContext context) {
@@ -110,59 +46,13 @@ class PrayScreen2 extends StatelessWidget {
           Container(
               color: backgroundColor,
           ),
-        Positioned.fill(
-            child: ShaderMask( // Máscara para el borde inferior
-              shaderCallback: (Rect bounds) {
-                return const LinearGradient(
-                  begin: Alignment.bottomCenter,
-                  end: Alignment.topCenter,
-                  colors: [Colors.white, Colors.transparent],
-                  stops: [0.8, 1.0],
-                ).createShader(bounds);
-              },
-              blendMode: BlendMode.dstIn,
-              child: ShaderMask( // Máscara para el borde superior
-                shaderCallback: (Rect bounds) {
-                  return const LinearGradient(
-                    begin: Alignment.topCenter,
-                    end: Alignment.bottomCenter,
-                    colors: [Colors.white, Colors.transparent],
-                    stops: [0.8, 1.0],
-                  ).createShader(bounds);
-                },
-                blendMode: BlendMode.dstIn,
-                child: ShaderMask( // Máscara para el borde derecho
-                  shaderCallback: (Rect bounds) {
-                    return const LinearGradient(
-                      begin: Alignment.centerRight,
-                      end: Alignment.centerLeft,
-                      colors: [Colors.white, Colors.transparent],
-                      stops: [0.6, 0.7],
-                    ).createShader(bounds);
-                  },
-                  blendMode: BlendMode.dstIn,
-                  child: ShaderMask( // Máscara para el borde izquierdo
-                    shaderCallback: (Rect bounds) {
-                      return const LinearGradient(
-                        begin: Alignment.centerLeft,
-                        end: Alignment.centerRight,
-                        colors: [Colors.white, Colors.transparent],
-                        stops: [0.6, 0.7],
-                      ).createShader(bounds);
-                    },
-                    blendMode: BlendMode.dstIn,
-                    child: Container(
+          Container(
                       decoration: const BoxDecoration(
                         image: DecorationImage(
                           image: AssetImage('assets/images/VirgenLourdes.png'),
                           fit: BoxFit.fitHeight,
                         ),
                       ),
-                    ),
-                  ),
-                ),
-              ),
-            ),
           ),
           Center(
             child: SizedBox(
@@ -173,8 +63,8 @@ class PrayScreen2 extends StatelessWidget {
                   LayoutBuilder(
                     builder: (BuildContext context, BoxConstraints constraints) {
                         final screenHeight = MediaQuery.of(context).size.height;
-                        const double tamanoNuevaPerlaBase = 35.0;
-                        const double espacioNuevasPerlas = tamanoNuevaPerlaBase * 0.2;
+                        const double tamanoNuevaPerlaBase = 25.0;
+                        const double espacioNuevasPerlas = tamanoNuevaPerlaBase * 0.8;
                         final int numNuevasPerlas = nuevasPerlas.length;
                         final double alturaPerlasAdicionales = (tamanoNuevaPerlaBase + espacioNuevasPerlas) * numNuevasPerlas - espacioNuevasPerlas + (tamanoNuevaPerlaBase * 0.5);
                         const double factorEspacioVertical = 0.7;
@@ -245,9 +135,9 @@ class PerlasCircularesPainter extends CustomPainter {
     final numPerlas = perlas.length;
     const initialOffset = pi / 2; // Desplazamiento para empezar en la parte inferior del canvas
     // Define el tamaño estándar de las perlas
-    const double standardPearlSize = 30.0;
+    const double standardPearlSize = 25.0;
     // Define un factor para hacer las perlas especificadas más grandes
-    const double largePearlFactor = 2;
+    const double largePearlFactor = 2.5;
     // Define un factor para hacer la perla en el índice 0 la más grande
     const double largestPearlFactor = 4.0;
     
@@ -310,22 +200,24 @@ class PerlasCircularesPainter extends CustomPainter {
 
     Offset currentNuevaPerlaCenter = Offset(
       centroPerlaCero.dx - desplazarejex,  //----------------------------------------
-      centroPerlaCero.dy + (largestPearlFactor * standardPearlSize / 2) + (tamanoNuevaPerlaBase  / 2), // Debajo de la perla 0
+      centroPerlaCero.dy + ((largestPearlFactor * standardPearlSize)/2) + (tamanoNuevaPerlaBase/1.5), // Debajo de la perla 0
     );
 
       // FACTORES DE ESCALA PARA LAS PERLAS ADICIONALES  
-      const double nuevaPerlaGrandeFactor = 1.5;  //----------------------------------------
+      const double nuevaPerlaGrandeFactor = 2.5;  //----------------------------------------
       const double nuevaPerlaMasGrandeFactor = 4.0; //----------------------------------------
 
       for (int i = 0; i < nuevasPerlas.length; i++) {
         double tamanoActualNuevaPerla = tamanoNuevaPerlaBase;
         // APLICANDO TAMAÑOS ESPECIALES A LAS PERLAS ADICIONALES
         if (i == 0 || i == 4) {
-          tamanoActualNuevaPerla = tamanoNuevaPerlaBase * nuevaPerlaGrandeFactor;  
+          tamanoActualNuevaPerla = tamanoNuevaPerlaBase * nuevaPerlaGrandeFactor; 
+          //TRASLADAR LAS PERLAS HACIA ABAJO 
+          currentNuevaPerlaCenter = currentNuevaPerlaCenter.translate(desplazarejex, tamanoActualNuevaPerla/9); 
         } else if (i == 5) {
           tamanoActualNuevaPerla = tamanoNuevaPerlaBase * nuevaPerlaMasGrandeFactor;  
           //TRASLADAR LA PERLA 5 HACIA ABAJO 
-          currentNuevaPerlaCenter = currentNuevaPerlaCenter.translate(desplazarejex, tamanoActualNuevaPerla / 3);
+          currentNuevaPerlaCenter = currentNuevaPerlaCenter.translate( desplazarejex + 3 , tamanoActualNuevaPerla / 3);
         }
 
         final pearlRectAdicional = Rect.fromCenter(
@@ -352,7 +244,7 @@ class PerlasCircularesPainter extends CustomPainter {
       );
 
       // Mueve el centro para la siguiente perla adicional
-      currentNuevaPerlaCenter = currentNuevaPerlaCenter.translate(0, tamanoNuevaPerlaBase - 10); //----------------------------------------
+      currentNuevaPerlaCenter = currentNuevaPerlaCenter.translate(0, tamanoNuevaPerlaBase - tamanoNuevaPerlaBase/4); //----------------------------------------
     }
   }
 

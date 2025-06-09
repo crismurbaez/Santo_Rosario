@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'presentations/screens/home_screen.dart';
 import 'presentations/screens/pray_screen.dart';
 import 'presentations/screens/pray_screen_2.dart';
+import 'presentations/screens/pray_screen_3.dart';
 
 class SantoRosarioApp extends StatelessWidget {
   const SantoRosarioApp({super.key});
@@ -39,9 +40,13 @@ class SantoRosarioApp extends StatelessWidget {
           final mystery = ModalRoute.of(context)?.settings.arguments as String?;
           return PrayScreen(mystery: mystery);
   },
-  '/pray_2': (context) {
+        '/pray_2': (context) {
           final mystery = ModalRoute.of(context)?.settings.arguments as String?;
           return PrayScreen2(mystery: mystery);
+  },
+          '/pray_3': (context) {
+          final mystery = ModalRoute.of(context)?.settings.arguments as String?;
+          return PrayScreen3(mystery: mystery);
   },
 },
     );
