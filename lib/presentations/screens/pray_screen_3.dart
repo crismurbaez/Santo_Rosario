@@ -108,13 +108,19 @@ class cuentasPainter extends CustomPainter {
       //se calcula el centro del canvas
       Offset center = Offset(size.width/2, (size.height/2));
       double radius;
-      const imageWidthBasic = 30.0;
-      const imageHeightBasic= 30.0;
-      const imageWidthLarge = 100.0;
-      const imageHeightLarge= 100.0;
-      const imageWidthLargest = 150.0;
-      const imageHeightLargest= 150.0;
-      const cuentasAdicionales = 5 * imageHeightBasic;
+      //TODO: hacer los tamaños de las cuentas adaptables a las pantallas
+      //tener en cuenta el tamaño de pantalla s8 que es el que mejor se dapta al tamaño actual de las imágenes
+      debugPrint('-------------------------------------');
+      debugPrint('Tamaño de pantalla ancho x alto: ${size.width} x ${size.height}');
+      debugPrint('Tamaño de perlas ancho x alto: ${size.width*0.10} x ${size.height*.10}');
+      debugPrint('Tamaño de perla: ${min(size.width*0.10,size.height*.10)}');
+      double imageWidthBasic;
+      double imageHeightBasic;
+      double imageWidthLarge;
+      double imageHeightLarge;
+      double imageWidthLargest;
+      double imageHeightLargest;
+      double cuentasAdicionales = 5 * 30;
       int orientation;
       ui.Image image;
       late Rect dstcuentas;
@@ -127,18 +133,36 @@ class cuentasPainter extends CustomPainter {
       // si el ancho es menor que el alto se hace la resta y se cambia la orientación.
 
       // obtiene el menor radio entre el ancho y el alto de la pantalla,
-
-      debugPrint("------------------------------------------------------------------");
       if (size.width<size.height) {
         //se desplaza el centro hacia arriba para que entre la extensión y no salga de la pantalla
-        center = Offset(center.dx, center.dy - cuentasAdicionales);
+        
         radius = min((size.width / 2),((size.height - cuentasAdicionales) / 2)); 
+        debugPrint('Radio: $radius');
+        debugPrint('Tamaño de perla: ${radius*0.20}');
+        imageWidthBasic = radius * 0.20;
+        imageHeightBasic = radius * 0.20;
+        imageWidthLarge = radius * 0.60;
+        imageHeightLarge = radius * 0.60;
+        imageWidthLargest = radius * 0.90;
+        imageHeightLargest = radius * 0.90;
+        debugPrint('Tamaño de perla: ${radius*0.20} $imageWidthBasic');
+        cuentasAdicionales = 5 * imageHeightBasic;
+        center = Offset(center.dx, center.dy - cuentasAdicionales);
         //la extensión se dibuja debajo del rosario
         orientation = 1;
       } else {
         // la extensión se dibuja dentro del rosario
         orientation = -1;
         radius = min((size.width / 2),((size.height) / 2)); 
+        debugPrint('Tamaño de perla: ${radius*0.20}');
+        imageWidthBasic = radius * 0.20;
+        imageHeightBasic = radius * 0.20;
+        imageWidthLarge = radius * 0.50;
+        imageHeightLarge = radius * 0.50;
+        imageWidthLargest = radius * 0.70;
+        imageHeightLargest = radius * 0.70;
+        debugPrint('Tamaño de perla: ${radius*0.20} $imageWidthBasic');
+        cuentasAdicionales = 5 * imageHeightBasic;
       }
 
 
@@ -196,7 +220,6 @@ class cuentasPainter extends CustomPainter {
           //Se dibuja la extensión del rosario
           for (var j = 0; j < 6; j++) {
                 image = cuentas['perla']!;
-                debugPrint("medallaCenter: $medallaCenter");
                 if ([0].contains(j) ) {
                   image = cuentas['rosa']!; 
                   medallaCenter = Offset(
