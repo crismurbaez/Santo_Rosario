@@ -203,7 +203,6 @@ class cuentasPainter extends CustomPainter {
               );
               //se guarda la ubicación de la medalla para dibujar la extensión
               medallaCenter = cuentaCenter;
-              debugPrint('Medalla Center: $medallaCenter');
               dstcuentas = Rect.fromCenter(
                 center: cuentaCenter, 
                 width: imageWidthLargest, 
