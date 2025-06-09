@@ -135,8 +135,8 @@ class cuentasPainter extends CustomPainter {
       // obtiene el menor radio entre el ancho y el alto de la pantalla,
       if (size.width<size.height) {
         //se desplaza el centro hacia arriba para que entre la extensión y no salga de la pantalla
-        
-        radius = min((size.width / 2),((size.height - size.height * 0.34) / 2)); 
+        cuentasAdicionales = size.height * 0.34;
+        radius = min((size.width / 2),((size.height - cuentasAdicionales) / 2)); 
         debugPrint('Radio: $radius');
         debugPrint('Tamaño de perla: ${radius*0.20}');
         imageWidthBasic = radius * 0.20;
