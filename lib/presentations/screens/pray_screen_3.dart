@@ -61,6 +61,14 @@ class _PrayScreen3State extends State<PrayScreen3> {
           Container(
             color: backgroundColor,
           ),
+           Container(
+                      decoration: const BoxDecoration(
+                        image: DecorationImage(
+                          image: AssetImage('assets/images/VirgenLourdes.png'),
+                          fit: BoxFit.fitHeight,
+                        ),
+                      ),
+          ),
           Center(
             child: LayoutBuilder(
               builder: (BuildContext context, BoxConstraints constraints) { 
