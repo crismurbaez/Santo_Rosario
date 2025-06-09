@@ -117,10 +117,6 @@ class cuentasPainter extends CustomPainter {
       Offset center = Offset(size.width/2, (size.height/2));
       double radius;
       //tener en cuenta el tamaño de pantalla s8 que es el que mejor se dapta al tamaño actual de las imágenes
-      debugPrint('-------------------------------------');
-      debugPrint('Tamaño de pantalla ancho x alto: ${size.width} x ${size.height}');
-      debugPrint('Tamaño de perlas ancho x alto: ${size.width*0.10} x ${size.height*.10}');
-      debugPrint('Tamaño de perla: ${min(size.width*0.10,size.height*.10)}');
       double imageWidthBasic;
       double imageHeightBasic;
       double imageWidthLarge;
@@ -144,17 +140,13 @@ class cuentasPainter extends CustomPainter {
         //se desplaza el centro hacia arriba para que entre la extensión y no salga de la pantalla
         cuentasAdicionales = size.height * 0.34;
         radius = min((size.width / 2),((size.height - cuentasAdicionales) / 2)); 
-        debugPrint('Radio: $radius');
-        debugPrint('Tamaño de perla: ${radius*0.20}');
         imageWidthBasic = radius * 0.20;
         imageHeightBasic = radius * 0.20;
         imageWidthLarge = radius * 0.60;
         imageHeightLarge = radius * 0.60;
         imageWidthLargest = radius * 0.90;
         imageHeightLargest = radius * 0.90;
-        debugPrint('Tamaño de perla: ${radius*0.20} $imageWidthBasic');
         cuentasAdicionales = 5 * imageHeightBasic;
-        debugPrint('cuentasAdicionales: $cuentasAdicionales ${size.height * 0.34}');
         center = Offset(center.dx, center.dy - cuentasAdicionales);
         //la extensión se dibuja debajo del rosario
         orientation = 1;
@@ -162,16 +154,12 @@ class cuentasPainter extends CustomPainter {
         // la extensión se dibuja dentro del rosario
         orientation = -1;
         radius = min((size.width / 2),((size.height) / 2)); 
-        debugPrint('Radio: $radius');
-        debugPrint('traslación: ${radius * 0.017}');
-        debugPrint('Tamaño de perla: ${radius*0.20}');
         imageWidthBasic = radius * 0.20;
         imageHeightBasic = radius * 0.20;
         imageWidthLarge = radius * 0.50;
         imageHeightLarge = radius * 0.50;
         imageWidthLargest = radius * 0.70;
         imageHeightLargest = radius * 0.70;
-        debugPrint('Tamaño de perla: ${radius*0.20} $imageWidthBasic');
         cuentasAdicionales = 5 * imageHeightBasic;
       }
 
