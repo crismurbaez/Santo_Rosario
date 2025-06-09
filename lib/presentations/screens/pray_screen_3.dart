@@ -136,7 +136,7 @@ class cuentasPainter extends CustomPainter {
       if (size.width<size.height) {
         //se desplaza el centro hacia arriba para que entre la extensión y no salga de la pantalla
         
-        radius = min((size.width / 2),((size.height - cuentasAdicionales) / 2)); 
+        radius = min((size.width / 2),((size.height - size.height * 0.34) / 2)); 
         debugPrint('Radio: $radius');
         debugPrint('Tamaño de perla: ${radius*0.20}');
         imageWidthBasic = radius * 0.20;
@@ -147,6 +147,7 @@ class cuentasPainter extends CustomPainter {
         imageHeightLargest = radius * 0.90;
         debugPrint('Tamaño de perla: ${radius*0.20} $imageWidthBasic');
         cuentasAdicionales = 5 * imageHeightBasic;
+        debugPrint('cuentasAdicionales: $cuentasAdicionales ${size.height * 0.34}');
         center = Offset(center.dx, center.dy - cuentasAdicionales);
         //la extensión se dibuja debajo del rosario
         orientation = 1;
@@ -154,6 +155,7 @@ class cuentasPainter extends CustomPainter {
         // la extensión se dibuja dentro del rosario
         orientation = -1;
         radius = min((size.width / 2),((size.height) / 2)); 
+        debugPrint('Radio: $radius');
         debugPrint('Tamaño de perla: ${radius*0.20}');
         imageWidthBasic = radius * 0.20;
         imageHeightBasic = radius * 0.20;
