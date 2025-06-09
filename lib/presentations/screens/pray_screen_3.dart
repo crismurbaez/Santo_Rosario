@@ -55,6 +55,27 @@ class _PrayScreen3State extends State<PrayScreen3> {
       appBar: AppBar(
         backgroundColor: Theme.of(context).colorScheme.inversePrimary,
         toolbarHeight: 70.0,
+         title: Column(
+          children: [
+            ListTile(
+              title: Align(
+                alignment: Alignment.center,
+                child: Text(
+                  'Santo Rosario',
+                  style: Theme.of(context).textTheme.displayLarge,
+                ),
+              ),
+              subtitle: Align(
+                alignment: Alignment.center,
+                child: Text(
+                  'Misterios ${widget.mystery}',
+                  style: Theme.of(context).textTheme.displaySmall,
+                  textAlign: TextAlign.center,
+                ),
+              ),
+            ),
+          ],
+        )
       ),
       body: Stack (
         children: <Widget>[
