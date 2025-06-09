@@ -155,6 +155,7 @@ class cuentasPainter extends CustomPainter {
         orientation = -1;
         radius = min((size.width / 2),((size.height) / 2)); 
         debugPrint('Radio: $radius');
+        debugPrint('traslación: ${radius * 0.017}');
         debugPrint('Tamaño de perla: ${radius*0.20}');
         imageWidthBasic = radius * 0.20;
         imageHeightBasic = radius * 0.20;
@@ -202,7 +203,7 @@ class cuentasPainter extends CustomPainter {
               image = cuentas['medalla']!;
               cuentaCenter = Offset(
                 center.dx + cos(angle) * radius, //posición en x
-                center.dy + (sin(angle) * radius) + imageHeightBasic * 0.9, //posición en y se traslada un poco hacia abajo
+                center.dy + (sin(angle) * radius) + imageHeightBasic * 0.8, //posición en y se traslada un poco hacia abajo
               );
               //se guarda la ubicación de la medalla para dibujar la extensión
               medallaCenter = cuentaCenter;
@@ -225,7 +226,7 @@ class cuentasPainter extends CustomPainter {
                 if ([0].contains(j) ) {
                   image = cuentas['rosa']!; 
                   medallaCenter = Offset(
-                    medallaCenter.dx - 3, //posición en x
+                    medallaCenter.dx - radius * 0.017, //posición en x
                     medallaCenter.dy + imageHeightLarge * 0.57, //posición en y
                   );
                   
@@ -265,7 +266,7 @@ class cuentasPainter extends CustomPainter {
                if ([5].contains(j) ) {
                 image = cuentas['cruz']!; 
                 medallaCenter = Offset(
-                  medallaCenter.dx + 3, //posición en x
+                  medallaCenter.dx + radius * 0.017, //posición en x
                   medallaCenter.dy + imageHeightLarge * 0.64, //posición en y
                 );
                 dstcuentas = Rect.fromCenter(
