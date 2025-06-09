@@ -108,7 +108,6 @@ class cuentasPainter extends CustomPainter {
       //se calcula el centro del canvas
       Offset center = Offset(size.width/2, (size.height/2));
       double radius;
-      //TODO: hacer los tamaños de las cuentas adaptables a las pantallas
       //tener en cuenta el tamaño de pantalla s8 que es el que mejor se dapta al tamaño actual de las imágenes
       debugPrint('-------------------------------------');
       debugPrint('Tamaño de pantalla ancho x alto: ${size.width} x ${size.height}');
@@ -203,10 +202,11 @@ class cuentasPainter extends CustomPainter {
               image = cuentas['medalla']!;
               cuentaCenter = Offset(
                 center.dx + cos(angle) * radius, //posición en x
-                center.dy + (sin(angle) * radius) + 30, //posición en y se traslada un poco hacia abajo
+                center.dy + (sin(angle) * radius) + imageHeightBasic * 0.9, //posición en y se traslada un poco hacia abajo
               );
               //se guarda la ubicación de la medalla para dibujar la extensión
               medallaCenter = cuentaCenter;
+              debugPrint('Medalla Center: $medallaCenter');
               dstcuentas = Rect.fromCenter(
                 center: cuentaCenter, 
                 width: imageWidthLargest, 
@@ -228,6 +228,7 @@ class cuentasPainter extends CustomPainter {
                     medallaCenter.dx - 3, //posición en x
                     medallaCenter.dy + imageHeightLarge * 0.57, //posición en y
                   );
+                  
                   dstcuentas = Rect.fromCenter(
                     center: medallaCenter, 
                     width: imageWidthLarge, 
