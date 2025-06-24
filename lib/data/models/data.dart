@@ -41,7 +41,7 @@
       MysteryDetail(
         title: 'Misterios Luminosos',
         subtitle: 'Se rezan los días Jueves',
-        imageAsset: 'assets/images/luminosos.png',
+        imageAsset: 'assets/images/luminosos.jpg',
         mystery: 'luminoso',
       ),
     ];
@@ -51,7 +51,7 @@
   final String title;
   final String subtitle;
   final String imageAsset;
-  final String? mystery; 
+  final String mystery; 
 
   const MysteryDetail({
     required this.title,

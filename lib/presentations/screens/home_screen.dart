@@ -19,6 +19,12 @@ class _HomeScreenState extends State<HomeScreen> {
 
   void _toggleMystery(String mystery, bool value) {
     setState(() {
+      // gozoso = mystery == 'gozoso' ? value : false;
+      // doloroso = mystery == 'doloroso' ? value : false;
+      // luminoso = mystery == 'luminoso' ? value : false;
+      // glorioso = mystery == 'glorioso' ? value : false;
+
+
       gozoso = mystery == 'gozoso' ? value : false;
       doloroso = mystery == 'doloroso' ? value : false;
       luminoso = mystery == 'luminoso' ? value : false;
@@ -53,6 +59,21 @@ class _HomeScreenState extends State<HomeScreen> {
       );
     }
   }
+
+  bool _getMysteryValue(String key) {
+  switch (key) {
+    case 'gozoso':
+      return gozoso;
+    case 'glorioso':
+      return glorioso;
+    case 'doloroso':
+      return doloroso;
+    case 'luminoso':
+      return luminoso;
+    default:
+      return gozoso; 
+  }
+}
 
   @override
   Widget build(BuildContext context) {
@@ -94,49 +115,24 @@ class _HomeScreenState extends State<HomeScreen> {
                 thickness: 2,
                 height: 20,
               ),
-              MysteryListItem(
-                title: 'MISTERIOS GOZOSOS',
-                subtitle: 'Se rezan los días Lunes y Sábados',
-                imageAsset: 'assets/images/gozosos.png',
-                value: gozoso,
-                onChanged: (value) => _toggleMystery('gozoso', value),
-              ),
-              const Divider(
-                color: Colors.white24,
-                thickness: 2,
-                height: 20,
-              ),
-              MysteryListItem(
-                title: 'MISTERIOS GLORIOSOS',
-                subtitle: 'Se rezan los días Miércoles y Domingos',
-                imageAsset: 'assets/images/gloriosos.png',
-                value: glorioso,
-                onChanged: (value) => _toggleMystery('glorioso', value),
-              ),
-              const Divider(
-                color: Colors.white24,
-                thickness: 2,
-                height: 20,
-              ),
-              MysteryListItem(
-                title: 'MISTERIOS DOLOROSOS',
-                subtitle: 'Se rezan los días Martes y Viernes',
-                imageAsset: 'assets/images/dolorosos.png',
-                value: doloroso,
-                onChanged: (value) => _toggleMystery('doloroso', value),
-              ),
-              const Divider(
-                color: Colors.white24,
-                thickness: 2,
-                height: 20,
-              ),
-              MysteryListItem(
-                title: 'MISTERIOS LUMINOSOS',
-                subtitle: 'Se rezan los días Jueves',
-                imageAsset: 'assets/images/luminosos.jpg',
-                value: luminoso,
-                onChanged: (value) => _toggleMystery('luminoso', value),
-              ),
+              ...Data.mysteries.map((mystery) {
+                return Column(
+                  children: [
+                    MysteryListItem(
+                      title: mystery.title, 
+                      subtitle: mystery.subtitle, 
+                      imageAsset: mystery.imageAsset, 
+                      value: _getMysteryValue(mystery.mystery), 
+                      onChanged:(value) => _toggleMystery(mystery.mystery, value),
+                    ),
+                    const Divider(
+                      color: Colors.white24,
+                      thickness: 2,
+                      height: 20,
+                    ),
+                  ],
+                );
+              }).toList(),
               const Divider(
                 color: Colors.white24,
                 thickness: 2,
