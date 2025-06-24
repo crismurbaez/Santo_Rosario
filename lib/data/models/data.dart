@@ -14,61 +14,61 @@
 
     static const List<RosaryDetail> rosaryDetails = [
       RosaryDetail(cuenta: 'medalla', prayer: 'SeñaldelaCruz', count: 1, order: 1,
-          width: '100', height: '100'),
+          width: 'largest', height: 'largest'),
       RosaryDetail(cuenta: 'medalla', prayer: 'Credo', count: 1, order: 1,
-          width: '100', height: '100'),
+          width: 'largest', height: 'largest'),
       RosaryDetail(cuenta: 'medalla', prayer: 'Mystery', count: 1, order: 1,
-          width: '100', height: '100' ),  //1
+          width: 'largest', height: 'largest' ),  //1
       RosaryDetail(cuenta: 'medalla', prayer: 'PadreNuestro', count: 1, order: 1,
-          width: '100', height: '100'),
+          width: 'largest', height: 'largest'),
       RosaryDetail(cuenta: 'perla', prayer: 'AveMaría', count: 10, order: 1,
-          width: '100', height: '100'),
+          width: 'basic', height: 'basic'),
       RosaryDetail(cuenta: 'rosa', prayer: 'Gloria', count: 1,  order: 1,
-          width: '100', height: '100'),
+          width: 'large', height: 'large'),
       RosaryDetail(cuenta: 'rosa', prayer: 'OhJesúsMío', count: 1, order: 1,
-          width: '100', height: '100'),
+          width: 'large', height: 'large'),
       RosaryDetail(cuenta: 'rosa', prayer: 'Mystery', count: 1, order: 2,
-      width: '100', height: '100'), //2
+      width: 'large', height: 'large'), //2
       RosaryDetail(cuenta: 'rosa', prayer: 'PadreNuestro', count: 1, order: 2,
-          width: '100', height: '100'),
+          width: 'large', height: 'large'),
       RosaryDetail(cuenta: 'perla', prayer: 'AveMaría', count: 10, order: 2,
-          width: '100', height: '100'),
+          width: 'basic', height: 'basic'),
       RosaryDetail(cuenta: 'rosa', prayer: 'Gloria', count: 1, order: 2,
-          width: '100', height: '100'),
+          width: 'large', height: 'large'),
       RosaryDetail(cuenta: 'rosa', prayer: 'OhJesúsMío', count: 1, order: 2,
-          width: '100', height: '100'),
+          width: 'large', height: 'large'),
       RosaryDetail(cuenta: 'rosa', prayer: 'Mystery', count: 1, order: 3,
-          width: '100', height: '100'), //3
+          width: 'large', height: 'large'), //3
       RosaryDetail(cuenta: 'rosa', prayer: 'PadreNuestro', count: 1, order: 3,
-          width: '100', height: '100'),
+          width: 'large', height: 'large'),
       RosaryDetail(cuenta: 'perla', prayer: 'AveMaría', count: 10, order: 3,
-          width: '100', height: '100'),
+          width: 'basic', height: 'basic'),
       RosaryDetail(cuenta: 'rosa', prayer: 'Gloria', count: 1, order: 3,
-          width: '100', height: '100'),
+          width: 'large', height: 'large'),
       RosaryDetail(cuenta: 'rosa', prayer: 'OhJesúsMío', count: 1, order: 3,
-          width: '100', height: '100'),
+          width: 'large', height: 'large'),
       RosaryDetail(cuenta: 'rosa', prayer: 'Mystery', count: 1, order: 4,
-          width: '100', height: '100'), //4
+          width: 'large', height: 'large'), //4
       RosaryDetail(cuenta: 'rosa', prayer: 'PadreNuestro', count: 1, order: 4,
-          width: '100', height: '100'),
+          width: 'large', height: 'large'),
       RosaryDetail(cuenta: 'perla', prayer: 'AveMaría', count: 10, order: 4,
-          width: '100', height: '100'),
+          width: 'basic', height: 'basic'),
       RosaryDetail(cuenta: 'rosa', prayer: 'Gloria', count: 1, order: 4,
-          width: '100', height: '100'),
+          width: 'large', height: 'large'),
       RosaryDetail(cuenta: 'rosa', prayer: 'OhJesúsMío', count: 1, order: 4,
-          width: '100', height: '100'),
+          width: 'large', height: 'large'),
       RosaryDetail(cuenta: 'rosa', prayer: 'Mystery', count: 1, order: 5,
-          width: '100', height: '100'), //5
+          width: 'large', height: 'large'), //5
       RosaryDetail(cuenta: 'rosa', prayer: 'PadreNuestro', count: 1, order: 5,
-          width: '100', height: '100'),
+          width: 'large', height: 'large'),
       RosaryDetail(cuenta: 'perla', prayer: 'AveMaría', count: 10, order: 5,
-          width: '100', height: '100'),
+          width: 'basic', height: 'basic'),
       RosaryDetail(cuenta: 'rosa', prayer: 'Gloria', count: 1, order: 5,
-          width: '100', height: '100'),
+          width: 'large', height: 'large'),
       RosaryDetail(cuenta: 'rosa', prayer: 'OhJesúsMío', count: 1, order: 5,
-          width: '100', height: '100'),
+          width: 'large', height: 'large'),
       RosaryDetail(cuenta: 'cruz', prayer: 'SeñaldelaCruz', count: 1, order: 5,
-          width: '100', height: '100'),
+          width: 'largest', height: 'largest'),
     ];
     static const Map<String, String> prayers = {
       'SeñaldelaCruz': 'En el nombre del Padre, y del Hijo, y del Espíritu Santo. Amén.',
@@ -148,6 +148,40 @@
         mystery: 'luminoso',
       ),
     ];
+     static const rosaryCircleBeadCount = 55;
+     static const List<RosaryDetailCircle> rosaryDetailsCircle = [
+      RosaryDetailCircle(cuenta: 'medalla', count: 1, order: 1,
+          width: 'largest', height: 'largest'),
+      RosaryDetailCircle(cuenta: 'perla', count: 10, order: 1,
+          width: 'basic', height: 'basic'),
+      RosaryDetailCircle(cuenta: 'rosa', count: 1, order: 2,
+          width: 'large', height: 'large'),
+      RosaryDetailCircle(cuenta: 'perla', count: 10, order: 2,
+          width: 'basic', height: 'basic'),
+      RosaryDetailCircle(cuenta: 'rosa', count: 1, order: 3,
+          width: 'large', height: 'large'),
+      RosaryDetailCircle(cuenta: 'perla', count: 10, order: 3,
+          width: 'basic', height: 'basic'),
+      RosaryDetailCircle(cuenta: 'rosa', count: 1, order: 4,
+          width: 'large', height: 'large'),
+      RosaryDetailCircle(cuenta: 'perla', count: 10, order: 4,
+          width: 'basic', height: 'basic'),
+      RosaryDetailCircle(cuenta: 'rosa', count: 1, order: 5,
+          width: 'large', height: 'large'),
+      RosaryDetailCircle(cuenta: 'perla', count: 10, order: 5,
+          width: 'basic', height: 'basic'),
+     ];
+
+     static const List<RosaryDetailExtension> rosaryDetailsExtension = [
+      RosaryDetailExtension(cuenta: 'rosa', prayer: 'Gloria', count: 1,  order: 1,
+          width: 'large', height: 'large'),
+      RosaryDetailExtension(cuenta: 'perla', prayer: 'AveMaría', count: 3, order: 1,
+          width: 'basic', height: 'basic'),
+      RosaryDetailExtension(cuenta: 'rosa', prayer: 'OhJesúsMío', count: 1, order: 1,
+          width: 'large', height: 'large'),
+      RosaryDetailExtension(cuenta: 'cruz', prayer: 'Mystery', count: 1, order: 1,
+          width: 'largest', height: 'largest'),
+     ];
   }
   
  class MysteryDetail {
@@ -172,6 +206,39 @@
     final String height;
 
     const RosaryDetail({
+      required this.cuenta,
+      required this.prayer,
+      required this.count,
+      required this.order,
+      required this.width,
+      required this.height,
+    });
+  }
+    class RosaryDetailCircle {
+    final String cuenta;
+    final int count;
+    final int order; 
+    final String width;
+    final String height;
+
+    const RosaryDetailCircle({
+      required this.cuenta,
+      required this.count,
+      required this.order,
+      required this.width,
+      required this.height,
+    });
+  }
+
+      class RosaryDetailExtension {
+    final String cuenta;
+    final String prayer;
+    final int count;
+    final int order; 
+    final String width;
+    final String height;
+
+    const RosaryDetailExtension({
       required this.cuenta,
       required this.prayer,
       required this.count,

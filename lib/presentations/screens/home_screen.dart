@@ -54,7 +54,7 @@ class _HomeScreenState extends State<HomeScreen> {
     } else if (luminoso) {
       Navigator.pushNamed(
         context,
-        '/pray',
+        '/pray3',
         arguments: 'luminosos', 
       );
     }
