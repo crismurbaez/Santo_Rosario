@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../widgets/mystery_list_item.dart';
 import '../widgets/start_button.dart';
+import '../../data/models/data.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key, required this.title});
@@ -29,19 +30,19 @@ class _HomeScreenState extends State<HomeScreen> {
     if (gozoso) {
       Navigator.pushNamed(
         context,
-        '/pray_3',
+        '/pray',
         arguments: 'gozosos', 
       );
     } else if (glorioso) {
       Navigator.pushNamed(
         context,
-        '/pray',
+        '/pray1',
         arguments: 'gloriosos', 
       );
     } else if (doloroso) {
       Navigator.pushNamed(
         context,
-        '/pray',
+        '/pray2',
         arguments: 'dolorosos', 
       );
     } else if (luminoso) {

@@ -4,17 +4,17 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../../data/models/data.dart';
 
-class PrayScreen2 extends StatefulWidget {
-  const PrayScreen2({
+class PrayScreen1 extends StatefulWidget {
+  const PrayScreen1({
     super.key,
     required this.mystery,
   });
   final String? mystery;
   @override
-  State<PrayScreen2> createState() => _PrayScreen2State();
+  State<PrayScreen1> createState() => _PrayScreenState1();
 }
 
-class _PrayScreen2State extends State<PrayScreen2> {
+class _PrayScreenState1 extends State<PrayScreen1> {
   Map<String, ui.Image>? _loadedImages;
 
   @override
@@ -136,7 +136,6 @@ class cuentasPainter extends CustomPainter {
 
   @override
   void paint(Canvas canvas, Size size) {
-    // Se calcula el centro del canvas
     Offset center = Offset(size.width / 2, (size.height / 2));
     double radius;
     double imageWidthBasic;
@@ -145,12 +144,11 @@ class cuentasPainter extends CustomPainter {
     double imageHeightLarge;
     double imageWidthLargest;
     double imageHeightLargest;
-    double cuentasAdicionales = 5 * 30; // Valor inicial
+    double cuentasAdicionales = 5 * 30;
     int orientation;
     Offset? medallaCenter; // Se inicializa como nullable
 
-    // Teniendo en cuenta la orientación de la pantalla, se determina si la extensión se dibuja debajo o dentro del rosario
-    // Si el ancho es menor que el alto se ajusta el centro y la orientación.
+    // Calcular dimensiones y orientación
     if (size.width < size.height) {
       cuentasAdicionales = size.height * 0.34;
       radius = min((size.width / 2), ((size.height - cuentasAdicionales) / 2));
@@ -160,14 +158,10 @@ class cuentasPainter extends CustomPainter {
       imageHeightLarge = radius * 0.60;
       imageWidthLargest = radius * 0.90;
       imageHeightLargest = radius * 0.90;
-      // cuentasAdicionales se recalcula basándose en el tamaño de las imágenes básicas
       cuentasAdicionales = 5 * imageHeightBasic;
-      // Se desplaza el centro hacia arriba para que la extensión entre en pantalla
       center = Offset(center.dx, center.dy - cuentasAdicionales);
-      // La extensión se dibuja debajo del rosario
       orientation = 1;
     } else {
-      // La extensión se dibuja dentro del rosario
       orientation = -1;
       radius = min((size.width / 2), ((size.height) / 2));
       imageWidthBasic = radius * 0.20;
@@ -176,42 +170,35 @@ class cuentasPainter extends CustomPainter {
       imageHeightLarge = radius * 0.50;
       imageWidthLargest = radius * 0.70;
       imageHeightLargest = radius * 0.70;
-      cuentasAdicionales = 5 * imageHeightBasic; // Se recalcula
+      cuentasAdicionales = 5 * imageHeightBasic;
     }
 
-    // --- Bucle principal para dibujar las cuentas del rosario ---
+    // Dibujar las cuentas del rosario principal
     for (var i = 0; i < 55; i++) {
-      final Offset currentBeadCenter = _drawRosaryBead(
+      final Offset currentBeadCenter = _drawMainRosary(
         canvas,
+        size,
         center,
         radius,
         orientation,
-        i, // Índice de la cuenta actual
-        imageWidthBasic,
+        i,
         imageHeightBasic,
         imageWidthLarge,
         imageHeightLarge,
         imageWidthLargest,
         imageHeightLargest,
-        cuentas,
+        imageWidthLargest,
       );
-
-      // Si es la primera cuenta (la medalla), guardamos su centro
+           // Si es la primera cuenta (la medalla), guardamos su centro
       if (i == 0) {
         medallaCenter = currentBeadCenter;
       }
     }
 
-    // Asegurarse de que medallaCenter no sea nulo antes de continuar
-    if (medallaCenter == null) {
-      // Si por alguna razón la medalla no se dibujó, no podemos dibujar la extensión
-      return;
-    }
-
-    // --- Dibujar la extensión del rosario ---
+    // Dibujar la extensión del rosario
     final Offset brilloCenter = _drawRosaryExtension(
       canvas,
-      medallaCenter, 
+      medallaCenter!,
       imageWidthBasic,
       imageHeightBasic,
       imageWidthLarge,
@@ -219,89 +206,82 @@ class cuentasPainter extends CustomPainter {
       imageWidthLargest,
       imageHeightLargest,
       radius,
-      cuentas,
     );
 
-    // --- Dibujar el brillo en la medalla ---
+    // Dibujar el brillo en la medalla
     _drawMedalGlow(
       canvas,
       brilloCenter,
       imageWidthLargest,
       imageHeightLargest,
-      cuentas,
     );
   }
 
-  /// Dibuja una única cuenta o la medalla del rosario principal.
-  /// Retorna la posición central de la cuenta dibujada.
-  Offset _drawRosaryBead(
+  /// Dibuja el círculo principal del rosario (las 55 cuentas y 5 "rosas").
+  Offset _drawMainRosary(
     Canvas canvas,
+    Size size,
     Offset center,
     double radius,
     int orientation,
-    int i, // Índice de la cuenta a dibujar
+    int i,
     double imageWidthBasic,
     double imageHeightBasic,
     double imageWidthLarge,
     double imageHeightLarge,
     double imageWidthLargest,
     double imageHeightLargest,
-    Map<String, ui.Image> cuentas,
   ) {
     ui.Image image;
     late Rect dstcuentas;
+    // Offset medallaCenter = center; // Se inicializa con el centro
 
-    // El cálculo del ángulo se basa en el índice 'i'
-    final double angle = orientation * (pi / 2) + 2 * pi * (-i) / 55;
+    // for (var i = 0; i < 55; i++) {
+      final double angle = orientation * (pi / 2) + 2 * pi * (-i) / 55;
 
-    // Por defecto, es una perla
-    image = cuentas['perla']!;
-    Offset cuentaCenter = Offset(
-      center.dx + cos(angle) * radius, // Posición en x
-      center.dy + sin(angle) * radius, // Posición en y
-    );
-    dstcuentas = Rect.fromCenter(
-      center: cuentaCenter,
-      width: imageWidthBasic,
-      height: imageHeightBasic,
-    );
-
-    // Si es una "rosa" (cuenta más grande)
-    if ([11, 22, 33, 44].contains(i)) {
-      image = cuentas['rosa']!;
-      dstcuentas = Rect.fromCenter(
-        center: cuentaCenter,
-        width: imageWidthLarge,
-        height: imageHeightLarge,
-      );
-    }
-
-    // Si es la medalla (la primera cuenta del círculo)
-    if (i == 0) {
-      image = cuentas['medalla']!;
-      // Se ajusta un poco la posición de la medalla para que cuelgue
-      cuentaCenter = Offset(
+      image = cuentas['perla']!;
+      var cuentaCenter = Offset(
         center.dx + cos(angle) * radius,
-        center.dy + (sin(angle) * radius) + imageHeightBasic * 0.8,
+        center.dy + sin(angle) * radius,
       );
       dstcuentas = Rect.fromCenter(
         center: cuentaCenter,
-        width: imageWidthLargest,
-        height: imageHeightLargest,
+        width: imageWidthBasic,
+        height: imageHeightBasic,
       );
-    }
 
-    final paintImage = Paint();
-    // Source rectangle, recorta la imagen a mostrar (completa en este caso)
-    final srccuentas =
-        Rect.fromLTWH(0, 0, image.width.toDouble(), image.height.toDouble());
-    canvas.drawImageRect(image, srccuentas, dstcuentas, paintImage);
+      if ([11, 22, 33, 44].contains(i)) {
+        image = cuentas['rosa']!;
+        dstcuentas = Rect.fromCenter(
+          center: cuentaCenter,
+          width: imageWidthLarge,
+          height: imageHeightLarge,
+        );
+      }
 
+      if (i == 0) {
+        image = cuentas['medalla']!;
+        cuentaCenter = Offset(
+          center.dx + cos(angle) * radius,
+          center.dy + (sin(angle) * radius) + imageHeightBasic * 0.8,
+        );
+        // medallaCenter = cuentaCenter;
+        dstcuentas = Rect.fromCenter(
+          center: cuentaCenter,
+          width: imageWidthLargest,
+          height: imageHeightLargest,
+        );
+      }
+
+      final paintImage = Paint();
+      final srccuentas =
+          Rect.fromLTWH(0, 0, image.width.toDouble(), image.height.toDouble());
+      canvas.drawImageRect(image, srccuentas, dstcuentas, paintImage);
+    // }
     return cuentaCenter; // Retorna el centro de la cuenta dibujada
   }
 
   /// Dibuja la extensión del rosario (las cuentas que cuelgan de la medalla).
-  /// Retorna la posición central de la cuenta que brillará (generalmente la primera cuenta de la extensión).
   Offset _drawRosaryExtension(
     Canvas canvas,
     Offset medallaCenter,
@@ -312,18 +292,17 @@ class cuentasPainter extends CustomPainter {
     double imageWidthLargest,
     double imageHeightLargest,
     double radius,
-    Map<String, ui.Image> cuentas,
   ) {
     ui.Image image;
     late Rect dstcuentas;
     Offset currentMedallaCenter = medallaCenter;
-    Offset brilloCenter = medallaCenter; // Se usará para el brillo de la medalla
+    Offset brilloCenter = medallaCenter; // Se usará para el brillo
 
     for (var j = 0; j < 6; j++) {
       image = cuentas['perla']!;
 
-      if (j == 0) {
-        brilloCenter = currentMedallaCenter; // Guarda la posición para el brillo
+      if ([0].contains(j)) {
+        brilloCenter = currentMedallaCenter; // Guarda la posición de la primera cuenta de la extensión (rosa)
         image = cuentas['rosa']!;
         currentMedallaCenter = Offset(
           currentMedallaCenter.dx - radius * 0.017,
@@ -334,7 +313,7 @@ class cuentasPainter extends CustomPainter {
           width: imageWidthLarge,
           height: imageHeightLarge,
         );
-      } else if (j == 4) {
+      } else if ([4].contains(j)) {
         image = cuentas['rosa']!;
         currentMedallaCenter = Offset(
           currentMedallaCenter.dx,
@@ -356,7 +335,7 @@ class cuentasPainter extends CustomPainter {
           width: imageWidthBasic,
           height: imageHeightBasic,
         );
-      } else if (j == 5) {
+      } else if ([5].contains(j)) {
         image = cuentas['cruz']!;
         currentMedallaCenter = Offset(
           currentMedallaCenter.dx + radius * 0.017,
@@ -383,7 +362,6 @@ class cuentasPainter extends CustomPainter {
     Offset brilloCenter,
     double imageWidthLargest,
     double imageHeightLargest,
-    Map<String, ui.Image> cuentas,
   ) {
     ui.Image image = cuentas['brillo']!;
     final Rect dstcuentas = Rect.fromCenter(
