@@ -164,8 +164,9 @@ class cuentasPainter extends CustomPainter {
       double imageHeightLarge;
       double imageWidthLargest;
       double imageHeightLargest;
-      double cuentasAdicionales = 5 * 30;
+      double cuentasAdicionales;
       int orientation;
+      int location;
       ui.Image image;
       late Rect dstcuentas;
       // se inicializa con este valor, pero luego se cambia
@@ -188,14 +189,10 @@ class cuentasPainter extends CustomPainter {
 
       //teniendo en cuenta la orientación de la pantalla, se determina si la extensión se dibuja debajo o dentro del rosario
       //si se dibuja debajo, se le resta la parte vertical del rosario para que no se salga de la pantalla
-      // si el ancho es menor que el alto se hace la resta y se cambia la orientación.
+      // si el ancho es menor que el alto se hace la resta y se cambia la ubicación y la orientación .
 
       // obtiene el menor radio entre el ancho y el alto de la pantalla,
       if (size.width<size.height) {
-        debugPrint('ancho');
-        debugPrint(size.width.toString());
-        debugPrint('alto');
-        debugPrint(size.height.toString());
         //se desplaza el centro hacia arriba para que entre la extensión y no salga de la pantalla
         cuentasAdicionales = size.height * 0.34;
         radius = min((size.width / 2),((size.height - cuentasAdicionales) / 2)); 
@@ -208,14 +205,17 @@ class cuentasPainter extends CustomPainter {
         cuentasAdicionales = 5 * imageHeightBasic;
         center = Offset(center.dx, center.dy - cuentasAdicionales);
         //la extensión se dibuja debajo del rosario
-        orientation = 1;
-      } else {
-        debugPrint('ancho');
-        debugPrint(size.width.toString());
-        debugPrint('alto');
-        debugPrint(size.height.toString());
-        // la extensión se dibuja dentro del rosario
+        location = 1; 
+        //se dibuja en sentido anti horario
         orientation = -1;
+        
+
+      } else {
+        // la extensión se dibuja dentro del rosario
+        location = -1; 
+        //se dibuja en sentido horario
+        orientation = 1;
+
         radius = min((size.width / 2),((size.height) / 2)); 
         imageWidthBasic = radius * 0.20;
         imageHeightBasic = radius * 0.20;
@@ -225,7 +225,7 @@ class cuentasPainter extends CustomPainter {
         imageHeightLargest = radius * 0.70;
         cuentasAdicionales = 5 * imageHeightBasic;
       }
-      double angle;
+
       int i = 0;
      
        List<dynamic> rosaryElements = Data.rosaryDetailsCircle.expand((detail) {
@@ -233,7 +233,7 @@ class cuentasPainter extends CustomPainter {
         List<Map<String, dynamic>> currentDetailElements = [];
 
         for (int j = 0; j < detail.count; j++) {
-          double angle = orientation * (pi / 2) + 2 * pi * (-i) / Data.rosaryCircleBeadCount;
+          double angle = location * (pi / 2) + 2 * pi * i * orientation / Data.rosaryCircleBeadCount;
 
           String currentCuentaName = detail.cuenta; 
             image = cuentas[currentCuentaName]!;
@@ -273,14 +273,13 @@ class cuentasPainter extends CustomPainter {
               final srccuentas = Rect.fromLTWH(0,0,image.width.toDouble(), image.height.toDouble());  
               canvas.drawImageRect(image, srccuentas, dstcuentas, paintImage);
 
-          // Here, you add the data/widget for the current bead to the list
-          // For demonstration, I'm adding a Map, but this is where you'd put your Widget.
           currentDetailElements.add({
             'cuenta': currentCuentaName,
             'angle': angle,
             'width': detail.width,
             'height': detail.height,
-            // Add any other data you need for your drawing logic or widget
+            'dstcuentas': dstcuentas,
+            'cuentaCenter': cuentaCenter,
           });
 
           i++; // Increment 'i' for the next *individual* bead/element
@@ -298,31 +297,51 @@ class cuentasPainter extends CustomPainter {
         cuentaHeight = e.height,
       }
       ).toList();
- debugPrint('----------------------------------');
 
+// Se dibuja el brillo
+          if (rosaryElements.isNotEmpty) {
+            var element = rosaryElements[0];
+            cuentaName = element['cuenta']; 
+            // puedo utilizarlo para agregar la oración de acuerdo al nombre
+            //Data.rosaryDetails aquí tengo el nombre de la cuenta y las oraciones 
+            cuentaOrder = cuentasOrder;
+            cuentaCount = cuentasCount;
+            cuentaWidth = element['width'];
+            cuentaHeight = element['height'];
+            dstcuentas = element['dstcuentas'];
+            var cuentaCenter = element['cuentaCenter'];
+            
+            //se dibuja la cuenta brillo
+            image = cuentas['brillo']!;
 
- 
-
-
-          // //se dibuja el brillo en la medalla
-          // image = cuentas['brillo']!;
-          // //Hace la lógica para que el brillo vaya adelantando  cada vez que se presiona un botón o viceversa
-
-          //   dstcuentas = Rect.fromCenter(
-          //     center: brilloCenter, 
-          //     width: imageWidthLargest * 0.3, 
-          //     height: imageHeightLargest * 0.5,
-          //   );
-          //     final paintImage = Paint();
-          //     paintImage.colorFilter = const ColorFilter.mode(
-          //       Color.fromRGBO(255, 255, 255, 0.4), 
-          //       BlendMode.modulate, // Multiplica los valores de color y alfa
-          //     );
-
-          //     //source rectangle, recorta la imagen a mostrar, en este caso la mostramos completa
-          //     final srccuentas = Rect.fromLTWH(0,0,image.width.toDouble(), image.height.toDouble()); 
-          //     // final srccuentas = Rect.fromCircle(center: brilloCenter, radius: imageWidthLarge*0.3);
-          //     canvas.drawImageRect(image, srccuentas, dstcuentas, paintImage);
+            //destination Rectangle, da la ubicación y la escala de la imagen
+            if (cuentaWidth == 'basic') {
+              imageWidth = imageWidthBasic * 0.7;
+              imageHeight = imageHeightBasic * 0.7; 
+            }
+            if (cuentaWidth == 'large') {
+              imageWidth = imageWidthLarge * 0.4; 
+              imageHeight = imageHeightLarge * 0.4;
+            }
+            if (cuentaWidth == 'largest') {
+              imageWidth = imageWidthLargest * 0.3;
+              imageHeight = imageHeightLargest * 0.7;
+            }
+            
+            dstcuentas = Rect.fromCenter(
+              center: cuentaCenter, 
+              width: imageWidth, 
+              height: imageHeight,
+            );
+              final paintImage = Paint();
+              paintImage.colorFilter = const ColorFilter.mode(
+                Color.fromRGBO(255, 255, 255, 0.5), 
+                BlendMode.modulate, // Multiplica los valores de color y alfa
+              );
+              //source rectangle, recorta la imagen a mostrar, en este caso la mostramos completa
+              final srccuentas = Rect.fromLTWH(0,0,image.width.toDouble(), image.height.toDouble());  
+              canvas.drawImageRect(image, srccuentas, dstcuentas, paintImage);
+          }
 
         }
     
