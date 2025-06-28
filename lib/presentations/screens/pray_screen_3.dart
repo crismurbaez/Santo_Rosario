@@ -9,6 +9,7 @@ class PrayScreen3 extends StatefulWidget {
   const PrayScreen3({
     super.key,
     required this.mystery,
+
   });
   final String? mystery;
       @override
@@ -20,6 +21,9 @@ class _PrayScreen3State extends State<PrayScreen3> {
   // Mapa para almacenar las imágenes cargadas
   Map<String, ui.Image>? _loadedImages;
   int _counter = 0;
+  int rosaryBeadCount = Data.rosaryCircleBeadCount + Data.rosaryExtensionBeadCount;
+  int rosaryCircleBeadCount = Data.rosaryCircleBeadCount;
+  
 
     @override
   void initState() {
@@ -29,7 +33,8 @@ class _PrayScreen3State extends State<PrayScreen3> {
 
       void _incrementCounter() {
       setState(() {
-        if (_counter < Data.rosaryCircleBeadCount-1) {
+        
+        if (_counter < rosaryBeadCount-1) {
           _counter++; // Incrementa el contador
         }
       });
@@ -133,7 +138,8 @@ class _PrayScreen3State extends State<PrayScreen3> {
                     painter : CuentasPainter(
                       cuentas: _loadedImages!,
                       counter: _counter,
-                      
+                      rosaryBeadCount: rosaryBeadCount,
+                      rosaryCircleBeadCount: rosaryCircleBeadCount,
                     )
                   ),
                 );
@@ -152,7 +158,7 @@ class _PrayScreen3State extends State<PrayScreen3> {
                           padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 20.0),
                         ),
                         onPressed: _decrementCounter,
-                        child: const Text('Anterior'),
+                        child: const Icon(Icons.arrow_back),
                       ),
                       ElevatedButton(
                         style: ElevatedButton.styleFrom(
@@ -170,7 +176,7 @@ class _PrayScreen3State extends State<PrayScreen3> {
                           padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 20.0),
                         ),
                         onPressed: _incrementCounter,
-                        child: const Text('Siguiente'),
+                        child: const Icon(Icons.arrow_forward),
                       ),
                     ]
                   ),
@@ -185,10 +191,14 @@ class _PrayScreen3State extends State<PrayScreen3> {
 class CuentasPainter extends CustomPainter {
   final Map<String,  ui.Image> cuentas;
   final int counter;
+  final int rosaryBeadCount;
+  final int rosaryCircleBeadCount;
 
   CuentasPainter({
     required this.cuentas,
     required this.counter,
+    required this.rosaryBeadCount,
+    required this.rosaryCircleBeadCount,
   });
 
   @override
@@ -269,12 +279,11 @@ class CuentasPainter extends CustomPainter {
 
        int i = 0;
        //Se dibujan las cuentas del rosario
-       List<dynamic> rosaryElements = Data.rosaryDetailsCircle.expand((detail) {
-        // Create a local list to hold the elements generated for *this* 'detail'
+       List<dynamic> rosaryElementsCircle = Data.rosaryDetailsCircle.expand((detail) {
         List<Map<String, dynamic>> currentDetailElements = [];
 
         for (int j = 0; j < detail.count; j++) {
-          double angle = location * (pi / 2) + 2 * pi * i * orientation / Data.rosaryCircleBeadCount;
+          double angle = location * (pi / 2) + 2 * pi * i * orientation / rosaryCircleBeadCount;
 
           String currentCuentaName = detail.cuenta; 
             image = cuentas[currentCuentaName]!;
@@ -296,7 +305,7 @@ class CuentasPainter extends CustomPainter {
               imageWidth = imageWidthLargest;
               imageHeight = imageHeightLargest;
             }
-            if (currentCuentaName == 'medalla') { //hacer más universal, cómo marcar como inicio****************
+            if (currentCuentaName == 'medalla') { //TODOhacer más universal, cómo marcar como inicio****************
               cuentaCenter = Offset(
                 center.dx + cos(angle) * radius, //posición en x
                 center.dy + (sin(angle) * radius) + imageHeightBasic * 0.8, //posición en y se traslada un poco hacia abajo
@@ -323,25 +332,77 @@ class CuentasPainter extends CustomPainter {
             'cuentaCenter': cuentaCenter,
           });
 
-          i++; // Increment 'i' for the next *individual* bead/element
+          i++; // Incremento de i para calcular el ángulo de la siguiente cuenta
         }
-        // Return the list of elements generated for this 'detail' entry.
         return currentDetailElements;
       }).toList();
 
-      Data.rosaryDetailsExtension.map((e) => {
-        cuentaName = e.cuenta,
-        image = cuentas[cuentaName]!,
-        cuentaCount = e.count,
-        cuentaOrder = e.order,
-        cuentaWidth = e.width,
-        cuentaHeight = e.height,
-      }
-      ).toList();
+      //desplazamiento inicial de la extensión a partir de la ubicación de la medalla
+      Offset cuentaCenter = Offset(
+                medallaCenter.dx, //posición en x
+                medallaCenter.dy + imageWidthBasic, //posición en y
+              );
+            
+      List<dynamic> rosaryElementsExtension = Data.rosaryDetailsExtension.expand((detail) {
+        List<Map<String, dynamic>> currentDetailElements = [];
+        
+        for (int j = 0; j < detail.count; j++) {
+
+          String currentCuentaName = detail.cuenta; 
+            image = cuentas[currentCuentaName]!;
+            //destination Rectangle, da la ubicación y la escala de la imagen
+            if (detail.width == 'basic') {
+              imageWidth = imageWidthBasic;
+              imageHeight = imageHeightBasic; 
+              // se calcula el centro de la cuenta
+              cuentaCenter = Offset(
+                cuentaCenter.dx, //posición en x
+                cuentaCenter.dy + imageHeight * 0.57, //posición en y
+              );
+            }
+            if (detail.width == 'large') {
+              imageWidth = imageWidthLarge; 
+              imageHeight = imageHeightLarge;
+              cuentaCenter = Offset(
+                cuentaCenter.dx, //posición en x
+                cuentaCenter.dy + imageHeight * 0.25, //posición en y
+              );
+            }
+            if (detail.width == 'largest') {
+              imageWidth = imageWidthLargest;
+              imageHeight = imageHeightLargest;
+              cuentaCenter = Offset(
+                cuentaCenter.dx + imageWidthBasic * 0.1, //posición en x
+                cuentaCenter.dy + imageHeight * 0.45, //posición en y
+              );
+            }
+
+            dstcuentas = Rect.fromCenter(
+              center: cuentaCenter, 
+              width: imageWidth, 
+              height: imageHeight,
+            );
+              final paintImage = Paint();
+              //source rectangle, recorta la imagen a mostrar, en este caso la mostramos completa
+              final srccuentas = Rect.fromLTWH(0,0,image.width.toDouble(), image.height.toDouble());  
+              canvas.drawImageRect(image, srccuentas, dstcuentas, paintImage);
+
+          currentDetailElements.add({
+            'cuenta': currentCuentaName,
+            'width': detail.width,
+            'height': detail.height,
+            'dstcuentas': dstcuentas,
+            'cuentaCenter': cuentaCenter,
+          });
+        }
+        return currentDetailElements;
+      }).toList();
+
+      final List<dynamic> allRosaryElements = rosaryElementsCircle + rosaryElementsExtension;
 
           // Se dibuja el brillo
-          if (rosaryElements.isNotEmpty) {
-            var element = rosaryElements[counter];
+          if (allRosaryElements.isNotEmpty) {
+            var element = allRosaryElements[counter];
             cuentaName = element['cuenta']; 
             //^^^ puedo utilizarlo para agregar la oración de acuerdo al nombre
             //Data.rosaryDetails aquí tengo el nombre de la cuenta y las oraciones 

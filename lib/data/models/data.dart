@@ -148,6 +148,8 @@
         mystery: 'luminoso',
       ),
     ];
+    //TODOpara que se pueda cambiar el rosario de acuerdo a la configuración
+    //TODOagregar otra capa donde ponga cada elemeto que va a ser parte del rosario
      static const rosaryCircleBeadCount = 55;
      static const List<RosaryDetailCircle> rosaryDetailsCircle = [
       RosaryDetailCircle(cuenta: 'medalla', count: 1, order: 1,
@@ -171,7 +173,7 @@
       RosaryDetailCircle(cuenta: 'perla', count: 10, order: 5,
           width: 'basic', height: 'basic'),
      ];
-
+     static const rosaryExtensionBeadCount = 6;
      static const List<RosaryDetailExtension> rosaryDetailsExtension = [
       RosaryDetailExtension(cuenta: 'rosa', prayer: 'Gloria', count: 1,  order: 1,
           width: 'large', height: 'large'),
