@@ -1,6 +1,5 @@
 import 'dart:math';
 import 'dart:ui' as ui;
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../../data/models/data.dart'; 
@@ -20,6 +19,7 @@ class PrayScreen3 extends StatefulWidget {
 class _PrayScreen3State extends State<PrayScreen3> {
   // Mapa para almacenar las imágenes cargadas
   Map<String, ui.Image>? _loadedImages;
+  int _counter = 0;
 
     @override
   void initState() {
@@ -27,6 +27,21 @@ class _PrayScreen3State extends State<PrayScreen3> {
     _loadAllImages(); // Inicia la carga de todas las imágenes
   }
 
+      void _incrementCounter() {
+      setState(() {
+        if (_counter < Data.rosaryCircleBeadCount-1) {
+          _counter++; // Incrementa el contador
+        }
+      });
+    }
+
+    void _decrementCounter() {
+      setState(() {
+        if (_counter > 0) {
+          _counter--;  // Disminuye el contador
+        }
+      });
+    }
    // Función asíncrona para cargar todas las imágenes
   Future<void> _loadAllImages() async {
     final Map<String, ui.Image> images = {};
@@ -45,6 +60,8 @@ class _PrayScreen3State extends State<PrayScreen3> {
     setState(() {
       _loadedImages = images; // Actualiza el estado con las imágenes cargadas
     });
+
+
   }
   
   @override
@@ -56,27 +73,28 @@ class _PrayScreen3State extends State<PrayScreen3> {
       appBar: AppBar(
         backgroundColor: Theme.of(context).colorScheme.inversePrimary,
         toolbarHeight: 70.0,
-         title: Column(
-          children: [
-            ListTile(
-              title: Align(
-                alignment: Alignment.center,
-                child: Text(
-                  'Santo Rosario',
-                  style: Theme.of(context).textTheme.displayLarge,
+         title: 
+             Column(
+              children: [
+                ListTile(
+                  title: Align(
+                    alignment: Alignment.center,
+                    child: Text(
+                      'Santo Rosario',
+                      style: Theme.of(context).textTheme.displayLarge,
+                    ),
+                  ),
+                  subtitle: Align(
+                    alignment: Alignment.center,
+                    child: Text(
+                      'Misterios ${widget.mystery}',
+                      style: Theme.of(context).textTheme.displaySmall,
+                      textAlign: TextAlign.center,
+                    ),
+                  ),
                 ),
-              ),
-              subtitle: Align(
-                alignment: Alignment.center,
-                child: Text(
-                  'Misterios ${widget.mystery}',
-                  style: Theme.of(context).textTheme.displaySmall,
-                  textAlign: TextAlign.center,
-                ),
-              ),
-            ),
-          ],
-        )
+              ],
+        ),
       ),
       body: Stack (
         children: <Widget>[
@@ -112,8 +130,9 @@ class _PrayScreen3State extends State<PrayScreen3> {
                   height: height,
                   child: 
                   CustomPaint(
-                    painter : cuentasPainter(
+                    painter : CuentasPainter(
                       cuentas: _loadedImages!,
+                      counter: _counter,
                       
                     )
                   ),
@@ -124,18 +143,36 @@ class _PrayScreen3State extends State<PrayScreen3> {
               alignment: Alignment.bottomCenter,
               child: Padding(
                   padding: const EdgeInsets.all(20.0),
-                  child: SizedBox(
-                    width: double.infinity,
-                    child: ElevatedButton(
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color.fromRGBO(255, 192, 121, 0.5),
-                        padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 20.0),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceAround,
+                    children:[
+                      ElevatedButton(
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: const Color.fromRGBO(255, 192, 121, 0.5),
+                          padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 20.0),
+                        ),
+                        onPressed: _decrementCounter,
+                        child: const Text('Anterior'),
                       ),
-                      onPressed: () {
-                        Navigator.pop(context); 
-                      },
-                      child: const Text('Credo'),
-                    ),
+                      ElevatedButton(
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: const Color.fromRGBO(255, 192, 121, 0.5),
+                          padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 20.0),
+                        ),
+                        onPressed: () {
+                          Navigator.pop(context); 
+                        },
+                        child: const Text('Credo'),
+                      ),
+                      ElevatedButton(
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: const Color.fromRGBO(255, 192, 121, 0.5),
+                          padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 20.0),
+                        ),
+                        onPressed: _incrementCounter,
+                        child: const Text('Siguiente'),
+                      ),
+                    ]
                   ),
                 ),
             ),
@@ -145,11 +182,13 @@ class _PrayScreen3State extends State<PrayScreen3> {
   }
 }
 
-class cuentasPainter extends CustomPainter {
+class CuentasPainter extends CustomPainter {
   final Map<String,  ui.Image> cuentas;
+  final int counter;
 
-  cuentasPainter({
+  CuentasPainter({
     required this.cuentas,
+    required this.counter,
   });
 
   @override
@@ -185,6 +224,8 @@ class cuentasPainter extends CustomPainter {
 
       double imageWidth=1;
       double imageHeight=1;
+
+      int counter = this.counter;
       
 
       //teniendo en cuenta la orientación de la pantalla, se determina si la extensión se dibuja debajo o dentro del rosario
@@ -226,8 +267,8 @@ class cuentasPainter extends CustomPainter {
         cuentasAdicionales = 5 * imageHeightBasic;
       }
 
-      int i = 0;
-     
+       int i = 0;
+       //Se dibujan las cuentas del rosario
        List<dynamic> rosaryElements = Data.rosaryDetailsCircle.expand((detail) {
         // Create a local list to hold the elements generated for *this* 'detail'
         List<Map<String, dynamic>> currentDetailElements = [];
@@ -298,11 +339,11 @@ class cuentasPainter extends CustomPainter {
       }
       ).toList();
 
-// Se dibuja el brillo
+          // Se dibuja el brillo
           if (rosaryElements.isNotEmpty) {
-            var element = rosaryElements[0];
+            var element = rosaryElements[counter];
             cuentaName = element['cuenta']; 
-            // puedo utilizarlo para agregar la oración de acuerdo al nombre
+            //^^^ puedo utilizarlo para agregar la oración de acuerdo al nombre
             //Data.rosaryDetails aquí tengo el nombre de la cuenta y las oraciones 
             cuentaOrder = cuentasOrder;
             cuentaCount = cuentasCount;
@@ -347,7 +388,7 @@ class cuentasPainter extends CustomPainter {
     
   
     @override
-    bool shouldRepaint(covariant cuentasPainter oldDelegate) {
+    bool shouldRepaint(covariant CuentasPainter oldDelegate) {
       return oldDelegate.cuentas != cuentas;
     }
 }
