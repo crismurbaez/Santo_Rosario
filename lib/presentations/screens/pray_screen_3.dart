@@ -299,142 +299,30 @@ class cuentasPainter extends CustomPainter {
       }
       ).toList();
  debugPrint('----------------------------------');
-      // for (var i = 0; i < 55; i++) {
-            // el cálculo comienza en el ángulo 0, que se encuentra a la derecha, y continúa en sentido horario.
-            //como quiero que comience en la parte de abajo, le sumo 90 grados-> pi/2
-            //para que vaya dibujando las perlas en sentido antihorario, le multiplico por -1 a la i
-            //orientation cambia la ubicación de la medalla y de las cuentas que siguen en vertical hacia abajo según las dimensiones de la pantalla
-            // final double angle = orientation * (pi/2) + 2 * pi * (-i) / 55; 
 
-            // //imagen por defecto
-            // image = cuentas['perla']!;
-            // // se calcula el centro de la cuenta
-            // var cuentaCenter = Offset(
-            //   center.dx + cos(angle) * radius, //posición en x
-            //   center.dy + sin(angle) * radius, //posición en y
-            // );
-            // //destination Rectangle, da la ubicación y la escala de la imagen
-            // dstcuentas = Rect.fromCenter(
-            //   center: cuentaCenter, 
-            //   width: imageWidthBasic, 
-            //   height: imageHeightBasic,
-            // );
 
-            // if ([11, 22, 33, 44].contains(i) ) {
-            //   image = cuentas['rosa']!; 
-            //   dstcuentas = Rect.fromCenter(
-            //     center: cuentaCenter, 
-            //     width: imageWidthLarge, 
-            //     height: imageHeightLarge,
-            //   );
-            // }
+ 
 
-            // if (i == 0) {
-            //   image = cuentas['medalla']!;
-            //   cuentaCenter = Offset(
-            //     center.dx + cos(angle) * radius, //posición en x
-            //     center.dy + (sin(angle) * radius) + imageHeightBasic * 0.8, //posición en y se traslada un poco hacia abajo
-            //   );
-            //   //se guarda la ubicación de la medalla para dibujar la extensión
-            //   medallaCenter = cuentaCenter;
-            //   dstcuentas = Rect.fromCenter(
-            //     center: cuentaCenter, 
-            //     width: imageWidthLargest, 
-            //     height: imageHeightLargest,
-            //   );
-            // } 
 
-              // final paintImage = Paint();
-              // //source rectangle, recorta la imagen a mostrar, en este caso la mostramos completa
-              // final srccuentas = Rect.fromLTWH(0,0,image.width.toDouble(), image.height.toDouble());  
-              // canvas.drawImageRect(image, srccuentas, dstcuentas, paintImage);
-          // }
+          // //se dibuja el brillo en la medalla
+          // image = cuentas['brillo']!;
+          // //Hace la lógica para que el brillo vaya adelantando  cada vez que se presiona un botón o viceversa
 
-          //****************************************** */
-          //Se dibuja la extensión del rosario
-          // for (var j = 0; j < 6; j++) {
-          //       image = cuentas['perla']!;
-                
-          //       if ([0].contains(j) ) {
-          //         brilloCenter = medallaCenter;
-          //         image = cuentas['rosa']!; 
-          //         medallaCenter = Offset(
-          //           medallaCenter.dx - radius * 0.017, //posición en x
-          //           medallaCenter.dy + imageHeightLarge * 0.57, //posición en y
-          //         );
-
-                  
-                  
-          //         dstcuentas = Rect.fromCenter(
-          //           center: medallaCenter, 
-          //           width: imageWidthLarge, 
-          //           height: imageHeightLarge,
-          //         );
-          //       }
-
-          //       if ([4].contains(j) ) {
-          //         image = cuentas['rosa']!; 
-          //         medallaCenter = Offset(
-          //           medallaCenter.dx, //posición en x
-          //           medallaCenter.dy + imageHeightBasic * 0.8, //posición en y
-          //         );
-          //         dstcuentas = Rect.fromCenter(
-          //           center: medallaCenter, 
-          //           width: imageWidthLarge, 
-          //           height: imageHeightLarge,
-          //         );
-          //       }
-
-          //       if ([1,2,3].contains(j) ) {
-          //         image = cuentas['perla']!;
-          //         medallaCenter = Offset(
-          //           medallaCenter.dx, //posición en x
-          //           medallaCenter.dy + imageHeightBasic * 0.57, //posición en y
-          //         );
-          //         dstcuentas = Rect.fromCenter(
-          //           center: medallaCenter, 
-          //           width: imageWidthBasic, 
-          //           height: imageHeightBasic,
-          //         );
-          //       }
-
-          //      if ([5].contains(j) ) {
-          //         image = cuentas['cruz']!; 
-          //         medallaCenter = Offset(
-          //           medallaCenter.dx + radius * 0.017, //posición en x
-          //           medallaCenter.dy + imageHeightLarge * 0.64, //posición en y
-          //         );
-          //         dstcuentas = Rect.fromCenter(
-          //           center: medallaCenter, 
-          //           width: imageWidthLargest, 
-          //           height: imageHeightLargest,
-          //         );
-          //       }
-
+          //   dstcuentas = Rect.fromCenter(
+          //     center: brilloCenter, 
+          //     width: imageWidthLargest * 0.3, 
+          //     height: imageHeightLargest * 0.5,
+          //   );
           //     final paintImage = Paint();
+          //     paintImage.colorFilter = const ColorFilter.mode(
+          //       Color.fromRGBO(255, 255, 255, 0.4), 
+          //       BlendMode.modulate, // Multiplica los valores de color y alfa
+          //     );
+
           //     //source rectangle, recorta la imagen a mostrar, en este caso la mostramos completa
           //     final srccuentas = Rect.fromLTWH(0,0,image.width.toDouble(), image.height.toDouble()); 
+          //     // final srccuentas = Rect.fromCircle(center: brilloCenter, radius: imageWidthLarge*0.3);
           //     canvas.drawImageRect(image, srccuentas, dstcuentas, paintImage);
-          // }
-          //se dibuja el brillo en la medalla
-          image = cuentas['brillo']!;
-          //Hace la lógica para que el brillo vaya adelantando  cada vez que se presiona un botón o viceversa
-
-            dstcuentas = Rect.fromCenter(
-              center: brilloCenter, 
-              width: imageWidthLargest * 0.3, 
-              height: imageHeightLargest * 0.5,
-            );
-              final paintImage = Paint();
-              paintImage.colorFilter = const ColorFilter.mode(
-                Color.fromRGBO(255, 255, 255, 0.4), 
-                BlendMode.modulate, // Multiplica los valores de color y alfa
-              );
-
-              //source rectangle, recorta la imagen a mostrar, en este caso la mostramos completa
-              final srccuentas = Rect.fromLTWH(0,0,image.width.toDouble(), image.height.toDouble()); 
-              // final srccuentas = Rect.fromCircle(center: brilloCenter, radius: imageWidthLarge*0.3);
-              canvas.drawImageRect(image, srccuentas, dstcuentas, paintImage);
 
         }
     
