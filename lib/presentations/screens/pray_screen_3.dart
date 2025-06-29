@@ -45,7 +45,7 @@ class _PrayScreen3State extends State<PrayScreen3> {
           }
       });
     }
-
+    //TODO también decrementar el orden de oración si se vuelve atrás
     void _decrementCounter() {
       setState(() {
         if (_counter > 0) {
@@ -194,8 +194,9 @@ class _PrayScreen3State extends State<PrayScreen3> {
                             context: context,
                             builder: (BuildContext dialogContext) {
                               return PrayerDialog(
-                                prayer: _currentPrayers[_orderPrayer], // Pasamos las oraciones actuales
-                                mystery: widget.mystery, // También puedes pasar el misterio
+                                prayer: _currentPrayers[_orderPrayer], 
+                                mystery: widget.mystery,
+                                currentMysteryOrder:1, 
                               );
                             },
                           );

@@ -53,15 +53,15 @@
           scriptural: 'Lucas 23:27-31, Jesús carga su cruz hacia el Calvario, encontrándose con las mujeres de Jerusalén que lloran por él.'),
       MysteriesMeditations(mystery: 'doloroso', order: 5, meditation: 'La Crucifixión y Muerte de Jesús',
           scriptural: 'Lucas 23:33-46, Jesús es crucificado y muere en la cruz por nuestros pecados, entregando su espíritu al Padre.'),
-      MysteriesMeditations(mystery: 'luminoso', order: 1, meditation: 'El Bautismo de Jesús en el Jordán',
+      MysteriesMeditations(mystery: 'luminosos', order: 1, meditation: 'El Bautismo de Jesús en el Jordán',
           scriptural: 'Mateo 3:13-17, Jesús es bautizado por Juan el Bautista en el río Jordán, donde el Espíritu Santo desciende sobre él y se escucha la voz del Padre.'),
-      MysteriesMeditations(mystery: 'luminoso', order: 2, meditation: 'La Autorrevelación de Jesús en las Bodas de Caná',
+      MysteriesMeditations(mystery: 'luminosos', order: 2, meditation: 'La Autorrevelación de Jesús en las Bodas de Caná',
           scriptural: 'Juan 2:1-11, Jesús realiza su primer milagro convirtiendo agua en vino en las bodas de Caná, manifestando su gloria y fortaleciendo la fe de sus discípulos.'),
-      MysteriesMeditations(mystery: 'luminoso', order: 3, meditation: 'La Predicación del Reino de Dios y la Invitación a la Conversión',
+      MysteriesMeditations(mystery: 'luminosos', order: 3, meditation: 'La Predicación del Reino de Dios y la Invitación a la Conversión',
           scriptural: 'Mateo 4:17, Jesús comienza su ministerio predicando el Reino de Dios y llamando a la conversión, invitando a todos a seguirlo.'),
-      MysteriesMeditations(mystery: 'luminoso', order: 4, meditation: 'La Transfiguración de Jesús en el Monte Tabor',
+      MysteriesMeditations(mystery: 'luminosos', order: 4, meditation: 'La Transfiguración de Jesús en el Monte Tabor',
           scriptural: 'Mateo 17:1-9, Jesús se transfigura en el monte Tabor, mostrando su gloria divina a Pedro, Santiago y Juan, y siendo confirmado por la voz del Padre.'),
-      MysteriesMeditations(mystery: 'luminoso', order: 5, meditation: 'La Institución de la Eucaristía',
+      MysteriesMeditations(mystery: 'luminosos', order: 5, meditation: 'La Institución de la Eucaristía',
           scriptural: 'Mateo 26:26-29, En la Última Cena, Jesús instituye la Eucaristía, entregando su cuerpo y sangre a sus discípulos como alimento espiritual.'),
     ];
     
@@ -97,30 +97,30 @@
      static const List<RosaryDetailCircle> rosaryDetailsCircle = [
       RosaryDetailCircle(cuenta: 'medalla', count: 1, order: 1,
           width: 'largest', height: 'largest'
-          , prayers:['Señal de la Cruz','Credo','Mystery','Padre Nuestro']),
+          , prayers:['Señal de la Cruz','Credo','Misterio','Padre Nuestro']),
       RosaryDetailCircle(cuenta: 'perla', count: 10, order: 1,
           width: 'basic', height: 'basic', prayers:['Ave María']),
       RosaryDetailCircle(cuenta: 'rosa', count: 1, order: 2,
           width: 'large', height: 'large'
-          , prayers:[ 'Gloria','Oh Jesús Mío','Mystery','Padre Nuestro']),
+          , prayers:[ 'Gloria','Oh Jesús Mío','Misterio','Padre Nuestro']),
       RosaryDetailCircle(cuenta: 'perla', count: 10, order: 2,
           width: 'basic', height: 'basic'
           , prayers:['Ave María']),
       RosaryDetailCircle(cuenta: 'rosa', count: 1, order: 3,
           width: 'large', height: 'large'
-          , prayers:[ 'Gloria','Oh Jesús Mío','Mystery','Padre Nuestro']),
+          , prayers:[ 'Gloria','Oh Jesús Mío','Misterio','Padre Nuestro']),
       RosaryDetailCircle(cuenta: 'perla', count: 10, order: 3,
           width: 'basic', height: 'basic'
           , prayers:['Ave María']),
       RosaryDetailCircle(cuenta: 'rosa', count: 1, order: 4,
           width: 'large', height: 'large'
-          , prayers:[ 'Gloria','Oh Jesús Mío','Mystery','Padre Nuestro']),
+          , prayers:[ 'Gloria','Oh Jesús Mío','Misterio','Padre Nuestro']),
       RosaryDetailCircle(cuenta: 'perla', count: 10, order: 4,
           width: 'basic', height: 'basic'
           , prayers:['Ave María']),
       RosaryDetailCircle(cuenta: 'rosa', count: 1, order: 5,
           width: 'large', height: 'large'
-          , prayers:[ 'Gloria','Oh Jesús Mío','Mystery','Padre Nuestro']),
+          , prayers:[ 'Gloria','Oh Jesús Mío','Misterio','Padre Nuestro']),
       RosaryDetailCircle(cuenta: 'perla', count: 10, order: 5,
           width: 'basic', height: 'basic'
           , prayers:['Ave María']),
