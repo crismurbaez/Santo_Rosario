@@ -25,6 +25,7 @@ class _PrayScreen3State extends State<PrayScreen3> {
   int rosaryCircleBeadCount = Data.rosaryCircleBeadCount;
   List<String> _currentPrayers = [''];
   int _orderPrayer=0;
+  int _orderMystery=0;
   
 
     @override
@@ -54,15 +55,17 @@ class _PrayScreen3State extends State<PrayScreen3> {
         }
       });
     }
-
-    void _handleCuentaHighlighted(List<String> prayers) {
+    // Esta función se llama cuando una cuenta es resaltada
+    // y actualiza las oraciones actuales y el orden del misterio.
+    void _handleCuentaHighlighted(List<String> prayers, int orderMystery) {
       // Solo actualizamos si las oraciones son diferentes para evitar redibujados innecesarios
-      if (_currentPrayers.toString() != prayers.toString()) {
+      if (_currentPrayers.toString() != prayers.toString() || _orderMystery != orderMystery) {
         // Usamos addPostFrameCallback para posponer la llamada a setState
         // hasta después de que el frame actual haya terminado de construirse.
         WidgetsBinding.instance.addPostFrameCallback((_) {
           setState(() {
-            _currentPrayers = prayers;
+            _currentPrayers = prayers; // Actualiza las oraciones actuales
+            _orderMystery = orderMystery; // Actualiza el orden del misterio
           });
         });
       }
@@ -161,8 +164,8 @@ class _PrayScreen3State extends State<PrayScreen3> {
                       counter: _counter,
                       rosaryBeadCount: rosaryBeadCount,
                       rosaryCircleBeadCount: rosaryCircleBeadCount,
-                      onCuentaHighlighted: _handleCuentaHighlighted, // <-- Aquí se pasa el callback
-                      orderPrayer: _orderPrayer,
+                      onCuentaHighlighted: _handleCuentaHighlighted, 
+                      orderPrayer: _orderPrayer, 
                     )
                   ),
                 );
@@ -196,7 +199,7 @@ class _PrayScreen3State extends State<PrayScreen3> {
                               return PrayerDialog(
                                 prayer: _currentPrayers[_orderPrayer], 
                                 mystery: widget.mystery,
-                                currentMysteryOrder:1, 
+                                currentMysteryOrder:_orderMystery, 
                               );
                             },
                           );
@@ -226,7 +229,7 @@ class CuentasPainter extends CustomPainter {
   final int counter;
   final int rosaryBeadCount;
   final int rosaryCircleBeadCount;
-  final Function(List<String> prayers) onCuentaHighlighted; // <-- ¡Aquí el callback!
+  final Function(List<String> prayers, int orderMystery) onCuentaHighlighted; //pasa el conjunto de oraciones de la cuenta resaltada
   final int orderPrayer; // <-- Añadido para el orden de oración
 
 
@@ -235,7 +238,7 @@ class CuentasPainter extends CustomPainter {
     required this.counter,
     required this.rosaryBeadCount,
     required this.rosaryCircleBeadCount,
-    required this.onCuentaHighlighted, // <-- Requiere el callback
+    required this.onCuentaHighlighted,
     required this.orderPrayer,
   });
 
@@ -370,6 +373,7 @@ class CuentasPainter extends CustomPainter {
             'dstcuentas': dstcuentas,
             'cuentaCenter': cuentaCenter,
             'prayers': detail.prayers, // Agrega las oraciones de la cuenta
+            'order': detail.order, // Agrega el orden de la cuenta
           });
 
           i++; // Incremento de i para calcular el ángulo de la siguiente cuenta
@@ -434,6 +438,7 @@ class CuentasPainter extends CustomPainter {
             'dstcuentas': dstcuentas,
             'cuentaCenter': cuentaCenter,
             'prayers': detail.prayers, // Agrega las oraciones de la cuenta
+            'order': detail.order, // Agrega el orden de la cuenta
           });
         }
         return currentDetailElements;
@@ -447,10 +452,10 @@ class CuentasPainter extends CustomPainter {
             cuentaName = element['cuenta']; 
             // Verificamos que 'prayers' exista y sea una List<String> antes de castear y llamar.
             if (element['prayers'] != null) {
-              onCuentaHighlighted(element['prayers'] as List<String>);
+              onCuentaHighlighted(element['prayers'] as List<String>, element['order'] as int); // Pasa las oraciones y el orden de la cuenta resaltada
             } else {
               // En caso de que, por alguna razón, no tenga la clave o el tipo correcto (poco probable ahora)
-              onCuentaHighlighted([]); // Pasa una lista vacía para evitar errores
+              onCuentaHighlighted([],0); // Pasa una lista vacía y un cero para evitar errores
             }
             cuentaOrder = cuentasOrder;
             cuentaCount = cuentasCount;
