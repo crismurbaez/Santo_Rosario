@@ -1,8 +1,5 @@
 import 'package:flutter/material.dart';
 import 'presentations/screens/home_screen.dart';
-import 'presentations/screens/pray_screen.dart';
-import 'presentations/screens/pray_screen_1.dart';
-import 'presentations/screens/pray_screen_2.dart';
 import 'presentations/screens/pray_screen_3.dart';
 
 class SantoRosarioApp extends StatelessWidget {
@@ -37,18 +34,6 @@ class SantoRosarioApp extends StatelessWidget {
       home: const HomeScreen(title: 'Santo Rosario'),
       debugShowCheckedModeBanner: false,
       routes: {
-        '/pray': (context) {
-          final mystery = ModalRoute.of(context)?.settings.arguments as String?;
-          return PrayScreen(mystery: mystery);
-  },
-    '/pray1': (context) {
-          final mystery = ModalRoute.of(context)?.settings.arguments as String?;
-          return PrayScreen1(mystery: mystery);
-  },
-      '/pray2': (context) {
-          final mystery = ModalRoute.of(context)?.settings.arguments as String?;
-          return PrayScreen2(mystery: mystery);
-  },
       '/pray3': (context) {
           final mystery = ModalRoute.of(context)?.settings.arguments as String?;
           return PrayScreen3(mystery: mystery);
