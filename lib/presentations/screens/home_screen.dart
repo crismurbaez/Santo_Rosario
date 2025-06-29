@@ -19,16 +19,10 @@ class _HomeScreenState extends State<HomeScreen> {
 
   void _toggleMystery(String mystery, bool value) {
     setState(() {
-      // gozoso = mystery == 'gozoso' ? value : false;
-      // doloroso = mystery == 'doloroso' ? value : false;
-      // luminoso = mystery == 'luminoso' ? value : false;
-      // glorioso = mystery == 'glorioso' ? value : false;
-
-
-      gozoso = mystery == 'gozoso' ? value : false;
-      doloroso = mystery == 'doloroso' ? value : false;
-      luminoso = mystery == 'luminoso' ? value : false;
-      glorioso = mystery == 'glorioso' ? value : false;
+      gozoso = mystery == 'gozosos' ? value : false;
+      doloroso = mystery == 'dolorosos' ? value : false;
+      luminoso = mystery == 'luminosos' ? value : false;
+      glorioso = mystery == 'gloriosos' ? value : false;
     });
   }
 
@@ -36,19 +30,19 @@ class _HomeScreenState extends State<HomeScreen> {
     if (gozoso) {
       Navigator.pushNamed(
         context,
-        '/pray',
+        '/pray3',
         arguments: 'gozosos', 
       );
     } else if (glorioso) {
       Navigator.pushNamed(
         context,
-        '/pray1',
+        '/pray3',
         arguments: 'gloriosos', 
       );
     } else if (doloroso) {
       Navigator.pushNamed(
         context,
-        '/pray2',
+        '/pray3',
         arguments: 'dolorosos', 
       );
     } else if (luminoso) {
@@ -62,13 +56,13 @@ class _HomeScreenState extends State<HomeScreen> {
 
   bool _getMysteryValue(String key) {
   switch (key) {
-    case 'gozoso':
+    case 'gozosos':
       return gozoso;
-    case 'glorioso':
+    case 'gloriosos':
       return glorioso;
-    case 'doloroso':
+    case 'dolorosos':
       return doloroso;
-    case 'luminoso':
+    case 'luminosos':
       return luminoso;
     default:
       return gozoso; 

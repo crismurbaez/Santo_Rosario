@@ -70,25 +70,25 @@
         title: 'Misterios Gozosos',
         subtitle: 'Se rezan los días Lunes y Sábado',
         imageAsset: 'assets/images/gozosos.png',
-        mystery: 'gozoso',
+        mystery: 'gozosos',
       ),
       MysteryDetail(
         title: 'Misterios Gloriosos',
         subtitle: 'Se rezan los días Miércoles y Domingo',
         imageAsset: 'assets/images/gloriosos.png',
-        mystery: 'glorioso',
+        mystery: 'gloriosos',
       ),
       MysteryDetail(
         title: 'Misterios Dolorosos',
         subtitle: 'Se rezan los días Martes y Viernes',
         imageAsset: 'assets/images/dolorosos.png',
-        mystery: 'doloroso',
+        mystery: 'dolorosos',
       ),
       MysteryDetail(
         title: 'Misterios Luminosos',
         subtitle: 'Se rezan los días Jueves',
         imageAsset: 'assets/images/luminosos.jpg',
-        mystery: 'luminoso',
+        mystery: 'luminosos',
       ),
     ];
     //TODOpara que se pueda cambiar el rosario de acuerdo a la configuración

@@ -46,7 +46,6 @@ class _PrayScreen3State extends State<PrayScreen3> {
           }
       });
     }
-    //TODO también decrementar el orden de oración si se vuelve atrás
     void _decrementCounter() {
       setState(() {
         if (_orderPrayer > 0) {

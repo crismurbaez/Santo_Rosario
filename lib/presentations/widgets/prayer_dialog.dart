@@ -19,8 +19,7 @@ class PrayerDialog extends StatelessWidget {
         return m; // Encontramos la meditación, la retornamos
       }
     }
-    return null
-    ; // Si el bucle termina y no encontramos nada, retornamos null
+    return null; // Si el bucle termina y no encontramos nada, retornamos null
   }
 
   @override
