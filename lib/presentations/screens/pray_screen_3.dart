@@ -3,6 +3,7 @@ import 'dart:ui' as ui;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../../data/models/data.dart'; 
+import '../widgets/prayer_dialog.dart';
 
 class PrayScreen3 extends StatefulWidget {
 
@@ -32,17 +33,16 @@ class _PrayScreen3State extends State<PrayScreen3> {
     _loadAllImages(); // Inicia la carga de todas las imágenes
   }
 
-      void _incrementCounter() {
+    void _incrementCounter() {
       setState(() {
-        
-        if (_counter < rosaryBeadCount-1) {
           if (_orderPrayer < _currentPrayers.length-1) {
             _orderPrayer++;
           } else {
+            if (_counter < rosaryBeadCount-1) {
             _counter++; // Incrementa el contador
             _orderPrayer = 0;
+            }
           }
-        }
       });
     }
 
@@ -189,7 +189,16 @@ class _PrayScreen3State extends State<PrayScreen3> {
                           padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 20.0),
                         ),
                         onPressed: () {
-                          Navigator.pop(context); 
+                          // Muestra el diálogo con las oraciones actuales
+                          showDialog(
+                            context: context,
+                            builder: (BuildContext dialogContext) {
+                              return PrayerDialog(
+                                prayer: _currentPrayers[_orderPrayer], // Pasamos las oraciones actuales
+                                mystery: widget.mystery, // También puedes pasar el misterio
+                              );
+                            },
+                          );
                         },
                         child: Text(_currentPrayers[_orderPrayer]),
                       ),
@@ -493,9 +502,9 @@ class CuentasPainter extends CustomPainter {
   
     @override
     bool shouldRepaint(covariant CuentasPainter oldDelegate) {
-      return oldDelegate.cuentas != cuentas||
-      oldDelegate.counter != counter ||
-      oldDelegate.rosaryBeadCount != rosaryBeadCount ||
-      oldDelegate.rosaryCircleBeadCount != rosaryCircleBeadCount;
+      return  oldDelegate.cuentas != cuentas
+           || oldDelegate.counter != counter ||
+              oldDelegate.rosaryBeadCount != rosaryBeadCount ||
+              oldDelegate.rosaryCircleBeadCount != rosaryCircleBeadCount;
     }
 }
