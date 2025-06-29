@@ -13,71 +13,71 @@
     };
 
     static const List<RosaryDetail> rosaryDetails = [
-      RosaryDetail(cuenta: 'medalla', prayer: 'SeñaldelaCruz', count: 1, order: 1,
+      RosaryDetail(cuenta: 'medalla', prayer: 'Señal de la Cruz', count: 1, order: 1,
           width: 'largest', height: 'largest'),
       RosaryDetail(cuenta: 'medalla', prayer: 'Credo', count: 1, order: 1,
           width: 'largest', height: 'largest'),
       RosaryDetail(cuenta: 'medalla', prayer: 'Mystery', count: 1, order: 1,
           width: 'largest', height: 'largest' ),  //1
-      RosaryDetail(cuenta: 'medalla', prayer: 'PadreNuestro', count: 1, order: 1,
+      RosaryDetail(cuenta: 'medalla', prayer: 'Padre Nuestro', count: 1, order: 1,
           width: 'largest', height: 'largest'),
-      RosaryDetail(cuenta: 'perla', prayer: 'AveMaría', count: 10, order: 1,
+      RosaryDetail(cuenta: 'perla', prayer: 'Ave María', count: 10, order: 1,
           width: 'basic', height: 'basic'),
       RosaryDetail(cuenta: 'rosa', prayer: 'Gloria', count: 1,  order: 1,
           width: 'large', height: 'large'),
-      RosaryDetail(cuenta: 'rosa', prayer: 'OhJesúsMío', count: 1, order: 1,
+      RosaryDetail(cuenta: 'rosa', prayer: 'Oh Jesús Mío', count: 1, order: 1,
           width: 'large', height: 'large'),
       RosaryDetail(cuenta: 'rosa', prayer: 'Mystery', count: 1, order: 2,
       width: 'large', height: 'large'), //2
-      RosaryDetail(cuenta: 'rosa', prayer: 'PadreNuestro', count: 1, order: 2,
+      RosaryDetail(cuenta: 'rosa', prayer: 'Padre Nuestro', count: 1, order: 2,
           width: 'large', height: 'large'),
-      RosaryDetail(cuenta: 'perla', prayer: 'AveMaría', count: 10, order: 2,
+      RosaryDetail(cuenta: 'perla', prayer: 'Ave María', count: 10, order: 2,
           width: 'basic', height: 'basic'),
       RosaryDetail(cuenta: 'rosa', prayer: 'Gloria', count: 1, order: 2,
           width: 'large', height: 'large'),
-      RosaryDetail(cuenta: 'rosa', prayer: 'OhJesúsMío', count: 1, order: 2,
+      RosaryDetail(cuenta: 'rosa', prayer: 'Oh Jesús Mío', count: 1, order: 2,
           width: 'large', height: 'large'),
       RosaryDetail(cuenta: 'rosa', prayer: 'Mystery', count: 1, order: 3,
           width: 'large', height: 'large'), //3
-      RosaryDetail(cuenta: 'rosa', prayer: 'PadreNuestro', count: 1, order: 3,
+      RosaryDetail(cuenta: 'rosa', prayer: 'Padre Nuestro', count: 1, order: 3,
           width: 'large', height: 'large'),
-      RosaryDetail(cuenta: 'perla', prayer: 'AveMaría', count: 10, order: 3,
+      RosaryDetail(cuenta: 'perla', prayer: 'Ave María', count: 10, order: 3,
           width: 'basic', height: 'basic'),
       RosaryDetail(cuenta: 'rosa', prayer: 'Gloria', count: 1, order: 3,
           width: 'large', height: 'large'),
-      RosaryDetail(cuenta: 'rosa', prayer: 'OhJesúsMío', count: 1, order: 3,
+      RosaryDetail(cuenta: 'rosa', prayer: 'Oh Jesús Mío', count: 1, order: 3,
           width: 'large', height: 'large'),
       RosaryDetail(cuenta: 'rosa', prayer: 'Mystery', count: 1, order: 4,
           width: 'large', height: 'large'), //4
-      RosaryDetail(cuenta: 'rosa', prayer: 'PadreNuestro', count: 1, order: 4,
+      RosaryDetail(cuenta: 'rosa', prayer: 'Padre Nuestro', count: 1, order: 4,
           width: 'large', height: 'large'),
-      RosaryDetail(cuenta: 'perla', prayer: 'AveMaría', count: 10, order: 4,
+      RosaryDetail(cuenta: 'perla', prayer: 'Ave María', count: 10, order: 4,
           width: 'basic', height: 'basic'),
       RosaryDetail(cuenta: 'rosa', prayer: 'Gloria', count: 1, order: 4,
           width: 'large', height: 'large'),
-      RosaryDetail(cuenta: 'rosa', prayer: 'OhJesúsMío', count: 1, order: 4,
+      RosaryDetail(cuenta: 'rosa', prayer: 'Oh Jesús Mío', count: 1, order: 4,
           width: 'large', height: 'large'),
       RosaryDetail(cuenta: 'rosa', prayer: 'Mystery', count: 1, order: 5,
           width: 'large', height: 'large'), //5
-      RosaryDetail(cuenta: 'rosa', prayer: 'PadreNuestro', count: 1, order: 5,
+      RosaryDetail(cuenta: 'rosa', prayer: 'Padre Nuestro', count: 1, order: 5,
           width: 'large', height: 'large'),
-      RosaryDetail(cuenta: 'perla', prayer: 'AveMaría', count: 10, order: 5,
+      RosaryDetail(cuenta: 'perla', prayer: 'Ave María', count: 10, order: 5,
           width: 'basic', height: 'basic'),
       RosaryDetail(cuenta: 'rosa', prayer: 'Gloria', count: 1, order: 5,
           width: 'large', height: 'large'),
-      RosaryDetail(cuenta: 'rosa', prayer: 'OhJesúsMío', count: 1, order: 5,
+      RosaryDetail(cuenta: 'rosa', prayer: 'Oh Jesús Mío', count: 1, order: 5,
           width: 'large', height: 'large'),
-      RosaryDetail(cuenta: 'cruz', prayer: 'SeñaldelaCruz', count: 1, order: 5,
+      RosaryDetail(cuenta: 'cruz', prayer: 'Señal de la Cruz', count: 1, order: 5,
           width: 'largest', height: 'largest'),
     ];
     static const Map<String, String> prayers = {
-      'SeñaldelaCruz': 'En el nombre del Padre, y del Hijo, y del Espíritu Santo. Amén.',
+      'Señal de la Cruz': 'En el nombre del Padre, y del Hijo, y del Espíritu Santo. Amén.',
       'Credo': 'Creo en Dios, Padre todopoderoso, Creador del cielo y de la tierra; y en Jesucristo, su único Hijo, nuestro Señor, que fue concebido por obra y gracia del Espíritu Santo; nació de Santa María Virgen; padeció bajo el poder de Poncio Pilato; fue crucificado, muerto y sepultado; descendió a los infiernos; al tercer día resucitó de entre los muertos; subió a los cielos, y está sentado a la derecha de Dios, Padre todopoderoso; desde allí ha de venir a juzgar a vivos y muertos. Creo en el Espíritu Santo, la santa Iglesia católica, la comunión de los santos, el perdón de los pecados, la resurrección de la carne y la vida eterna. Amén.',
-      'PadreNuestro': 'Padre nuestro, que estás en los cielos, santificado sea tu nombre; venga tu reino; hágase tu voluntad, así en la tierra como en el cielo. Danos hoy el pan nuestro de cada día; perdona nuestras ofensas, así como nosotros perdonamos a los que nos ofenden; no nos dejes caer en la tentación y líbranos de mal. Amén.',
-      'AveMaría': 'Dios te salve, María, llena eres de gracia; el Señor es contigo; bendita tú eres entre todas las mujeres y bendito es el fruto de tu vientre, Jesús. Santa María, Madre de Dios, ruega por nosotros pecadores, ahora y en la hora de nuestra muerte. Amén.',
+      'Padre Nuestro': 'Padre nuestro, que estás en los cielos, santificado sea tu nombre; venga tu reino; hágase tu voluntad, así en la tierra como en el cielo. Danos hoy el pan nuestro de cada día; perdona nuestras ofensas, así como nosotros perdonamos a los que nos ofenden; no nos dejes caer en la tentación y líbranos de mal. Amén.',
+      'Ave María': 'Dios te salve, María, llena eres de gracia; el Señor es contigo; bendita tú eres entre todas las mujeres y bendito es el fruto de tu vientre, Jesús. Santa María, Madre de Dios, ruega por nosotros pecadores, ahora y en la hora de nuestra muerte. Amén.',
       'Gloria': 'Gloria al Padre, y al Hijo, y al Espíritu Santo. Como era en el principio, ahora y siempre, por los siglos de los siglos. Amén.',
-      'OhJesúsMío': 'Oh Jesús mío, perdona nuestros pecados, líbranos del fuego del infierno; lleva al cielo a todas las almas, especialmente a las más necesitadas de tu misericordia.',
-      'SantoDios': 'Santo Dios, Santo Fuerte, Santo Inmortal, ten piedad de nosotros y del mundo entero.',
+      'Oh Jesús Mío': 'Oh Jesús mío, perdona nuestros pecados, líbranos del fuego del infierno; lleva al cielo a todas las almas, especialmente a las más necesitadas de tu misericordia.',
+      'Santo Dios': 'Santo Dios, Santo Fuerte, Santo Inmortal, ten piedad de nosotros y del mundo entero.',
     };
     static const List<MysteriesMeditations> meditations = [
       MysteriesMeditations(mystery: 'gozoso', order: 1, meditation: 'La Anunciación del Arcángel Gabriel a María',
@@ -153,36 +153,49 @@
      static const rosaryCircleBeadCount = 55;
      static const List<RosaryDetailCircle> rosaryDetailsCircle = [
       RosaryDetailCircle(cuenta: 'medalla', count: 1, order: 1,
-          width: 'largest', height: 'largest'),
+          width: 'largest', height: 'largest'
+          , prayers:['Señal de la Cruz','Credo','Mystery','Padre Nuestro']),
       RosaryDetailCircle(cuenta: 'perla', count: 10, order: 1,
-          width: 'basic', height: 'basic'),
+          width: 'basic', height: 'basic', prayers:['Ave María']),
       RosaryDetailCircle(cuenta: 'rosa', count: 1, order: 2,
-          width: 'large', height: 'large'),
+          width: 'large', height: 'large'
+          , prayers:[ 'Gloria','Oh Jesús Mío','Mystery','Padre Nuestro']),
       RosaryDetailCircle(cuenta: 'perla', count: 10, order: 2,
-          width: 'basic', height: 'basic'),
+          width: 'basic', height: 'basic'
+          , prayers:['Ave María']),
       RosaryDetailCircle(cuenta: 'rosa', count: 1, order: 3,
-          width: 'large', height: 'large'),
+          width: 'large', height: 'large'
+          , prayers:[ 'Gloria','Oh Jesús Mío','Mystery','Padre Nuestro']),
       RosaryDetailCircle(cuenta: 'perla', count: 10, order: 3,
-          width: 'basic', height: 'basic'),
+          width: 'basic', height: 'basic'
+          , prayers:['Ave María']),
       RosaryDetailCircle(cuenta: 'rosa', count: 1, order: 4,
-          width: 'large', height: 'large'),
+          width: 'large', height: 'large'
+          , prayers:[ 'Gloria','Oh Jesús Mío','Mystery','Padre Nuestro']),
       RosaryDetailCircle(cuenta: 'perla', count: 10, order: 4,
-          width: 'basic', height: 'basic'),
+          width: 'basic', height: 'basic'
+          , prayers:['Ave María']),
       RosaryDetailCircle(cuenta: 'rosa', count: 1, order: 5,
-          width: 'large', height: 'large'),
+          width: 'large', height: 'large'
+          , prayers:[ 'Gloria','Oh Jesús Mío','Mystery','Padre Nuestro']),
       RosaryDetailCircle(cuenta: 'perla', count: 10, order: 5,
-          width: 'basic', height: 'basic'),
+          width: 'basic', height: 'basic'
+          , prayers:['Ave María']),
      ];
      static const rosaryExtensionBeadCount = 6;
      static const List<RosaryDetailExtension> rosaryDetailsExtension = [
-      RosaryDetailExtension(cuenta: 'rosa', prayer: 'Gloria', count: 1,  order: 1,
-          width: 'large', height: 'large'),
-      RosaryDetailExtension(cuenta: 'perla', prayer: 'AveMaría', count: 3, order: 1,
-          width: 'basic', height: 'basic'),
-      RosaryDetailExtension(cuenta: 'rosa', prayer: 'OhJesúsMío', count: 1, order: 1,
-          width: 'large', height: 'large'),
-      RosaryDetailExtension(cuenta: 'cruz', prayer: 'Mystery', count: 1, order: 1,
-          width: 'largest', height: 'largest'),
+      RosaryDetailExtension(cuenta: 'rosa', count: 1,  order: 6,
+          width: 'large', height: 'large'
+          , prayers:[ 'Gloria','Oh Jesús Mío','Padre Nuestro']),
+      RosaryDetailExtension(cuenta: 'perla', count: 3, order: 6,
+          width: 'basic', height: 'basic'
+          , prayers:['Ave María']),
+      RosaryDetailExtension(cuenta: 'rosa', count: 1, order: 6,
+          width: 'large', height: 'large'
+          , prayers:[ 'Gloria','Oh Jesús Mío']),
+      RosaryDetailExtension(cuenta: 'cruz', count: 1, order: 6,
+          width: 'largest', height: 'largest'
+          , prayers:['Señal de la Cruz']),
      ];
   }
   
@@ -222,6 +235,7 @@
     final int order; 
     final String width;
     final String height;
+    final List<String> prayers;
 
     const RosaryDetailCircle({
       required this.cuenta,
@@ -229,24 +243,25 @@
       required this.order,
       required this.width,
       required this.height,
+      required this.prayers,
     });
   }
 
       class RosaryDetailExtension {
     final String cuenta;
-    final String prayer;
     final int count;
     final int order; 
     final String width;
     final String height;
+    final List<String> prayers;
 
     const RosaryDetailExtension({
       required this.cuenta,
-      required this.prayer,
       required this.count,
       required this.order,
       required this.width,
       required this.height,
+      required this.prayers,
     });
   }
 

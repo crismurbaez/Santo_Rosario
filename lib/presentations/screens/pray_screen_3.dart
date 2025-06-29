@@ -18,11 +18,12 @@ class PrayScreen3 extends StatefulWidget {
 
 
 class _PrayScreen3State extends State<PrayScreen3> {
-  // Mapa para almacenar las imágenes cargadas
   Map<String, ui.Image>? _loadedImages;
   int _counter = 0;
   int rosaryBeadCount = Data.rosaryCircleBeadCount + Data.rosaryExtensionBeadCount;
   int rosaryCircleBeadCount = Data.rosaryCircleBeadCount;
+  List<String> _currentPrayers = [''];
+  int _orderPrayer=0;
   
 
     @override
@@ -35,7 +36,12 @@ class _PrayScreen3State extends State<PrayScreen3> {
       setState(() {
         
         if (_counter < rosaryBeadCount-1) {
-          _counter++; // Incrementa el contador
+          if (_orderPrayer < _currentPrayers.length-1) {
+            _orderPrayer++;
+          } else {
+            _counter++; // Incrementa el contador
+            _orderPrayer = 0;
+          }
         }
       });
     }
@@ -44,9 +50,24 @@ class _PrayScreen3State extends State<PrayScreen3> {
       setState(() {
         if (_counter > 0) {
           _counter--;  // Disminuye el contador
+          _orderPrayer = 0;
         }
       });
     }
+
+    void _handleCuentaHighlighted(List<String> prayers) {
+      // Solo actualizamos si las oraciones son diferentes para evitar redibujados innecesarios
+      if (_currentPrayers.toString() != prayers.toString()) {
+        // Usamos addPostFrameCallback para posponer la llamada a setState
+        // hasta después de que el frame actual haya terminado de construirse.
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          setState(() {
+            _currentPrayers = prayers;
+          });
+        });
+      }
+    }
+
    // Función asíncrona para cargar todas las imágenes
   Future<void> _loadAllImages() async {
     final Map<String, ui.Image> images = {};
@@ -120,7 +141,7 @@ class _PrayScreen3State extends State<PrayScreen3> {
                 // Muestra un indicador de carga si las imágenes aún no se han cargado
                 if (_loadedImages == null) {
                   return const CircularProgressIndicator(
-                    color: Colors.amber, 
+                    color: ui.Color.fromARGB(255, 228, 207, 143), 
                   );
                 }
 
@@ -140,6 +161,8 @@ class _PrayScreen3State extends State<PrayScreen3> {
                       counter: _counter,
                       rosaryBeadCount: rosaryBeadCount,
                       rosaryCircleBeadCount: rosaryCircleBeadCount,
+                      onCuentaHighlighted: _handleCuentaHighlighted, // <-- Aquí se pasa el callback
+                      orderPrayer: _orderPrayer,
                     )
                   ),
                 );
@@ -168,7 +191,7 @@ class _PrayScreen3State extends State<PrayScreen3> {
                         onPressed: () {
                           Navigator.pop(context); 
                         },
-                        child: const Text('Credo'),
+                        child: Text(_currentPrayers[_orderPrayer]),
                       ),
                       ElevatedButton(
                         style: ElevatedButton.styleFrom(
@@ -193,12 +216,17 @@ class CuentasPainter extends CustomPainter {
   final int counter;
   final int rosaryBeadCount;
   final int rosaryCircleBeadCount;
+  final Function(List<String> prayers) onCuentaHighlighted; // <-- ¡Aquí el callback!
+  final int orderPrayer; // <-- Añadido para el orden de oración
+
 
   CuentasPainter({
     required this.cuentas,
     required this.counter,
     required this.rosaryBeadCount,
     required this.rosaryCircleBeadCount,
+    required this.onCuentaHighlighted, // <-- Requiere el callback
+    required this.orderPrayer,
   });
 
   @override
@@ -236,6 +264,7 @@ class CuentasPainter extends CustomPainter {
       double imageHeight=1;
 
       int counter = this.counter;
+      int orderPrayer = this.orderPrayer;
       
 
       //teniendo en cuenta la orientación de la pantalla, se determina si la extensión se dibuja debajo o dentro del rosario
@@ -330,6 +359,7 @@ class CuentasPainter extends CustomPainter {
             'height': detail.height,
             'dstcuentas': dstcuentas,
             'cuentaCenter': cuentaCenter,
+            'prayers': detail.prayers, // Agrega las oraciones de la cuenta
           });
 
           i++; // Incremento de i para calcular el ángulo de la siguiente cuenta
@@ -393,6 +423,7 @@ class CuentasPainter extends CustomPainter {
             'height': detail.height,
             'dstcuentas': dstcuentas,
             'cuentaCenter': cuentaCenter,
+            'prayers': detail.prayers, // Agrega las oraciones de la cuenta
           });
         }
         return currentDetailElements;
@@ -404,8 +435,13 @@ class CuentasPainter extends CustomPainter {
           if (allRosaryElements.isNotEmpty) {
             var element = allRosaryElements[counter];
             cuentaName = element['cuenta']; 
-            //^^^ puedo utilizarlo para agregar la oración de acuerdo al nombre
-            //Data.rosaryDetails aquí tengo el nombre de la cuenta y las oraciones 
+            // Verificamos que 'prayers' exista y sea una List<String> antes de castear y llamar.
+            if (element['prayers'] != null) {
+              onCuentaHighlighted(element['prayers'] as List<String>);
+            } else {
+              // En caso de que, por alguna razón, no tenga la clave o el tipo correcto (poco probable ahora)
+              onCuentaHighlighted([]); // Pasa una lista vacía para evitar errores
+            }
             cuentaOrder = cuentasOrder;
             cuentaCount = cuentasCount;
             cuentaWidth = element['width'];
@@ -416,7 +452,7 @@ class CuentasPainter extends CustomPainter {
             //se dibuja la cuenta brillo
             image = cuentas['brillo']!;
 
-            //destination Rectangle, da la ubicación y la escala de la imagen
+            
             if (cuentaWidth == 'basic') {
               imageWidth = imageWidthBasic * 0.7;
               imageHeight = imageHeightBasic * 0.7; 
@@ -429,17 +465,24 @@ class CuentasPainter extends CustomPainter {
               imageWidth = imageWidthLargest * 0.3;
               imageHeight = imageHeightLargest * 0.7;
             }
-            
+            //destination Rectangle, da la ubicación y la escala de la imagen
             dstcuentas = Rect.fromCenter(
               center: cuentaCenter, 
               width: imageWidth, 
               height: imageHeight,
             );
+
               final paintImage = Paint();
               paintImage.colorFilter = const ColorFilter.mode(
-                Color.fromRGBO(255, 255, 255, 0.5), 
+                Color.fromRGBO(255, 255, 255, 0.7), 
                 BlendMode.modulate, // Multiplica los valores de color y alfa
               );
+            if (cuentaName == 'cruz') {
+              paintImage.colorFilter = const ColorFilter.mode(
+                Color.fromRGBO(255, 255, 255, 0.3), 
+                BlendMode.modulate, // Multiplica los valores de color y alfa
+              );
+            }
               //source rectangle, recorta la imagen a mostrar, en este caso la mostramos completa
               final srccuentas = Rect.fromLTWH(0,0,image.width.toDouble(), image.height.toDouble());  
               canvas.drawImageRect(image, srccuentas, dstcuentas, paintImage);
@@ -450,6 +493,9 @@ class CuentasPainter extends CustomPainter {
   
     @override
     bool shouldRepaint(covariant CuentasPainter oldDelegate) {
-      return oldDelegate.cuentas != cuentas;
+      return oldDelegate.cuentas != cuentas||
+      oldDelegate.counter != counter ||
+      oldDelegate.rosaryBeadCount != rosaryBeadCount ||
+      oldDelegate.rosaryCircleBeadCount != rosaryCircleBeadCount;
     }
 }
