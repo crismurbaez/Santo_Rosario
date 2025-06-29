@@ -49,7 +49,12 @@ class _PrayScreen3State extends State<PrayScreen3> {
     //TODO también decrementar el orden de oración si se vuelve atrás
     void _decrementCounter() {
       setState(() {
-        if (_counter > 0) {
+        if (_orderPrayer > 0) {
+          _orderPrayer--; // Decrementa el orden de oración
+        } else if (_counter > 0 && _orderPrayer == 0) {
+          // Si estamos en la primera oración y el contador es mayor que 0, decrementamos el contador
+          // y reiniciamos el orden de oración a 0.
+          // Esto permite retroceder al misterio anterior.
           _counter--;  // Disminuye el contador
           _orderPrayer = 0;
         }
