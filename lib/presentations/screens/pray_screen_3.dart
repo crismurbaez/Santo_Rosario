@@ -147,7 +147,7 @@ class _PrayScreen3State extends State<PrayScreen3> {
            Container(
                       decoration: const BoxDecoration(
                         image: DecorationImage(
-                          image: AssetImage('assets/images/VirgenLourdes.png'),
+                          image: AssetImage('assets/images/VirgenLourdes.jpg'),
                           fit: BoxFit.fitHeight,
                         ),
                       ),

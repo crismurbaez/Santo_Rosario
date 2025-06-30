@@ -32,7 +32,7 @@ class PrayerDialog extends StatelessWidget {
 
 
     return AlertDialog(
-      backgroundColor: Color.fromRGBO(29, 64, 76, 0.5), // Fondo oscuro
+      backgroundColor: const Color.fromRGBO(29, 64, 76, 0.5), // Fondo oscuro
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(15.0),
       ),
