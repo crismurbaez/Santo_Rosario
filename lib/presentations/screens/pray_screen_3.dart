@@ -26,6 +26,7 @@ class _PrayScreen3State extends State<PrayScreen3> {
   List<String> _currentPrayers = [''];
   int _orderPrayer=0;
   int _orderMystery=0;
+  bool _isDecrement = false; // Variable para controlar el decremento
   
 
     @override
@@ -38,10 +39,12 @@ class _PrayScreen3State extends State<PrayScreen3> {
       setState(() {
           if (_orderPrayer < _currentPrayers.length-1) {
             _orderPrayer++;
+            _isDecrement = false;
           } else {
             if (_counter < rosaryBeadCount-1) {
             _counter++; // Incrementa el contador
             _orderPrayer = 0;
+            _isDecrement = false;
             }
           }
       });
@@ -50,12 +53,14 @@ class _PrayScreen3State extends State<PrayScreen3> {
       setState(() {
         if (_orderPrayer > 0) {
           _orderPrayer--; // Decrementa el orden de oración
+          _isDecrement = true;
         } else if (_counter > 0 && _orderPrayer == 0) {
           // Si estamos en la primera oración y el contador es mayor que 0, decrementamos el contador
           // y reiniciamos el orden de oración a 0.
-          // Esto permite retroceder al misterio anterior.
+          // Esto permite retroceder a la cuenta anterior.
           _counter--;  // Disminuye el contador
           _orderPrayer = 0;
+          _isDecrement = true;
         }
       });
     }
@@ -70,6 +75,11 @@ class _PrayScreen3State extends State<PrayScreen3> {
           setState(() {
             _currentPrayers = prayers; // Actualiza las oraciones actuales
             _orderMystery = orderMystery; // Actualiza el orden del misterio
+            if (_isDecrement) {
+              _orderPrayer = prayers.length - 1; // Si es decremento, va al último elemento
+            } else {
+              _orderPrayer = 0; // Si es incremento, reinicia el orden de oración
+            }
           });
         });
       }
