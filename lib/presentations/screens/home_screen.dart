@@ -99,41 +99,40 @@ class _HomeScreenState extends State<HomeScreen> {
       ),
       body: Container(
         decoration: BoxDecoration(color: Theme.of(context).colorScheme.inversePrimary),
-        child: Center(
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.spaceAround,
-            // mainAxisSize: MainAxisSize.max,
-            children: <Widget>[
-              const Divider(
-                color: Colors.white24,
-                thickness: 2,
-                height: 20,
+        child: SingleChildScrollView(
+          child: ConstrainedBox(
+            constraints: BoxConstraints(minHeight: MediaQuery.of(context).size.height - 70.0),
+            child: IntrinsicHeight( // <--- Importante para que Column sepa su "altura ideal"
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.spaceAround,
+                children: <Widget>[
+                  const Divider(
+                    color: Colors.white24,
+                    thickness: 2,
+                    height: 20,
+                  ),
+                  ...Data.mysteries.map((mystery) {
+                    return Column(
+                      children: [
+                        MysteryListItem(
+                          title: mystery.title, 
+                          subtitle: mystery.subtitle, 
+                          imageAsset: mystery.imageAsset, 
+                          value: _getMysteryValue(mystery.mystery), 
+                          onChanged:(value) => _toggleMystery(mystery.mystery, value),
+                        ),
+                        const Divider(
+                          color: Colors.white24,
+                          thickness: 2,
+                          height: 20,
+                        ),
+                      ],
+                    );
+                  }).toList(),
+                  StartButton(onPressed: _navigateToPray),
+                ],
               ),
-              ...Data.mysteries.map((mystery) {
-                return Column(
-                  children: [
-                    MysteryListItem(
-                      title: mystery.title, 
-                      subtitle: mystery.subtitle, 
-                      imageAsset: mystery.imageAsset, 
-                      value: _getMysteryValue(mystery.mystery), 
-                      onChanged:(value) => _toggleMystery(mystery.mystery, value),
-                    ),
-                    const Divider(
-                      color: Colors.white24,
-                      thickness: 2,
-                      height: 20,
-                    ),
-                  ],
-                );
-              }).toList(),
-              const Divider(
-                color: Colors.white24,
-                thickness: 2,
-                height: 20,
-              ),
-              StartButton(onPressed: _navigateToPray),
-            ],
+            ),
           ),
         ),
       ),

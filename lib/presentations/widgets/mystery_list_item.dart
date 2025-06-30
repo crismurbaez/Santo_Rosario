@@ -25,12 +25,13 @@ class MysteryListItem extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return ListTile(
-      visualDensity: VisualDensity.comfortable,
+      visualDensity: VisualDensity.compact,
+      contentPadding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 0.0),
       leading: SizedBox(
         width: imageWidth,
         height: imageHeight,
         child: ClipRRect(
-          borderRadius: BorderRadius.circular(20.0),
+          borderRadius: BorderRadius.circular(10.0),
           child: Image.asset(
             imageAsset,
             fit: imageFit, 
@@ -49,6 +50,7 @@ class MysteryListItem extends StatelessWidget {
         value: value,
         onChanged: onChanged,
       ),
+       onTap: () => onChanged(!value), // Permite tocar en cualquier parte del ListTile para cambiar el switch
     );
   }
 }
