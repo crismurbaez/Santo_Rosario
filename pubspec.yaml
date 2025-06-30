@@ -71,6 +71,26 @@ flutter:
      - assets\images\medalla.png
      - assets\images\cruz.png
      - assets\images\brillo.png
+     - assets\images\gozosos1.png
+     - assets\images\gozosos2.png
+     - assets\images\gozosos3.png
+     - assets\images\gozosos4.png
+     - assets\images\gozosos5.png
+     - assets\images\luminosos1.png
+     - assets\images\luminosos2.png
+     - assets\images\luminosos3.png
+     - assets\images\luminosos4.png
+     - assets\images\luminosos5.png
+     - assets\images\dolorosos1.png
+     - assets\images\dolorosos2.png
+     - assets\images\dolorosos3.png
+     - assets\images\dolorosos4.png
+     - assets\images\dolorosos5.png
+     - assets\images\gloriosos1.png
+     - assets\images\gloriosos2.png
+     - assets\images\gloriosos3.png
+     - assets\images\gloriosos4.png
+     - assets\images\gloriosos5.png
 
   # An image asset can refer to one or more resolution-specific "variants", see
   # https://flutter.dev/assets-and-images/#resolution-aware

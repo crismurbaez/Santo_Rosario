@@ -78,7 +78,7 @@ class _PrayScreen3State extends State<PrayScreen3> {
    // Función asíncrona para cargar todas las imágenes
   Future<void> _loadAllImages() async {
     final Map<String, ui.Image> images = {};
-    for (var entry in Data.cuentas.entries) {
+    for (var entry in Data.images.entries) {
       final String key = entry.key;
       final String assetPath = entry.value;
 
