@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../widgets/mystery_list_item.dart';
 import '../widgets/start_button.dart';
 import '../../data/models/data.dart';
+import 'pray_screen_3.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key, required this.title});
@@ -26,30 +27,46 @@ class _HomeScreenState extends State<HomeScreen> {
     });
   }
 
-  void _navigateToPray() {
+void _navigateToPray() {
+    String? mysteryType;
     if (gozoso) {
-      Navigator.pushNamed(
-        context,
-        '/pray3',
-        arguments: 'gozosos', 
-      );
+      mysteryType = 'gozosos';
     } else if (glorioso) {
-      Navigator.pushNamed(
-        context,
-        '/pray3',
-        arguments: 'gloriosos', 
-      );
+      mysteryType = 'gloriosos';
     } else if (doloroso) {
-      Navigator.pushNamed(
-        context,
-        '/pray3',
-        arguments: 'dolorosos', 
-      );
+      mysteryType = 'dolorosos';
     } else if (luminoso) {
-      Navigator.pushNamed(
-        context,
-        '/pray3',
-        arguments: 'luminosos', 
+      mysteryType = 'luminosos';
+    }
+
+    if (mysteryType != null) {
+      Navigator.of(context).push(
+        PageRouteBuilder(
+          pageBuilder: (context, animation, secondaryAnimation) =>
+              PrayScreen3(mystery: mysteryType),
+          transitionsBuilder: (context, animation, secondaryAnimation, child) {
+            // Here you can define your transition.
+            // For a fade transition:
+            return FadeTransition(
+              opacity: animation,
+              child: child,
+            );
+            // For a slide transition from right:
+            // return SlideTransition(
+            //   position: Tween<Offset>(
+            //     begin: const Offset(1.0, 0.0),
+            //     end: Offset.zero,
+            //   ).animate(animation),
+            //   child: child,
+            // );
+            // For a scale transition:
+            // return ScaleTransition(
+            //   scale: animation,
+            //   child: child,
+            // );
+          },
+          transitionDuration: const Duration(milliseconds: 500), // Adjust duration as needed
+        ),
       );
     }
   }
