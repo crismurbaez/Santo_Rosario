@@ -88,30 +88,36 @@ void _navigateToPray() {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
+   return Scaffold(
       appBar: AppBar(
         backgroundColor: Theme.of(context).colorScheme.inversePrimary,
         toolbarHeight: 70.0,
-        title: Column(
-          children: [
-            ListTile(
-              title: Align(
-                alignment: Alignment.center,
-                child: Text(
-                  'Misterios del ${widget.title}',
-                  style: Theme.of(context).textTheme.displayLarge,
-                ),
-              ),
-              subtitle: Align(
-                alignment: Alignment.center,
-                child: Text(
-                  'Selecciona el misterio de acuerdo al día y presiona comenzar.',
-                  style: Theme.of(context).textTheme.displaySmall,
-                  textAlign: TextAlign.center,
-                ),
-              ),
-            ),
-          ],
+        title:  FittedBox(
+          fit: BoxFit.scaleDown, // Escala hacia abajo si no cabe
+          alignment: Alignment.centerLeft, // Alinea el contenido a la izquierda
+          child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,// Alinea el texto a la izquierda
+                    children: [
+                      Align(
+                        alignment: Alignment.centerLeft,
+                        child: Text(
+                          'Misterios del ${widget.title}',
+                          style: Theme.of(context).textTheme.displayLarge,
+                          textAlign: TextAlign.left,
+                          softWrap: false,
+                          maxLines: 1, 
+                        ),
+                      ),
+                      Align(
+                        alignment: Alignment.centerLeft,
+                        child: Text(
+                          'Selecciona el misterio de acuerdo al día y presiona comenzar.',
+                          style: Theme.of(context).textTheme.displaySmall,
+                          textAlign: TextAlign.left,
+                        ),
+                      ),
+                    ],
+                  ),
         ),
       ),
       body: Container(
@@ -123,11 +129,6 @@ void _navigateToPray() {
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.spaceAround,
                 children: <Widget>[
-                  const Divider(
-                    color: Colors.white24,
-                    thickness: 2,
-                    height: 20,
-                  ),
                   ...Data.mysteries.map((mystery) {
                     return Column(
                       children: [

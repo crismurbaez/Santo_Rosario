@@ -121,18 +121,19 @@ class _PrayScreen3State extends State<PrayScreen3> {
               children: [
                 ListTile(
                   title: Align(
-                    alignment: Alignment.center,
+                    alignment: Alignment.centerLeft,
                     child: Text(
                       'Santo Rosario',
                       style: Theme.of(context).textTheme.displayLarge,
+                      textAlign: TextAlign.left
                     ),
                   ),
                   subtitle: Align(
-                    alignment: Alignment.center,
+                    alignment: Alignment.centerLeft,
                     child: Text(
                       'Misterios ${widget.mystery}',
                       style: Theme.of(context).textTheme.displaySmall,
-                      textAlign: TextAlign.center,
+                      textAlign: TextAlign.left,
                     ),
                   ),
                 ),
