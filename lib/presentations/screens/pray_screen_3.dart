@@ -219,12 +219,16 @@ class _PrayScreen3State extends State<PrayScreen3> {
                             },
                           );
                         },
-                        child: Row(
-                          children: [
-                            Text(_currentPrayers[_orderPrayer]),
-                            const SizedBox(width: 8), // Espacio entre el texto y el ícono
-                            const Icon(Icons.info_outline, size: 20), //  ícono
-                          ],
+                        child: FittedBox(
+                          fit: BoxFit.scaleDown, // Escala hacia abajo si no cabe
+                          alignment: Alignment.center,
+                          child: Row(
+                            children: [
+                              Text(_currentPrayers[_orderPrayer]),
+                              const SizedBox(width: 8), // Espacio entre el texto y el ícono
+                              const Icon(Icons.info_outline, size: 20), //  ícono
+                            ],
+                          ),
                         ),
                       ),
                       ElevatedButton(

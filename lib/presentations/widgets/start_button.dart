@@ -8,13 +8,13 @@ class StartButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return 
-    // Card(
-    //   color: const Color.fromARGB(0, 49, 177, 206),
-    //   margin: const EdgeInsets.all(20),
-    //   child: 
       ElevatedButton(
         onPressed: onPressed,
-        child: const Text('Comenzar'),
+        child: const FittedBox(
+          fit: BoxFit.scaleDown, // Escala hacia abajo si no cabe
+          alignment: Alignment.center,
+          child: Text('Comenzar')
+          ),
       );
     // );
   }
