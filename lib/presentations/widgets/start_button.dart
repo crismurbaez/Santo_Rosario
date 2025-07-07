@@ -10,12 +10,7 @@ class StartButton extends StatelessWidget {
     return 
       ElevatedButton(
         onPressed: onPressed,
-        child: const FittedBox(
-          fit: BoxFit.scaleDown, // Escala hacia abajo si no cabe
-          alignment: Alignment.center,
-          child: Text('Comenzar')
-          ),
+        child:  Text('Comenzar')
       );
-    // );
   }
 }

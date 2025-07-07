@@ -120,11 +120,12 @@ void _navigateToPray() {
                   ),
         ),
       ),
+      //TODO acomodar problema de letra muy grande
       body: Container(
         decoration: BoxDecoration(color: Theme.of(context).colorScheme.inversePrimary),
         child: SingleChildScrollView(
           child: ConstrainedBox(
-            constraints: BoxConstraints(minHeight: MediaQuery.of(context).size.height - 70.0),
+            constraints: BoxConstraints(minHeight: MediaQuery.of(context).size.height - 120.0),
             child: IntrinsicHeight( // <--- Importante para que Column sepa su "altura ideal"
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.spaceAround,
@@ -139,21 +140,29 @@ void _navigateToPray() {
                           value: _getMysteryValue(mystery.mystery), 
                           onChanged:(value) => _toggleMystery(mystery.mystery, value),
                         ),
-                        const Divider(
-                          color: Colors.white24,
-                          thickness: 2,
-                          height: 20,
-                        ),
+                        // const Divider(
+                        //   color: Colors.white24,
+                        //   thickness: 2,
+                        //   height: 20,
+                        // ),
                       ],
                     );
                   }).toList(),
-                  StartButton(onPressed: _navigateToPray),
                 ],
               ),
             ),
           ),
         ),
       ),
+      bottomNavigationBar:BottomAppBar(
+        color: Theme.of(context).colorScheme.inversePrimary,
+        child: Center(
+          child: Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 8.0),
+                  child: StartButton(onPressed: _navigateToPray),
+                ),
+        ),
+      ),   
     );
   }
 }
