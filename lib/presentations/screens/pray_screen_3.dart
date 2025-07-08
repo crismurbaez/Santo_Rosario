@@ -188,60 +188,73 @@ class _PrayScreen3State extends State<PrayScreen3> {
             ),
             Align(
               alignment: Alignment.bottomCenter,
-              child: Padding(
-                  padding: const EdgeInsets.all(20.0),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceAround,
-                    children:[
-                      ElevatedButton(
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: const Color.fromRGBO(255, 192, 121, 0.5),
-                          padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 20.0),
+              child: Column(
+                mainAxisSize: MainAxisSize.min, // La columna solo ocupa el espacio que necesitan sus hijos
+                children: [
+                  Padding(
+                        padding: const EdgeInsets.all(20.0),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children:[
+                            ElevatedButton(
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: const Color.fromRGBO(255, 192, 121, 0.5),
+                                padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 20.0),
+                              ),
+                              onPressed: _decrementCounter,
+                              child: const Icon(Icons.arrow_back),
+                            ),
+                            ElevatedButton(
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: const Color.fromRGBO(255, 192, 121, 0.5),
+                                padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 20.0),
+                              ),
+                              onPressed: _incrementCounter,
+                              child: const Icon(Icons.arrow_forward),
+                            ),
+                          ]
                         ),
-                        onPressed: _decrementCounter,
-                        child: const Icon(Icons.arrow_back),
-                      ),
-                      ElevatedButton(
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: const Color.fromRGBO(255, 192, 121, 0.5),
-                          padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 20.0),
-                        ),
-                        onPressed: () {
-                          // Muestra el diálogo con las oraciones actuales
-                          showDialog(
-                            context: context,
-                            builder: (BuildContext dialogContext) {
-                              return PrayerDialog(
-                                prayer: _currentPrayers[_orderPrayer], 
-                                mystery: widget.mystery,
-                                currentMysteryOrder:_orderMystery, 
-                              );
-                            },
-                          );
-                        },
-                        child: FittedBox(
-                          fit: BoxFit.scaleDown, // Escala hacia abajo si no cabe
-                          alignment: Alignment.center,
-                          child: Row(
-                            children: [
-                              Text(_currentPrayers[_orderPrayer]),
-                              const SizedBox(width: 8), // Espacio entre el texto y el ícono
-                              const Icon(Icons.info_outline, size: 20), //  ícono
-                            ],
-                          ),
-                        ),
-                      ),
-                      ElevatedButton(
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: const Color.fromRGBO(255, 192, 121, 0.5),
-                          padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 20.0),
-                        ),
-                        onPressed: _incrementCounter,
-                        child: const Icon(Icons.arrow_forward),
-                      ),
-                    ]
                   ),
-                ),
+                  Padding(
+                        padding: const EdgeInsets.all(20.0),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceAround,
+                          children:[
+                            ElevatedButton(
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: const Color.fromRGBO(255, 192, 121, 0.5),
+                                padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 20.0),
+                              ),
+                              onPressed: () {
+                                // Muestra el diálogo con las oraciones actuales
+                                showDialog(
+                                  context: context,
+                                  builder: (BuildContext dialogContext) {
+                                    return PrayerDialog(
+                                      prayer: _currentPrayers[_orderPrayer], 
+                                      mystery: widget.mystery,
+                                      currentMysteryOrder:_orderMystery, 
+                                    );
+                                  },
+                                );
+                              },
+                              child: FittedBox(
+                                fit: BoxFit.scaleDown, // Escala hacia abajo si no cabe
+                                alignment: Alignment.center,
+                                child: Row(
+                                  children: [
+                                    Text(_currentPrayers[_orderPrayer]),
+                                    const SizedBox(width: 8), // Espacio entre el texto y el ícono
+                                    const Icon(Icons.info_outline, size: 20), //  ícono
+                                  ],
+                                ),
+                              ),
+                            ),
+                          ]
+                        ),
+                  ),
+                ],
+              ),
             ),
         ]
       )

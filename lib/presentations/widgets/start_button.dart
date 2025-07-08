@@ -10,7 +10,7 @@ class StartButton extends StatelessWidget {
     return 
       ElevatedButton(
         onPressed: onPressed,
-        child:  Text('Comenzar')
+        child:  const Text('Comenzar')
       );
   }
 }
