@@ -109,12 +109,11 @@ void _navigateToPray() {
                   ],
                 ),
       ),
-      //TODO acomodar problema de letra muy grande
       body: Container(
         decoration: BoxDecoration(color: Theme.of(context).colorScheme.inversePrimary),
         child: SingleChildScrollView(
           child: ConstrainedBox(
-            constraints: BoxConstraints(minHeight: MediaQuery.of(context).size.height - 120.0),
+            constraints: BoxConstraints(minHeight: MediaQuery.of(context).size.height - 130.0),
             child: IntrinsicHeight( // <--- Importante para que Column sepa su "altura ideal"
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.spaceAround,
