@@ -121,11 +121,20 @@ void _navigateToPray() {
                   Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 20.0),
                     child: Align(
-                          alignment: Alignment.centerLeft,
-                          child: Text(
-                            'Selecciona el misterio de acuerdo al día y presiona comenzar.',
-                            style: Theme.of(context).textTheme.displaySmall,
-                            textAlign: TextAlign.left,
+                          alignment: Alignment.topLeft,
+                          child: Column(
+                            children: [
+                              Text(
+                                'Selecciona el misterio de acuerdo al día y presiona comenzar.',
+                                style: Theme.of(context).textTheme.displaySmall,
+                                textAlign: TextAlign.left,
+                              ),
+                              const Divider(
+                                color: Colors.white24,
+                                thickness: 2,
+                                height: 20,
+                              ),
+                            ],
                           ),
                         ),
                   ),
