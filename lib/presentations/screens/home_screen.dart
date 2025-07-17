@@ -4,19 +4,69 @@ import '../widgets/start_button.dart';
 import '../../data/models/data.dart';
 import 'pray_screen_3.dart';
 
+
 class HomeScreen extends StatefulWidget {
-  const HomeScreen({super.key, required this.title});
+  const HomeScreen(
+    {super.key, 
+    required this.title,
+    required this.dateNow
+    });
   final String title;
+  final int dateNow;
 
   @override
   State<HomeScreen> createState() => _HomeScreenState();
 }
 
 class _HomeScreenState extends State<HomeScreen> {
-  bool gozoso = true;
+  bool gozoso = false;
   bool doloroso = false;
   bool luminoso = false;
   bool glorioso = false;
+
+  int get weekdayNowInt => widget.dateNow;
+  late final String weekdayNow;
+
+  @override
+  void initState() {
+    super.initState(); 
+
+    switch(weekdayNowInt) {
+      case 1:
+        weekdayNow='Lunes';
+        gozoso = true;
+        break;
+      case 2:
+        weekdayNow='Martes';
+        doloroso = true;
+        break;
+      case 3:
+        weekdayNow='Miércoles';
+        glorioso = true;
+        break;
+      case 4:
+        weekdayNow='Jueves';
+        luminoso = true;
+        break;
+      case 5:
+        weekdayNow='Viernes';
+        doloroso = true;
+        break;
+      case 6:
+        weekdayNow='Sábado';
+        gozoso = true;
+        break;
+      case 7:
+        weekdayNow='Domingo';
+        glorioso = true;
+        break;
+      default:
+        weekdayNow='Lunes';
+        gozoso = true;
+      break;
+
+    }
+  }
 
   void _toggleMystery(String mystery, bool value) {
     setState(() {
@@ -27,16 +77,16 @@ class _HomeScreenState extends State<HomeScreen> {
     });
   }
 
-void _navigateToPray() {
-    String? mysteryType;
-    if (gozoso) {
-      mysteryType = 'gozosos';
-    } else if (glorioso) {
-      mysteryType = 'gloriosos';
-    } else if (doloroso) {
-      mysteryType = 'dolorosos';
-    } else if (luminoso) {
-      mysteryType = 'luminosos';
+    void _navigateToPray() {
+      String? mysteryType;
+      if (gozoso) {
+        mysteryType = 'gozosos';
+      } else if (glorioso) {
+        mysteryType = 'gloriosos';
+      } else if (doloroso) {
+        mysteryType = 'dolorosos';
+      } else if (luminoso) {
+        mysteryType = 'luminosos';
     }
 
     if (mysteryType != null) {
@@ -105,7 +155,6 @@ void _navigateToPray() {
                         maxLines: 1, 
                       ),
                     ),
-                    
                   ],
                 ),
       ),
@@ -124,10 +173,15 @@ void _navigateToPray() {
                           alignment: Alignment.topLeft,
                           child: Column(
                             children: [
-                              Text(
-                                'Selecciona el misterio de acuerdo al día y presiona comenzar.',
-                                style: Theme.of(context).textTheme.displaySmall,
-                                textAlign: TextAlign.left,
+                              Align(
+                                alignment: Alignment.center,
+                                child: Text(
+                                  'Hoy es $weekdayNow',
+                                  style: Theme.of(context).textTheme.displaySmall,
+                                  textAlign: TextAlign.left,
+                                  softWrap: false,
+                                  maxLines: 1, 
+                                ),
                               ),
                               const Divider(
                                 color: Colors.white24,
@@ -148,11 +202,6 @@ void _navigateToPray() {
                           value: _getMysteryValue(mystery.mystery), 
                           onChanged:(value) => _toggleMystery(mystery.mystery, value),
                         ),
-                        // const Divider(
-                        //   color: Colors.white24,
-                        //   thickness: 2,
-                        //   height: 20,
-                        // ),
                       ],
                     );
                   }).toList(),

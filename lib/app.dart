@@ -31,7 +31,10 @@ class SantoRosarioApp extends StatelessWidget {
           ),
         ),
       ),
-      home: const HomeScreen(title: 'Santo Rosario'),
+      home: HomeScreen(
+        title: 'Santo Rosario',
+        dateNow: DateTime.now().weekday,
+        ),
       debugShowCheckedModeBanner: false,
       routes: {
       '/pray3': (context) {

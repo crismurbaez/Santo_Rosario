@@ -296,12 +296,12 @@ class CuentasPainter extends CustomPainter {
       // se inicializa con este valor, pero luego se cambia
       //se usa para dibujar la extensión del rosario
       Offset medallaCenter = center;
-      Offset brilloCenter = center;
+      // Offset brilloCenter = center;
       int cuentasCount = 61; 
       int cuentasOrder = 0;
 
       String cuentaName;
-      String cuentaPrayer;
+      // String cuentaPrayer;
       int cuentaCount;
       int cuentaOrder;
       String cuentaWidth;
@@ -311,7 +311,7 @@ class CuentasPainter extends CustomPainter {
       double imageHeight=1;
 
       int counter = this.counter;
-      int orderPrayer = this.orderPrayer;
+      // int orderPrayer = this.orderPrayer;
       
 
       //teniendo en cuenta la orientación de la pantalla, se determina si la extensión se dibuja debajo o dentro del rosario
