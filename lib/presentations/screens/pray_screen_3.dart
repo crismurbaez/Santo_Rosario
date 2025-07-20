@@ -79,10 +79,10 @@ class _PrayScreen3State extends State<PrayScreen3> {
             }
           }
       });
-    // Llama a initAudio después de que el frame se haya construido
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      initAudio();
-    });
+      // Llama a initAudio después de que el frame se haya construido
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        initAudio();
+      });
     }
     void _decrementCounter() {
       setState(() {
@@ -98,10 +98,10 @@ class _PrayScreen3State extends State<PrayScreen3> {
           _isDecrement = true;
         }
       });
-    // Llama a initAudio después de que el frame se haya construido
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      initAudio();
-    });
+      // Llama a initAudio después de que el frame se haya construido
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        initAudio();
+      });
     }
     // Esta función se llama cuando una cuenta es resaltada
     // y actualiza las oraciones actuales y el orden del misterio.
