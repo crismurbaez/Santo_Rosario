@@ -28,43 +28,65 @@ class _PrayScreen3State extends State<PrayScreen3> {
   int _orderPrayer=0;
   int _orderMystery=0;
   bool _isDecrement = false; // Variable para controlar el decremento
-
+  int _oldOrderPrayer=0;
+  int _oldCounter = 0;
+  
   Map<String, String> rosaryprayersSounds = Data.prayersSounds;
   late String prayerSound;
   final player = AudioPlayer();
   bool _isplaying = false; //variable para controlar el audio
-  
 
-    @override
+  @override
   void initState() {
     super.initState();
     _loadAllImages(); // Inicia la carga de todas las imágenes    
   }
 
-    void playPause() async {
-      setState(() {
-        _isplaying = !_isplaying;
-      });
-
-      if (_isplaying) {
-        initAudio();
-      } else {
-        await player.stop();
-      }
+    // Limpia los recursos del reproductor cuando el widget se desecha
+    @override
+    void dispose() {
+      player.dispose();
+      super.dispose();
     }
 
     void initAudio() async {
-      await player.stop();
-      if (_isplaying && rosaryprayersSounds[_currentPrayers[_orderPrayer]] != null) {
-        //detiene la reproducción anterior y libera los recursos antes de reproducir el siguiente
+
         debugPrint (rosaryprayersSounds[_currentPrayers[_orderPrayer]]);
         debugPrint (_currentPrayers[_orderPrayer]);
+        debugPrint('${widget.mystery}${_orderMystery.toString()}');
+
+      if (rosaryprayersSounds[_currentPrayers[_orderPrayer]] != null) {
         prayerSound = rosaryprayersSounds[_currentPrayers[_orderPrayer]]!;
+      }
+
+      if (_currentPrayers[_orderPrayer] == 'Misterio') {
+        String soundMystery = '${widget.mystery}${_orderMystery.toString()}';
+        prayerSound = rosaryprayersSounds[soundMystery]!;
+      }
+
+      if (_isplaying) {
+        //Desactiva la reproducción anterior y libera los recursos antes de reproducir el siguiente
+        await player.stop();
+        //Carga el asset del sonido
         await player.setAsset(prayerSound);
-        // Reproducir
+        // Activa la reproducción
         player.play();
       }
     }
+
+    void stopAudio() async {
+      await player.stop();
+    }
+
+    void playPause() {
+        setState(() {
+          _isplaying = !_isplaying;
+        });
+
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          _isplaying ? initAudio() : stopAudio();
+        });
+      }
 
     void _incrementCounter() {
       setState(() {
@@ -79,10 +101,7 @@ class _PrayScreen3State extends State<PrayScreen3> {
             }
           }
       });
-      // Llama a initAudio después de que el frame se haya construido
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        initAudio();
-      });
+
     }
     void _decrementCounter() {
       setState(() {
@@ -98,30 +117,39 @@ class _PrayScreen3State extends State<PrayScreen3> {
           _isDecrement = true;
         }
       });
-      // Llama a initAudio después de que el frame se haya construido
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        initAudio();
-      });
+ 
     }
     // Esta función se llama cuando una cuenta es resaltada
     // y actualiza las oraciones actuales y el orden del misterio.
     void _handleCuentaHighlighted(List<String> prayers, int orderMystery) {
       // Solo actualizamos si las oraciones son diferentes para evitar redibujados innecesarios
-      if (_currentPrayers.toString() != prayers.toString() || _orderMystery != orderMystery) {
-        // Usamos addPostFrameCallback para posponer la llamada a setState
-        // hasta después de que el frame actual haya terminado de construirse.
-        WidgetsBinding.instance.addPostFrameCallback((_) {
-          setState(() {
-            _currentPrayers = prayers; // Actualiza las oraciones actuales
-            _orderMystery = orderMystery; // Actualiza el orden del misterio
-            if (_isDecrement) {
-              _orderPrayer = prayers.length - 1; // Si es decremento, va al último elemento
-            } else {
-              _orderPrayer = 0; // Si es incremento, reinicia el orden de oración
-            }
+        if (_currentPrayers.toString() != prayers.toString() || 
+          (_orderMystery != orderMystery) 
+          )
+        {
+          // Usamos addPostFrameCallback para posponer la llamada a setState
+          // hasta después de que el frame actual haya terminado de construirse.
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            setState(() {
+              _currentPrayers = prayers; // Actualiza las oraciones actuales
+              _orderMystery = orderMystery; // Actualiza el orden del misterio
+              if (_isDecrement) {
+                _orderPrayer = prayers.length - 1; // Si es decremento, va al último elemento del array de oraciones
+              } else {
+                _orderPrayer = 0; // Si es incremento, reinicia el orden de oración
+              }
+            });
           });
+        } 
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (_oldOrderPrayer!=_orderPrayer || _oldCounter != _counter) {
+          initAudio();
+          setState(() {
+            _oldOrderPrayer = _orderPrayer;
+            _oldCounter = _counter;
+          });
+          }
         });
-      }
     }
 
    // Función asíncrona para cargar todas las imágenes
