@@ -32,6 +32,7 @@ class _PrayScreen3State extends State<PrayScreen3> {
   Map<String, String> rosaryprayersSounds = Data.prayersSounds;
   late String prayerSound;
   final player = AudioPlayer();
+  bool _isplaying = false; //variable para controlar el audio
   
 
     @override
@@ -40,10 +41,22 @@ class _PrayScreen3State extends State<PrayScreen3> {
     _loadAllImages(); // Inicia la carga de todas las imágenes    
   }
 
-    void initAudio() async {
-      if (rosaryprayersSounds[_currentPrayers[_orderPrayer]] != null) {
-        //detiene la reproducción anterior y libera los recursos antes de reproducir el siguiente
+    void playPause() async {
+      setState(() {
+        _isplaying = !_isplaying;
+      });
+
+      if (_isplaying) {
+        initAudio();
+      } else {
         await player.stop();
+      }
+    }
+
+    void initAudio() async {
+      await player.stop();
+      if (_isplaying && rosaryprayersSounds[_currentPrayers[_orderPrayer]] != null) {
+        //detiene la reproducción anterior y libera los recursos antes de reproducir el siguiente
         debugPrint (rosaryprayersSounds[_currentPrayers[_orderPrayer]]);
         debugPrint (_currentPrayers[_orderPrayer]);
         prayerSound = rosaryprayersSounds[_currentPrayers[_orderPrayer]]!;
@@ -234,8 +247,9 @@ class _PrayScreen3State extends State<PrayScreen3> {
                             backgroundColor: const Color.fromRGBO(255, 192, 121, 0.5),
                             padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 20.0),
                           ),
-                          onPressed: initAudio,
-                          child: const Icon(Icons.volume_up),
+                          onPressed: playPause,
+                          //se cambia el ícono de acuerdo a si el audio está activado o no
+                          child: Icon(_isplaying ? Icons.volume_up : Icons.volume_off),
                         ),
                       ]
                     )
