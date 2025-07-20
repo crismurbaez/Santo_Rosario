@@ -64,13 +64,6 @@ class _PrayScreen3State extends State<PrayScreen3> {
         // Reproducir
         player.play();
       }
-
-      // // Otras funciones permanecen iguales
-      // await player.pause();
-      // await player.seek(Duration(seconds: 60));
-      // await player.setSpeed(2.0);
-      // await player.setVolume(0.5);
-      // await player.stop();
     }
 
     void _incrementCounter() {
