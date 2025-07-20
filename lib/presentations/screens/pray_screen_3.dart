@@ -142,8 +142,6 @@ class _PrayScreen3State extends State<PrayScreen3> {
     setState(() {
       _loadedImages = images; // Actualiza el estado con las imágenes cargadas
     });
-
-
   }
   
   @override
