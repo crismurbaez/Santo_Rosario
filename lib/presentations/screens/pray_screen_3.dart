@@ -39,7 +39,15 @@ class _PrayScreen3State extends State<PrayScreen3> {
   @override
   void initState() {
     super.initState();
-    _loadAllImages(); // Inicia la carga de todas las imágenes    
+    _loadAllImages(); // Inicia la carga de todas las imágenes  
+
+    // Configura un listener que detecta cuando termina la reproducción
+    player.playerStateStream.listen((playerState) {
+    if (playerState.processingState == ProcessingState.completed) {
+      // Se adelanta una oración cuando el audio termina
+      _incrementCounter();
+    }
+});  
   }
 
     // Limpia los recursos del reproductor cuando el widget se desecha
@@ -50,6 +58,10 @@ class _PrayScreen3State extends State<PrayScreen3> {
     }
 
     void initAudio() async {
+      stopAudio();
+      // Introduce un pequeño retraso
+      // Esto le da tiempo al reproductor para finalizar cualquier proceso interno
+      await Future.delayed(Duration(milliseconds: 100));
 
         debugPrint (rosaryprayersSounds[_currentPrayers[_orderPrayer]]);
         debugPrint (_currentPrayers[_orderPrayer]);
@@ -66,7 +78,7 @@ class _PrayScreen3State extends State<PrayScreen3> {
 
       if (_isplaying) {
         //Desactiva la reproducción anterior y libera los recursos antes de reproducir el siguiente
-        await player.stop();
+        stopAudio();
         //Carga el asset del sonido
         await player.setAsset(prayerSound);
         // Activa la reproducción
@@ -76,6 +88,7 @@ class _PrayScreen3State extends State<PrayScreen3> {
 
     void stopAudio() async {
       await player.stop();
+      await Future.delayed(Duration(milliseconds: 100));
     }
 
     void playPause() {
@@ -89,6 +102,7 @@ class _PrayScreen3State extends State<PrayScreen3> {
       }
 
     void _incrementCounter() {
+      stopAudio();
       setState(() {
           if (_orderPrayer < _currentPrayers.length-1) {
             _orderPrayer++;
@@ -142,12 +156,14 @@ class _PrayScreen3State extends State<PrayScreen3> {
           });
         } 
         WidgetsBinding.instance.addPostFrameCallback((_) {
+          //si cambia el orden de la oración en el array _currentPrayers
+          // o si cambia el contador de avance de perla _counter
           if (_oldOrderPrayer!=_orderPrayer || _oldCounter != _counter) {
-          initAudio();
-          setState(() {
-            _oldOrderPrayer = _orderPrayer;
-            _oldCounter = _counter;
-          });
+            initAudio();
+            setState(() {
+              _oldOrderPrayer = _orderPrayer;
+              _oldCounter = _counter;
+            });
           }
         });
     }
