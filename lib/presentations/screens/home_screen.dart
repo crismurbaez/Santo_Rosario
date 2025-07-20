@@ -5,6 +5,7 @@ import '../../data/models/data.dart';
 import 'pray_screen_3.dart';
 
 
+
 class HomeScreen extends StatefulWidget {
   const HomeScreen(
     {super.key, 
@@ -24,12 +25,17 @@ class _HomeScreenState extends State<HomeScreen> {
   bool luminoso = false;
   bool glorioso = false;
 
+  
+  
+
   int get weekdayNowInt => widget.dateNow;
   late final String weekdayNow;
 
   @override
   void initState() {
     super.initState(); 
+
+    
 
     switch(weekdayNowInt) {
       case 1:
@@ -67,6 +73,8 @@ class _HomeScreenState extends State<HomeScreen> {
 
     }
   }
+
+
 
   void _toggleMystery(String mystery, bool value) {
     setState(() {

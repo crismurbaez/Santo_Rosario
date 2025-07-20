@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../../data/models/data.dart'; 
 import '../widgets/prayer_dialog.dart';
+import 'package:just_audio/just_audio.dart';
 
 class PrayScreen3 extends StatefulWidget {
 
@@ -27,13 +28,37 @@ class _PrayScreen3State extends State<PrayScreen3> {
   int _orderPrayer=0;
   int _orderMystery=0;
   bool _isDecrement = false; // Variable para controlar el decremento
+
+  Map<String, String> rosaryprayersSounds = Data.prayersSounds;
+  late String prayerSound;
+  final player = AudioPlayer();
   
 
     @override
   void initState() {
     super.initState();
-    _loadAllImages(); // Inicia la carga de todas las imágenes
+    _loadAllImages(); // Inicia la carga de todas las imágenes    
   }
+
+    void initAudio() async {
+      if (rosaryprayersSounds[_currentPrayers[_orderPrayer]] != null) {
+        //detiene la reproducción anterior y libera los recursos antes de reproducir el siguiente
+        await player.stop();
+        debugPrint (rosaryprayersSounds[_currentPrayers[_orderPrayer]]);
+        debugPrint (_currentPrayers[_orderPrayer]);
+        prayerSound = rosaryprayersSounds[_currentPrayers[_orderPrayer]]!;
+        await player.setAsset(prayerSound);
+        // Reproducir
+        player.play();
+      }
+
+      // // Otras funciones permanecen iguales
+      // await player.pause();
+      // await player.seek(Duration(seconds: 60));
+      // await player.setSpeed(2.0);
+      // await player.setVolume(0.5);
+      // await player.stop();
+    }
 
     void _incrementCounter() {
       setState(() {
@@ -48,6 +73,10 @@ class _PrayScreen3State extends State<PrayScreen3> {
             }
           }
       });
+    // Llama a initAudio después de que el frame se haya construido
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      initAudio();
+    });
     }
     void _decrementCounter() {
       setState(() {
@@ -63,6 +92,10 @@ class _PrayScreen3State extends State<PrayScreen3> {
           _isDecrement = true;
         }
       });
+    // Llama a initAudio después de que el frame se haya construido
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      initAudio();
+    });
     }
     // Esta función se llama cuando una cuenta es resaltada
     // y actualiza las oraciones actuales y el orden del misterio.
@@ -191,6 +224,22 @@ class _PrayScreen3State extends State<PrayScreen3> {
               child: Column(
                 mainAxisSize: MainAxisSize.min, // La columna solo ocupa el espacio que necesitan sus hijos
                 children: [
+                  Padding(
+                    padding: const EdgeInsets.all(20.0),
+                    child:Row(
+                      mainAxisAlignment: MainAxisAlignment.end,
+                      children:[
+                        ElevatedButton(
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: const Color.fromRGBO(255, 192, 121, 0.5),
+                            padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 20.0),
+                          ),
+                          onPressed: initAudio,
+                          child: const Icon(Icons.volume_up),
+                        ),
+                      ]
+                    )
+                  ),
                   Padding(
                         padding: const EdgeInsets.all(20.0),
                         child: Row(
