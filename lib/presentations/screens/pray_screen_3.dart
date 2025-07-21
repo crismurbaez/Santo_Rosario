@@ -35,6 +35,7 @@ class _PrayScreen3State extends State<PrayScreen3> {
   late String prayerSound;
   final player = AudioPlayer();
   bool _isplaying = false; //variable para controlar el audio
+  bool _isIncrementingInProgress = false; //evita que se incremente dos veces al completar el audio automáticamente
 
   @override
   void initState() {
@@ -43,11 +44,14 @@ class _PrayScreen3State extends State<PrayScreen3> {
 
     // Configura un listener que detecta cuando termina la reproducción
     player.playerStateStream.listen((playerState) {
-    if (playerState.processingState == ProcessingState.completed) {
-      // Se adelanta una oración cuando el audio termina
-      _incrementCounter();
-    }
-});  
+      if (playerState.processingState == ProcessingState.completed) {
+        if (!_isIncrementingInProgress) {
+        // Se adelanta una oración cuando el audio termina
+          _isIncrementingInProgress = true;
+          _incrementCounter();
+        }
+      }
+    });  
   }
 
     // Limpia los recursos del reproductor cuando el widget se desecha
@@ -58,14 +62,9 @@ class _PrayScreen3State extends State<PrayScreen3> {
     }
 
     void initAudio() async {
-      stopAudio();
       // Introduce un pequeño retraso
       // Esto le da tiempo al reproductor para finalizar cualquier proceso interno
       await Future.delayed(Duration(milliseconds: 100));
-
-        debugPrint (rosaryprayersSounds[_currentPrayers[_orderPrayer]]);
-        debugPrint (_currentPrayers[_orderPrayer]);
-        debugPrint('${widget.mystery}${_orderMystery.toString()}');
 
       if (rosaryprayersSounds[_currentPrayers[_orderPrayer]] != null) {
         prayerSound = rosaryprayersSounds[_currentPrayers[_orderPrayer]]!;
@@ -78,11 +77,12 @@ class _PrayScreen3State extends State<PrayScreen3> {
 
       if (_isplaying) {
         //Desactiva la reproducción anterior y libera los recursos antes de reproducir el siguiente
-        stopAudio();
+        await player.stop();
         //Carga el asset del sonido
         await player.setAsset(prayerSound);
         // Activa la reproducción
         player.play();
+        _isIncrementingInProgress = false;
       }
     }
 
@@ -102,7 +102,6 @@ class _PrayScreen3State extends State<PrayScreen3> {
       }
 
     void _incrementCounter() {
-      stopAudio();
       setState(() {
           if (_orderPrayer < _currentPrayers.length-1) {
             _orderPrayer++;
