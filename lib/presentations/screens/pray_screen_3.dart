@@ -95,7 +95,6 @@ class _PrayScreen3State extends State<PrayScreen3> {
         setState(() {
           _isplaying = !_isplaying;
         });
-
         WidgetsBinding.instance.addPostFrameCallback((_) {
           _isplaying ? initAudio() : stopAudio();
         });

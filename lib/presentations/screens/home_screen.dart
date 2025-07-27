@@ -219,15 +219,24 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
         ),
       ),
-      bottomNavigationBar:BottomAppBar(
+      bottomNavigationBar: BottomAppBar(
         color: Theme.of(context).colorScheme.inversePrimary,
-        child: Center(
-          child: Padding(
-                  padding: const EdgeInsets.symmetric(vertical: 8.0),
-                  child: StartButton(onPressed: _navigateToPray),
+            child: ElevatedButton(
+              style: ElevatedButton.styleFrom(
+                backgroundColor: const Color.fromRGBO(255, 192, 121, 1),
+                foregroundColor: const Color.fromRGBO(0, 0, 0, 1),
+              ),
+              onPressed: _navigateToPray,
+              child: const Text(
+                'Comenzar',
+                style: TextStyle(
+                  color: Color.fromRGBO(0, 0, 0, 1),
+                  fontSize: 20.0,
+                  fontWeight: FontWeight.bold,
                 ),
+              ),
         ),
-      ),   
+      ),  
     );
   }
 }
