@@ -5,12 +5,14 @@ class PrayerDialog extends StatelessWidget {
   final String prayer;
   final String? mystery;
   final int? currentMysteryOrder; 
+  final String errorMessage;
 
   const PrayerDialog({
     super.key,
     required this.prayer,
     this.mystery,
     this.currentMysteryOrder,
+    required this.errorMessage,
   });
 
   MysteriesMeditations? _getMeditation(String mysteryName, int orderNumber) {
@@ -45,7 +47,7 @@ class PrayerDialog extends StatelessWidget {
                     fontSize: 20,
                   ),
             )
-          : Text(meditation==null ?  '' : meditation.meditation,
+          : Text(meditation==null ?  'Error' : meditation.meditation,
               textAlign: TextAlign.center,
               style: Theme.of(context).textTheme.headlineSmall?.copyWith(
                     color: const Color.fromARGB(255, 228, 207, 143), // Color de texto claro
@@ -66,7 +68,7 @@ class PrayerDialog extends StatelessWidget {
           ) : SingleChildScrollView(
                 child: Column(
                   children: [
-                    meditation==null ? const SizedBox.shrink() // Si meditation es null, no mostramos la imagen
+                    meditation==null ? Text('ERROR ❌:' )//const SizedBox.shrink() // Si meditation es null, no mostramos la imagen
                         :
                     // Si meditation no es null, mostramos la imagen
                     Image.asset(meditation.image, 
@@ -76,7 +78,7 @@ class PrayerDialog extends StatelessWidget {
                     ),
                     Padding(
                       padding: const EdgeInsets.all(8.0),
-                      child: Text(meditation==null ? '' : meditation.scriptural,
+                      child: Text(meditation==null ? errorMessage : meditation.scriptural,
                       textAlign: TextAlign.center,
                       style: Theme.of(context).textTheme.headlineSmall?.copyWith(
                             color: Colors.white, // Color de texto claro

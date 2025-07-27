@@ -1,10 +1,7 @@
 import 'package:flutter/material.dart';
-import '../widgets/mystery_list_item.dart';
-import '../widgets/start_button.dart';
-import '../../data/models/data.dart';
 import 'pray_screen_3.dart';
-
-
+import '../../data/models/data.dart';
+import '../widgets/mystery_list_item.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen(
@@ -74,8 +71,6 @@ class _HomeScreenState extends State<HomeScreen> {
     }
   }
 
-
-
   void _toggleMystery(String mystery, bool value) {
     setState(() {
       gozoso = mystery == 'gozosos' ? value : false;
@@ -129,24 +124,24 @@ class _HomeScreenState extends State<HomeScreen> {
     }
   }
 
-  bool _getMysteryValue(String key) {
-  switch (key) {
-    case 'gozosos':
-      return gozoso;
-    case 'gloriosos':
-      return glorioso;
-    case 'dolorosos':
-      return doloroso;
-    case 'luminosos':
-      return luminoso;
-    default:
-      return gozoso; 
+    bool _getMysteryValue(String key) {
+    switch (key) {
+      case 'gozosos':
+        return gozoso;
+      case 'gloriosos':
+        return glorioso;
+      case 'dolorosos':
+        return doloroso;
+      case 'luminosos':
+        return luminoso;
+      default:
+        return gozoso; 
+    }
   }
-}
 
   @override
   Widget build(BuildContext context) {
-   return Scaffold(
+    return Scaffold(
       appBar: AppBar(
         backgroundColor: Theme.of(context).colorScheme.inversePrimary,
         toolbarHeight: 50.0,
@@ -191,6 +186,16 @@ class _HomeScreenState extends State<HomeScreen> {
                                   maxLines: 1, 
                                 ),
                               ),
+                              //  Align(
+                              //   alignment: Alignment.center,
+                              //   child: Text(
+                              //     '${DateTime.now().hour.toString()} : ${DateTime.now().minute.toString()}',
+                              //     style: Theme.of(context).textTheme.displaySmall,
+                              //     textAlign: TextAlign.left,
+                              //     softWrap: false,
+                              //     maxLines: 1, 
+                              //   ),
+                              // ),
                               const Divider(
                                 color: Colors.white24,
                                 thickness: 2,
@@ -212,7 +217,7 @@ class _HomeScreenState extends State<HomeScreen> {
                         ),
                       ],
                     );
-                  }).toList(),
+                  }),
                 ],
               ),
             ),
@@ -236,7 +241,8 @@ class _HomeScreenState extends State<HomeScreen> {
                 ),
               ),
         ),
-      ),  
+      ),
     );
   }
+  
 }

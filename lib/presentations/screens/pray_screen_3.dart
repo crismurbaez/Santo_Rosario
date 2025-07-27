@@ -37,6 +37,8 @@ class _PrayScreen3State extends State<PrayScreen3> {
   bool _isplaying = false; //variable para controlar el audio
   bool _isIncrementingInProgress = false; //evita que se incremente dos veces al completar el audio automáticamente
 
+  late String _errorMessage='Sin Error';
+
   @override
   void initState() {
     super.initState();
@@ -172,18 +174,34 @@ class _PrayScreen3State extends State<PrayScreen3> {
     for (var entry in Data.images.entries) {
       final String key = entry.key;
       final String assetPath = entry.value;
-
-      // Carga el asset como ByteData
-      final ByteData data = await rootBundle.load(assetPath);
-      // Decodifica la imagen
-      final ui.Codec codec = await ui.instantiateImageCodec(data.buffer.asUint8List());
-      final ui.FrameInfo frameInfo = await codec.getNextFrame();
-      images[key] = frameInfo.image;
+      try {
+        // Carga el asset como ByteData
+        final ByteData data = await rootBundle.load(assetPath);
+        // Decodifica la imagen
+        final ui.Codec codec = await ui.instantiateImageCodec(data.buffer.asUint8List());
+        final ui.FrameInfo frameInfo = await codec.getNextFrame();
+        images[key] = frameInfo.image;
+        print('✅ Imagen cargada: $key desde $assetPath'); // Log de éxito
+      } catch (e) {
+        prayerSound = rosaryprayersSounds['Ave María']!;
+        initAudio();
+        _errorMessage='❌ Error cargando imagen: $key desde $assetPath - Error: $e';
+        print('❌ Error cargando imagen: $key desde $assetPath - Error: $e'); // Log de error
+        // Podrías incluso considerar un setState aquí para mostrar un mensaje de error en la UI
+        // o usar una imagen de placeholder si una falla.
+      }
     }
 
     setState(() {
       _loadedImages = images; // Actualiza el estado con las imágenes cargadas
     });
+  }
+
+  void _handleDrawingError(String message) {
+  setState(() {
+    _errorMessage = message;
+  });
+  print(message); // Para depuración
   }
   
   @override
@@ -260,6 +278,7 @@ class _PrayScreen3State extends State<PrayScreen3> {
                       rosaryCircleBeadCount: rosaryCircleBeadCount,
                       onCuentaHighlighted: _handleCuentaHighlighted, 
                       orderPrayer: _orderPrayer, 
+                      onDrawingError: _handleDrawingError,
                     )
                   ),
                 );
@@ -330,6 +349,7 @@ class _PrayScreen3State extends State<PrayScreen3> {
                                       prayer: _currentPrayers[_orderPrayer], 
                                       mystery: widget.mystery,
                                       currentMysteryOrder:_orderMystery, 
+                                      errorMessage: _errorMessage,
                                     );
                                   },
                                 );
@@ -348,6 +368,21 @@ class _PrayScreen3State extends State<PrayScreen3> {
                 ],
               ),
             ),
+            
+         // Muestra el mensaje de error si existe
+         if (_errorMessage!='Sin Error')
+          Positioned(
+            top: 10,
+            left: 10,
+            right: 10,
+            child: AlertDialog(
+              backgroundColor: Colors.red.withOpacity(0.8),
+              content: Text(
+                _errorMessage,
+                style: const TextStyle(color: Colors.white),
+              ),
+            ),
+          ),
         ]
       )
     );
@@ -361,6 +396,8 @@ class CuentasPainter extends CustomPainter {
   final int rosaryCircleBeadCount;
   final Function(List<String> prayers, int orderMystery) onCuentaHighlighted; //pasa el conjunto de oraciones de la cuenta resaltada
   final int orderPrayer; // <-- Añadido para el orden de oración
+  final Function(String message) onDrawingError; // Callback para manejar errores de dibujo
+  
 
 
   CuentasPainter({
@@ -370,6 +407,7 @@ class CuentasPainter extends CustomPainter {
     required this.rosaryCircleBeadCount,
     required this.onCuentaHighlighted,
     required this.orderPrayer,
+    required this.onDrawingError,
   });
 
   @override
@@ -493,7 +531,11 @@ class CuentasPainter extends CustomPainter {
               final paintImage = Paint();
               //source rectangle, recorta la imagen a mostrar, en este caso la mostramos completa
               final srccuentas = Rect.fromLTWH(0,0,image.width.toDouble(), image.height.toDouble());  
-              canvas.drawImageRect(image, srccuentas, dstcuentas, paintImage);
+              try {
+                canvas.drawImageRect(image, srccuentas, dstcuentas, paintImage);
+              } catch (e) {
+                onDrawingError('❌ Error al dibujar la imagen: $currentCuentaName - Error: $e');
+              }
 
           currentDetailElements.add({
             'cuenta': currentCuentaName,
@@ -559,7 +601,11 @@ class CuentasPainter extends CustomPainter {
               final paintImage = Paint();
               //source rectangle, recorta la imagen a mostrar, en este caso la mostramos completa
               final srccuentas = Rect.fromLTWH(0,0,image.width.toDouble(), image.height.toDouble());  
-              canvas.drawImageRect(image, srccuentas, dstcuentas, paintImage);
+              try {
+                canvas.drawImageRect(image, srccuentas, dstcuentas, paintImage);
+              } catch (e) {
+                onDrawingError('❌ Error al dibujar la imagen: $currentCuentaName - Error: $e');
+              }
 
           currentDetailElements.add({
             'cuenta': currentCuentaName,
@@ -629,8 +675,12 @@ class CuentasPainter extends CustomPainter {
               );
             }
               //source rectangle, recorta la imagen a mostrar, en este caso la mostramos completa
-              final srccuentas = Rect.fromLTWH(0,0,image.width.toDouble(), image.height.toDouble());  
-              canvas.drawImageRect(image, srccuentas, dstcuentas, paintImage);
+              final srccuentas = Rect.fromLTWH(0,0,image.width.toDouble(), image.height.toDouble()); 
+              try {
+                canvas.drawImageRect(image, srccuentas, dstcuentas, paintImage);
+              } catch (e) {
+                onDrawingError('❌ Error al dibujar la imagen: $cuentaName - Error: $e');
+              } 
           }
 
         }
