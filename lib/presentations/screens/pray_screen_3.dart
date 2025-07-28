@@ -5,6 +5,7 @@ import 'package:flutter/services.dart';
 import '../../data/models/data.dart'; 
 import '../widgets/prayer_dialog.dart';
 import 'package:just_audio/just_audio.dart';
+import 'package:wakelock_plus/wakelock_plus.dart';
 
 class PrayScreen3 extends StatefulWidget {
 
@@ -39,9 +40,12 @@ class _PrayScreen3State extends State<PrayScreen3> {
 
   late String _errorMessage='Sin Error';
 
+  bool _isBatterySaverActive = false; // Variable para controlar el wakelock
+
   @override
   void initState() {
     super.initState();
+    WakelockPlus.enable(); // Activa el wakelock (pantalla siempre encendida)
     _loadAllImages(); // Inicia la carga de todas las imágenes  
 
     // Configura un listener que detecta cuando termina la reproducción
@@ -56,11 +60,30 @@ class _PrayScreen3State extends State<PrayScreen3> {
     });  
   }
 
-    // Limpia los recursos del reproductor cuando el widget se desecha
+    // Limpia los recursos del reproductor cuando el widget se desecha y el bloqueo de pantalla se desactiva
     @override
     void dispose() {
       player.dispose();
+      WakelockPlus.enable(); // Activa el wakelock (pantalla siempre encendida)
       super.dispose();
+    }
+
+    // Activa o desactiva el wakelock según la variable _isBatterySaverActive
+    void _toggleWakelock() {
+      setState(() {
+        _isBatterySaverActive = !_isBatterySaverActive;
+        if (_isBatterySaverActive) {
+          WakelockPlus.disable(); // Desactiva el wakelock (ahorro de batería)
+          ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Modo Ahorro de Batería: Activado (pantalla se apagará)'))
+        );
+        } else {
+          WakelockPlus.enable(); // Activa el wakelock (pantalla siempre encendida)
+          ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Modo Pantalla Siempre Encendida'))
+        );
+      }
+      });
     }
 
     void initAudio() async {
@@ -181,14 +204,8 @@ class _PrayScreen3State extends State<PrayScreen3> {
         final ui.Codec codec = await ui.instantiateImageCodec(data.buffer.asUint8List());
         final ui.FrameInfo frameInfo = await codec.getNextFrame();
         images[key] = frameInfo.image;
-        print('✅ Imagen cargada: $key desde $assetPath'); // Log de éxito
       } catch (e) {
-        prayerSound = rosaryprayersSounds['Ave María']!;
-        initAudio();
         _errorMessage='❌ Error cargando imagen: $key desde $assetPath - Error: $e';
-        print('❌ Error cargando imagen: $key desde $assetPath - Error: $e'); // Log de error
-        // Podrías incluso considerar un setState aquí para mostrar un mensaje de error en la UI
-        // o usar una imagen de placeholder si una falla.
       }
     }
 
@@ -236,6 +253,16 @@ class _PrayScreen3State extends State<PrayScreen3> {
                 ),
               ],
         ),
+        actions: [
+          IconButton(
+            icon: Icon(
+              _isBatterySaverActive ? Icons.battery_saver : Icons.highlight,
+              color: Theme.of(context).textTheme.displaySmall!.color,
+            ),
+            onPressed: _toggleWakelock, // Cambia el estado del wakelock
+            tooltip: _isBatterySaverActive ? 'Activar Ahorro Batería' : 'Pantalla Siempre Encendida',
+          ),
+        ],
       ),
       body: Stack (
         children: <Widget>[
@@ -368,7 +395,6 @@ class _PrayScreen3State extends State<PrayScreen3> {
                 ],
               ),
             ),
-            
          // Muestra el mensaje de error si existe
          if (_errorMessage!='Sin Error')
           Positioned(
