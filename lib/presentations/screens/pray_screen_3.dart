@@ -64,7 +64,7 @@ class _PrayScreen3State extends State<PrayScreen3> {
     @override
     void dispose() {
       player.dispose();
-      WakelockPlus.enable(); // Activa el wakelock (pantalla siempre encendida)
+      WakelockPlus.disable(); // Desactiva el wakelock (pantalla se apagará)
       super.dispose();
     }
 
