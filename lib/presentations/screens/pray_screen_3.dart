@@ -46,6 +46,9 @@ class _PrayScreen3State extends State<PrayScreen3> {
   void initState() {
     super.initState();
     WakelockPlus.enable(); // Activa el wakelock (pantalla siempre encendida)
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('Modo Pantalla Siempre Encendida'))
+    );
     _loadAllImages(); // Inicia la carga de todas las imágenes  
 
     // Configura un listener que detecta cuando termina la reproducción
@@ -65,6 +68,9 @@ class _PrayScreen3State extends State<PrayScreen3> {
     void dispose() {
       player.dispose();
       WakelockPlus.disable(); // Desactiva el wakelock (pantalla se apagará)
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Modo Ahorro de Batería: Activado (pantalla se apagará)'))
+      );
       super.dispose();
     }
 
@@ -122,6 +128,13 @@ class _PrayScreen3State extends State<PrayScreen3> {
         });
         WidgetsBinding.instance.addPostFrameCallback((_) {
           _isplaying ? initAudio() : stopAudio();
+          _isplaying ? 
+          ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Audio Activado (avance y reproducción de oraciones automática)')))
+          : 
+          stopAudio();
+          ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Audio Desactivado (avance de oraciones manual)')));
         });
       }
 
