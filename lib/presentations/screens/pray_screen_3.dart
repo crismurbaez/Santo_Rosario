@@ -6,6 +6,7 @@ import '../../data/models/data.dart';
 import '../widgets/prayer_dialog.dart';
 import 'package:just_audio/just_audio.dart';
 import 'package:wakelock_plus/wakelock_plus.dart';
+import 'package:flutter/scheduler.dart';
 
 class PrayScreen3 extends StatefulWidget {
 
@@ -46,9 +47,6 @@ class _PrayScreen3State extends State<PrayScreen3> {
   void initState() {
     super.initState();
     WakelockPlus.enable(); // Activa el wakelock (pantalla siempre encendida)
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Modo Pantalla Siempre Encendida'))
-    );
     _loadAllImages(); // Inicia la carga de todas las imágenes  
 
     // Configura un listener que detecta cuando termina la reproducción
@@ -61,6 +59,17 @@ class _PrayScreen3State extends State<PrayScreen3> {
         }
       }
     });  
+  }
+
+  @override
+  void didChangeDependencies() { //se llama inmediatamente después de initState() y también cada vez que las dependencias del StatefulWidget cambian
+    super.didChangeDependencies();
+    // Programa el SnackBar para que se muestre después de que el frame actual se haya construido
+  SchedulerBinding.instance.addPostFrameCallback((_) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('Modo Pantalla Siempre Encendida'))
+    );
+  });
   }
 
     // Limpia los recursos del reproductor cuando el widget se desecha y el bloqueo de pantalla se desactiva
@@ -132,7 +141,6 @@ class _PrayScreen3State extends State<PrayScreen3> {
           ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Audio Activado (avance y reproducción de oraciones automática)')))
           : 
-          stopAudio();
           ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Audio Desactivado (avance de oraciones manual)')));
         });
