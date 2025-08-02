@@ -77,10 +77,8 @@ class _PrayScreen3State extends State<PrayScreen3> {
     @override
     void dispose() {
       player.dispose();
+      playerBackground.dispose();
       WakelockPlus.disable(); // Desactiva el wakelock (pantalla se apagará)
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Modo Ahorro de Batería: Activado (pantalla se apagará)'))
-      );
       super.dispose();
     }
 
@@ -133,6 +131,10 @@ class _PrayScreen3State extends State<PrayScreen3> {
         await player.stop();
         //Carga el asset del sonido
         await player.setAsset(prayerSound);
+        
+        prayerSound =='assets/sounds/Senal_de_la_cruz.mp3'?
+        await Future.delayed(Duration(milliseconds: 15000))
+        : null;
         // Activa la reproducción
         player.play();
         _isIncrementingInProgress = false;
@@ -153,6 +155,8 @@ class _PrayScreen3State extends State<PrayScreen3> {
           _isplaying = !_isplaying;
         });
         WidgetsBinding.instance.addPostFrameCallback((_) {
+          // Carga la música de fondo al iniciar el audio o lo detiene si se desactiva
+          _isplaying ? _loadBackgroundMusic() : stopAudioBackground();
           _isplaying ? initAudio() : stopAudio();
           _isplaying ? 
           ScaffoldMessenger.of(context).showSnackBar(
@@ -161,8 +165,7 @@ class _PrayScreen3State extends State<PrayScreen3> {
           ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Audio Desactivado (avance de oraciones manual)')));
         });
-         // Carga la música de fondo al iniciar el audio o lo detiene si se desactiva
-        _isplaying ? _loadBackgroundMusic() : stopAudioBackground();
+
       }
 
     void _incrementCounter() {
