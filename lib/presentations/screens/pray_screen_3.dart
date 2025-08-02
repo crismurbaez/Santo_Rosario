@@ -38,6 +38,7 @@ class _PrayScreen3State extends State<PrayScreen3> {
   final player = AudioPlayer();
   bool _isplaying = false; //variable para controlar el audio
   bool _isIncrementingInProgress = false; //evita que se incremente dos veces al completar el audio automáticamente
+  final playerBackground = AudioPlayer();
 
   late String _errorMessage='Sin Error';
 
@@ -101,6 +102,18 @@ class _PrayScreen3State extends State<PrayScreen3> {
       });
     }
 
+    Future<void> _loadBackgroundMusic() async {
+      try {
+        await playerBackground.setAsset('assets/sounds/Ave_Maria_Background.mp3'); // Reemplaza con la ruta de tu archivo de música
+        await playerBackground.setLoopMode(LoopMode.all); // Repetir la canción en bucle
+        await playerBackground.setVolume(0.3); // Ajusta el volumen de la música de fondo si es necesario
+        playerBackground.play();
+      } catch (e) {
+        _errorMessage = '❌ Error cargando música de fondo: $e';
+        print(_errorMessage);
+      }
+    }
+
     void initAudio() async {
       // Introduce un pequeño retraso
       // Esto le da tiempo al reproductor para finalizar cualquier proceso interno
@@ -125,6 +138,10 @@ class _PrayScreen3State extends State<PrayScreen3> {
         _isIncrementingInProgress = false;
       }
     }
+    void stopAudioBackground() async {
+      await playerBackground.stop();
+      await Future.delayed(Duration(milliseconds: 100));
+    }
 
     void stopAudio() async {
       await player.stop();
@@ -144,6 +161,8 @@ class _PrayScreen3State extends State<PrayScreen3> {
           ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Audio Desactivado (avance de oraciones manual)')));
         });
+         // Carga la música de fondo al iniciar el audio o lo detiene si se desactiva
+        _isplaying ? _loadBackgroundMusic() : stopAudioBackground();
       }
 
     void _incrementCounter() {
