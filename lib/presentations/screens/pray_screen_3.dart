@@ -2,6 +2,7 @@ import 'dart:math';
 import 'dart:ui' as ui;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../../data/models/data.dart'; 
 import '../widgets/prayer_dialog.dart';
 import 'package:just_audio/just_audio.dart';
@@ -36,13 +37,19 @@ class _PrayScreen3State extends State<PrayScreen3> {
   Map<String, String> rosaryprayersSounds = Data.prayersSounds;
   late String prayerSound;
   final player = AudioPlayer();
-  bool _isplaying = false; //variable para controlar el audio
-  bool _isIncrementingInProgress = false; //evita que se incremente dos veces al completar el audio automáticamente
   final playerBackground = AudioPlayer();
-
+  bool _isplaying = false; //variable para controlar el audio
+  bool _isBackgroundMusicPlaying = true; // Nuevo: controla si la música de fondo está activa
+  bool _isPrayersAudioPlaying = true; // Nuevo: controla si el audio de las oraciones está activo
+  bool _isIncrementingInProgress = false; //evita que se incremente dos veces al completar el audio automáticamente
+  
+  
+  late String message;
   late String _errorMessage='Sin Error';
 
   bool _isBatterySaverActive = false; // Variable para controlar el wakelock
+
+
 
   @override
   void initState() {
@@ -101,45 +108,51 @@ class _PrayScreen3State extends State<PrayScreen3> {
     }
 
     Future<void> _loadBackgroundMusic() async {
+      if (!_isBackgroundMusicPlaying) return; // Si la música de fondo no está activa, salimos
+
       try {
-        await playerBackground.setAsset('assets/sounds/Ave_Maria_Background.mp3'); // Reemplaza con la ruta de tu archivo de música
+        await playerBackground.setAsset('assets/sounds/Ave_Maria_Background.mp3'); 
         await playerBackground.setLoopMode(LoopMode.all); // Repetir la canción en bucle
-        await playerBackground.setVolume(0.3); // Ajusta el volumen de la música de fondo si es necesario
+        await playerBackground.setVolume(0.3); // volumen de la música de fondo 
         playerBackground.play();
       } catch (e) {
         _errorMessage = '❌ Error cargando música de fondo: $e';
-        print(_errorMessage);
       }
     }
 
     void initAudio() async {
+      if (!_isPrayersAudioPlaying) return; // Si el audio de las oraciones no está activo, salimnos
       // Introduce un pequeño retraso
       // Esto le da tiempo al reproductor para finalizar cualquier proceso interno
       await Future.delayed(Duration(milliseconds: 100));
+      try {
+        if (rosaryprayersSounds[_currentPrayers[_orderPrayer]] != null) {
+          prayerSound = rosaryprayersSounds[_currentPrayers[_orderPrayer]]!;
+        }
 
-      if (rosaryprayersSounds[_currentPrayers[_orderPrayer]] != null) {
-        prayerSound = rosaryprayersSounds[_currentPrayers[_orderPrayer]]!;
-      }
+        if (_currentPrayers[_orderPrayer] == 'Misterio') {
+          String soundMystery = '${widget.mystery}${_orderMystery.toString()}';
+          prayerSound = rosaryprayersSounds[soundMystery]!;
+        }
 
-      if (_currentPrayers[_orderPrayer] == 'Misterio') {
-        String soundMystery = '${widget.mystery}${_orderMystery.toString()}';
-        prayerSound = rosaryprayersSounds[soundMystery]!;
-      }
-
-      if (_isplaying) {
-        //Desactiva la reproducción anterior y libera los recursos antes de reproducir el siguiente
-        await player.stop();
-        //Carga el asset del sonido
-        await player.setAsset(prayerSound);
-        
-        prayerSound =='assets/sounds/Senal_de_la_cruz.mp3'?
-        await Future.delayed(Duration(milliseconds: 15000))
-        : null;
-        // Activa la reproducción
-        player.play();
-        _isIncrementingInProgress = false;
+        if (_isplaying) {
+          //Desactiva la reproducción anterior y libera los recursos antes de reproducir el siguiente
+          await player.stop();
+          //Carga el asset del sonido
+          await player.setAsset(prayerSound);
+          
+          prayerSound =='assets/sounds/Senal_de_la_cruz.mp3'?
+          await Future.delayed(Duration(milliseconds: 15000))
+          : null;
+          // Activa la reproducción
+          player.play();
+          _isIncrementingInProgress = false;
+        }
+      } catch (e) {
+        _errorMessage = '❌ Error cargando sonido de oración: $e';  
       }
     }
+
     void stopAudioBackground() async {
       await playerBackground.stop();
       await Future.delayed(Duration(milliseconds: 100));
@@ -156,17 +169,77 @@ class _PrayScreen3State extends State<PrayScreen3> {
         });
         WidgetsBinding.instance.addPostFrameCallback((_) {
           // Carga la música de fondo al iniciar el audio o lo detiene si se desactiva
-          _isplaying ? _loadBackgroundMusic() : stopAudioBackground();
-          _isplaying ? initAudio() : stopAudio();
-          _isplaying ? 
-          ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Audio Activado (avance y reproducción de oraciones automática)')))
-          : 
-          ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Audio Desactivado (avance de oraciones manual)')));
+          if (_isplaying) {
+            if (_isBackgroundMusicPlaying) {
+              _loadBackgroundMusic();
+            }
+            if (_isPrayersAudioPlaying) {
+              initAudio();
+            }
+          } else {
+            stopAudioBackground(); // Detiene la música de fondo
+            stopAudio(); // Detiene el audio de la oración
+          }
+          _showAudioStatusSnackBar();
         });
 
+    }
+    
+    // SnackBar unificado para el estado del audio
+  void _showAudioStatusSnackBar() {
+    if (!_isplaying) {
+      message = 'Audio Desactivado (avance de oraciones manual)';
+    } else {
+      List<String> activeAudios = [];
+      if (_isPrayersAudioPlaying) {
+        activeAudios.add('Oraciones');
       }
+      if (_isBackgroundMusicPlaying) {
+        activeAudios.add('Música de fondo');
+      }
+
+      if (activeAudios.isEmpty) {
+        message = 'Audio Activado pero sin Oraciones ni Música de fondo!!';
+      } else if (activeAudios.length == 2 || 
+                 (activeAudios.length == 1 && activeAudios[0] == 'Oraciones')) {
+        message = 'Audio Activado (avance de oraciones automática)';
+      } else  {
+        message = 'Audio Activado, sólo Música de fondo (avance de oraciones manual)';
+      }
+    }
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(message)),
+    );
+    
+  }
+    
+    // Función para alternar la reproducción de la música de fondo
+    void _toggleBackgroundMusic() {
+      setState(() {
+        _isBackgroundMusicPlaying = !_isBackgroundMusicPlaying;
+        if (_isBackgroundMusicPlaying && _isplaying) {
+          _loadBackgroundMusic(); // Si se activa, la carga y reproduce
+        } else {
+          playerBackground.stop(); // Si se desactiva, la detiene
+        }
+      });
+      _showAudioStatusSnackBar();
+    }
+
+    // Función para alternar la reproducción del audio de las oraciones
+    void _togglePrayersAudio() {
+      setState(() {
+        _isPrayersAudioPlaying = !_isPrayersAudioPlaying;
+        if (_isPrayersAudioPlaying && _isplaying) { // Si se activa y el audio principal está encendido
+          initAudio(); // Reproduce la oración actual
+        } else {
+          player.stop(); // Si se desactiva, detiene el audio de la oración
+        }
+      });
+      _showAudioStatusSnackBar();
+    }
+
+
 
     void _incrementCounter() {
       setState(() {
@@ -304,6 +377,42 @@ class _PrayScreen3State extends State<PrayScreen3> {
             ),
             onPressed: _toggleWakelock, // Cambia el estado del wakelock
             tooltip: _isBatterySaverActive ? 'Activar Ahorro Batería' : 'Pantalla Siempre Encendida',
+          ),
+          // Nuevo: Botón de menú de configuración de audio
+          PopupMenuButton<String>(
+            icon: Icon(
+              Icons.tune, // Ícono de configuración
+              color: Theme.of(context).textTheme.displaySmall!.color,
+            ),
+            onSelected: (value) {
+              if (value == 'toggleBackgroundMusic') {
+                _toggleBackgroundMusic();
+              } else if (value == 'togglePrayersAudio') {
+                _togglePrayersAudio();
+              }
+            },
+            itemBuilder: (BuildContext context) => <PopupMenuEntry<String>>[
+              PopupMenuItem<String>(
+                value: 'toggleBackgroundMusic',
+                child: Row(
+                  children: [
+                    Icon(_isBackgroundMusicPlaying ? Icons.music_note : Icons.music_off),
+                    const SizedBox(width: 8),
+                    Text(_isBackgroundMusicPlaying ? 'Música de Fondo: ON' : 'Música de Fondo: OFF'),
+                  ],
+                ),
+              ),
+              PopupMenuItem<String>(
+                value: 'togglePrayersAudio',
+                child: Row(
+                  children: [
+                    Icon(_isPrayersAudioPlaying ? Icons.record_voice_over : Icons.volume_mute),
+                    const SizedBox(width: 8),
+                    Text(_isPrayersAudioPlaying ? 'Audios Oraciones: ON' : 'Audios Oraciones: OFF'),
+                  ],
+                ),
+              ),
+            ],
           ),
         ],
       ),
