@@ -67,6 +67,7 @@ class _PrayScreen3State extends State<PrayScreen3> {
         }
       }
     });  
+    _loadPrefs(); // Carga las preferencias guardadas
   }
 
   @override
@@ -83,10 +84,28 @@ class _PrayScreen3State extends State<PrayScreen3> {
     // Limpia los recursos del reproductor cuando el widget se desecha y el bloqueo de pantalla se desactiva
     @override
     void dispose() {
+      player.stop();
       player.dispose();
+      playerBackground.stop();
       playerBackground.dispose();
       WakelockPlus.disable(); // Desactiva el wakelock (pantalla se apagará)
       super.dispose();
+    }
+
+    Future<void> _loadPrefs() async {
+      final prefs = await SharedPreferences.getInstance();
+      setState(() {
+        _isPrayersAudioPlaying = prefs.getBool('isPrayersAudioPlaying') ?? true;
+        _isBackgroundMusicPlaying = prefs.getBool('isBackgroundMusicPlaying') ?? true;
+      });
+    }
+
+    Future<void> _savePrefs() async {
+      final prefs = await SharedPreferences.getInstance();
+      setState(() {
+        prefs.setBool('isPrayersAudioPlaying', _isPrayersAudioPlaying);
+        prefs.setBool('isBackgroundMusicPlaying', _isBackgroundMusicPlaying);
+      });
     }
 
     // Activa o desactiva el wakelock según la variable _isBatterySaverActive
@@ -140,8 +159,8 @@ class _PrayScreen3State extends State<PrayScreen3> {
           await player.stop();
           //Carga el asset del sonido
           await player.setAsset(prayerSound);
-          
-          prayerSound =='assets/sounds/Senal_de_la_cruz.mp3'?
+          //retraso de 15 segundos si el sonido es 'Señal de la Cruz' y la música de fondo está activa
+          prayerSound =='assets/sounds/Senal_de_la_cruz.mp3' && _isBackgroundMusicPlaying?
           await Future.delayed(Duration(milliseconds: 15000))
           : null;
           // Activa la reproducción
@@ -217,6 +236,7 @@ class _PrayScreen3State extends State<PrayScreen3> {
     void _toggleBackgroundMusic() {
       setState(() {
         _isBackgroundMusicPlaying = !_isBackgroundMusicPlaying;
+        _savePrefs(); // Guarda las preferencias
         if (_isBackgroundMusicPlaying && _isplaying) {
           _loadBackgroundMusic(); // Si se activa, la carga y reproduce
         } else {
@@ -230,6 +250,7 @@ class _PrayScreen3State extends State<PrayScreen3> {
     void _togglePrayersAudio() {
       setState(() {
         _isPrayersAudioPlaying = !_isPrayersAudioPlaying;
+        _savePrefs(); // Guarda las preferencias
         if (_isPrayersAudioPlaying && _isplaying) { // Si se activa y el audio principal está encendido
           initAudio(); // Reproduce la oración actual
         } else {
