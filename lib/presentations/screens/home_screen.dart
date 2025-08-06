@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:santo_rosario/presentations/screens/calendar_screen.dart';
 import 'pray_screen_3.dart';
 import '../../data/models/data.dart';
 import '../widgets/mystery_list_item.dart';
@@ -79,7 +80,13 @@ class _HomeScreenState extends State<HomeScreen> {
       glorioso = mystery == 'gloriosos' ? value : false;
     });
   }
-
+    void _navigateToCalendar(){
+      Navigator.of(context).push(
+        MaterialPageRoute(
+          builder: (context) => const CalendarScreen(),
+        ),
+      );
+    }
     void _navigateToPray() {
       String? mysteryType;
       if (gozoso) {
@@ -176,6 +183,9 @@ class _HomeScreenState extends State<HomeScreen> {
                           alignment: Alignment.topLeft,
                           child: Column(
                             children: [
+                              IconButton(
+                                onPressed: _navigateToCalendar, 
+                                icon: Icon(Icons.add_alert_sharp,)),
                               Align(
                                 alignment: Alignment.center,
                                 child: Text(
