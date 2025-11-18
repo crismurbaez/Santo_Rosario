@@ -132,7 +132,7 @@ class _PrayScreen3State extends State<PrayScreen3> {
       try {
         await playerBackground.setAsset('assets/sounds/Ave_Maria_Background.mp3'); 
         await playerBackground.setLoopMode(LoopMode.all); // Repetir la canción en bucle
-        await playerBackground.setVolume(0.3); // volumen de la música de fondo 
+        await playerBackground.setVolume(0.1); // volumen de la música de fondo 
         playerBackground.play();
       } catch (e) {
         _errorMessage = '❌ Error cargando música de fondo: $e';
@@ -140,7 +140,7 @@ class _PrayScreen3State extends State<PrayScreen3> {
     }
 
     void initAudio() async {
-      if (!_isPrayersAudioPlaying) return; // Si el audio de las oraciones no está activo, salimnos
+      if (!_isPrayersAudioPlaying) return; // Si el audio de las oraciones no está activo, salimos
       // Introduce un pequeño retraso
       // Esto le da tiempo al reproductor para finalizar cualquier proceso interno
       await Future.delayed(Duration(milliseconds: 100));
@@ -165,6 +165,7 @@ class _PrayScreen3State extends State<PrayScreen3> {
           : null;
           // Activa la reproducción
           player.play();
+          
           _isIncrementingInProgress = false;
         }
       } catch (e) {
@@ -402,7 +403,7 @@ class _PrayScreen3State extends State<PrayScreen3> {
           // Nuevo: Botón de menú de configuración de audio
           PopupMenuButton<String>(
             icon: Icon(
-              Icons.tune, // Ícono de configuración
+              Icons.menu, // Ícono de configuración
               color: Theme.of(context).textTheme.displaySmall!.color,
             ),
             onSelected: (value) {

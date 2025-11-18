@@ -23,12 +23,15 @@
     };
     static const Map<String, String> prayersSounds = {
       'Señal de la Cruz': 'assets/sounds/Senal_de_la_cruz.mp3',
-      'Credo': 'assets/sounds/Ave_Maria.mp3',
+      'Credo': 'assets/sounds/Credo.mp3',
+      'Pesame': 'assets/sounds/Pesame.mp3',
       'Padre Nuestro': 'assets/sounds/Padre_Nuestro.mp3',
       'Ave María': 'assets/sounds/Ave_Maria.mp3',
       'Gloria': 'assets/sounds/Gloria.mp3',
-      'Oh Jesús Mío': 'assets/sounds/Ave_Maria.mp3',
-      'Santo Dios': 'assets/sounds/Ave_Maria.mp3',
+      'Oh Jesús Mío': 'assets/sounds/Oh_Jesus_mio.mp3',
+      'María Madre de Gracia': 'assets/sounds/Maria_Madre_de_Gracia.mp3',
+      'Intenciones del Papa': 'assets/sounds/Intenciones_del_papa.mp3',
+      'Dios te Salve': 'assets/sounds/Dios_te_Salve.mp3',
       'gozosos1':'assets/sounds/gozosos1.mp3',
       'gozosos2':'assets/sounds/gozosos2.mp3',
       'gozosos3':'assets/sounds/gozosos3.mp3',
@@ -145,30 +148,30 @@ static const List<MysteriesMeditations> meditations = [
      static const List<RosaryDetailCircle> rosaryDetailsCircle = [
       RosaryDetailCircle(cuenta: 'medalla', count: 1, order: 1,
           width: 'largest', height: 'largest'
-          , prayers:['Señal de la Cruz','Misterio','Padre Nuestro']),
+          , prayers:['Señal de la Cruz','Credo','Pesame','Misterio','Padre Nuestro']),
       RosaryDetailCircle(cuenta: 'perla', count: 10, order: 1,
           width: 'basic', height: 'basic', prayers:['Ave María']),
       RosaryDetailCircle(cuenta: 'rosa', count: 1, order: 2,
           width: 'large', height: 'large'
-          , prayers:[ 'Gloria','Misterio','Padre Nuestro']),
+          , prayers:[ 'Gloria','Oh Jesús Mío','María Madre de Gracia','Misterio','Padre Nuestro']),
       RosaryDetailCircle(cuenta: 'perla', count: 10, order: 2,
           width: 'basic', height: 'basic'
           , prayers:['Ave María']),
       RosaryDetailCircle(cuenta: 'rosa', count: 1, order: 3,
           width: 'large', height: 'large'
-          , prayers:[ 'Gloria','Misterio','Padre Nuestro']),
+          , prayers:[ 'Gloria','Oh Jesús Mío','María Madre de Gracia','Misterio','Padre Nuestro']),
       RosaryDetailCircle(cuenta: 'perla', count: 10, order: 3,
           width: 'basic', height: 'basic'
           , prayers:['Ave María']),
       RosaryDetailCircle(cuenta: 'rosa', count: 1, order: 4,
           width: 'large', height: 'large'
-          , prayers:[ 'Gloria','Misterio','Padre Nuestro']),
+          , prayers:[ 'Gloria','Oh Jesús Mío','María Madre de Gracia','Misterio','Padre Nuestro']),
       RosaryDetailCircle(cuenta: 'perla', count: 10, order: 4,
           width: 'basic', height: 'basic'
           , prayers:['Ave María']),
       RosaryDetailCircle(cuenta: 'rosa', count: 1, order: 5,
           width: 'large', height: 'large'
-          , prayers:[ 'Gloria','Misterio','Padre Nuestro']),
+          , prayers:[ 'Gloria','Oh Jesús Mío','María Madre de Gracia','Misterio','Padre Nuestro']),
       RosaryDetailCircle(cuenta: 'perla', count: 10, order: 5,
           width: 'basic', height: 'basic'
           , prayers:['Ave María']),
@@ -177,13 +180,13 @@ static const List<MysteriesMeditations> meditations = [
      static const List<RosaryDetailExtension> rosaryDetailsExtension = [
       RosaryDetailExtension(cuenta: 'rosa', count: 1,  order: 6,
           width: 'large', height: 'large'
-          , prayers:[ 'Gloria','Padre Nuestro']),
+          , prayers:[ 'Gloria','Oh Jesús Mío','María Madre de Gracia','Intenciones del Papa','Padre Nuestro']),
       RosaryDetailExtension(cuenta: 'perla', count: 3, order: 6,
           width: 'basic', height: 'basic'
           , prayers:['Ave María']),
       RosaryDetailExtension(cuenta: 'rosa', count: 1, order: 6,
           width: 'large', height: 'large'
-          , prayers:[ 'Gloria']),
+          , prayers:[ 'Gloria','Dios te Salve']),
       RosaryDetailExtension(cuenta: 'cruz', count: 1, order: 6,
           width: 'largest', height: 'largest'
           , prayers:['Señal de la Cruz']),
