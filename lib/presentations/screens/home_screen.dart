@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:santo_rosario/presentations/screens/calendar_screen.dart';
-import 'pray_screen_3.dart';
+import 'pray_screen.dart';
 import '../../data/models/data.dart';
 import '../widgets/mystery_list_item.dart';
 
@@ -33,7 +33,6 @@ class _HomeScreenState extends State<HomeScreen> {
   void initState() {
     super.initState(); 
 
-    
 
     switch(weekdayNowInt) {
       case 1:
@@ -103,7 +102,7 @@ class _HomeScreenState extends State<HomeScreen> {
       Navigator.of(context).push(
         PageRouteBuilder(
           pageBuilder: (context, animation, secondaryAnimation) =>
-              PrayScreen3(mystery: mysteryType),
+              PrayScreen(mystery: mysteryType),
           transitionsBuilder: (context, animation, secondaryAnimation, child) {
             // Here you can define your transition.
             // For a fade transition:
