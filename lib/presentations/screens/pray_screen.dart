@@ -1,6 +1,7 @@
 import 'dart:ui' as ui;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:santo_rosario/constants/app_constants.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../../data/models/data.dart'; 
 import '../widgets/rosary_painter.dart';
@@ -45,7 +46,7 @@ class _PrayScreenState extends State<PrayScreen> {
   
   
   late String message;
-  late String _errorMessage='Sin Error';
+  late String _errorMessage = AppSentinels.noError;
 
   bool _isBatterySaverActive = false; // Variable para controlar el wakelock
 
@@ -95,16 +96,16 @@ class _PrayScreenState extends State<PrayScreen> {
     Future<void> _loadPrefs() async {
       final prefs = await SharedPreferences.getInstance();
       setState(() {
-        _isPrayersAudioPlaying = prefs.getBool('isPrayersAudioPlaying') ?? true;
-        _isBackgroundMusicPlaying = prefs.getBool('isBackgroundMusicPlaying') ?? true;
+        _isPrayersAudioPlaying = prefs.getBool(AppPreferencesKeys.prayersAudioPlaying) ?? true;
+        _isBackgroundMusicPlaying = prefs.getBool(AppPreferencesKeys.backgroundMusicPlaying) ?? true;
       });
     }
 
     Future<void> _savePrefs() async {
       final prefs = await SharedPreferences.getInstance();
       setState(() {
-        prefs.setBool('isPrayersAudioPlaying', _isPrayersAudioPlaying);
-        prefs.setBool('isBackgroundMusicPlaying', _isBackgroundMusicPlaying);
+        prefs.setBool(AppPreferencesKeys.prayersAudioPlaying, _isPrayersAudioPlaying);
+        prefs.setBool(AppPreferencesKeys.backgroundMusicPlaying, _isBackgroundMusicPlaying);
       });
     }
 
@@ -130,9 +131,9 @@ class _PrayScreenState extends State<PrayScreen> {
       if (!_isBackgroundMusicPlaying) return; // Si la música de fondo no está activa, salimos
 
       try {
-        await playerBackground.setAsset('assets/sounds/Ave_Maria_Background.mp3'); 
+        await playerBackground.setAsset(AppAssets.soundAveMariaBackground); 
         await playerBackground.setLoopMode(LoopMode.all); // Repetir la canción en bucle
-        await playerBackground.setVolume(0.1); // volumen de la música de fondo 
+        await playerBackground.setVolume(AppAudio.backgroundMusicVolume); // volumen de la música de fondo 
         playerBackground.play();
       } catch (e) {
         _errorMessage = '❌ Error cargando música de fondo: $e';
@@ -143,7 +144,7 @@ class _PrayScreenState extends State<PrayScreen> {
       if (!_isPrayersAudioPlaying) return; // Si el audio de las oraciones no está activo, salimos
       // Introduce un pequeño retraso
       // Esto le da tiempo al reproductor para finalizar cualquier proceso interno
-      await Future.delayed(Duration(milliseconds: 100));
+      await Future.delayed(AppDelays.delayAudio);
       try {
         if (rosaryprayersSounds[_currentPrayers[_orderPrayer]] != null) {
           prayerSound = rosaryprayersSounds[_currentPrayers[_orderPrayer]]!;
@@ -160,8 +161,8 @@ class _PrayScreenState extends State<PrayScreen> {
           //Carga el asset del sonido
           await player.setAsset(prayerSound);
           //retraso de 15 segundos si el sonido es 'Señal de la Cruz' y la música de fondo está activa
-          prayerSound =='assets/sounds/Senal_de_la_cruz.mp3' && _isBackgroundMusicPlaying?
-          await Future.delayed(Duration(milliseconds: 15000))
+          prayerSound == AppAssets.soundSignalOfTheCross && _isBackgroundMusicPlaying?
+          await Future.delayed(AppDelays.delayMusic)
           : null;
           // Activa la reproducción
           player.play();
@@ -175,12 +176,12 @@ class _PrayScreenState extends State<PrayScreen> {
 
     void stopAudioBackground() async {
       await playerBackground.stop();
-      await Future.delayed(Duration(milliseconds: 100));
+      await Future.delayed(AppDelays.delayAudio);
     }
 
     void stopAudio() async {
       await player.stop();
-      await Future.delayed(Duration(milliseconds: 100));
+      await Future.delayed(AppDelays.delayAudio);
     }
 
     void playPause() {
@@ -362,12 +363,10 @@ class _PrayScreenState extends State<PrayScreen> {
   @override
   Widget build(BuildContext context) {
 
-    const Color backgroundColor = Color(0xFF1D404C);
-
     return Scaffold(
       appBar: AppBar(
         backgroundColor: Theme.of(context).colorScheme.inversePrimary,
-        toolbarHeight: 70.0,
+        toolbarHeight: AppLayout.appBarToolbarHeight,
          title: 
              Column(
               children: [
@@ -441,12 +440,12 @@ class _PrayScreenState extends State<PrayScreen> {
       body: Stack (
         children: <Widget>[
           Container(
-            color: backgroundColor,
+            color: AppColors.colorBackgroundBody,
           ),
            Container(
                       decoration: const BoxDecoration(
                         image: DecorationImage(
-                          image: AssetImage('assets/images/VirgenLourdes.jpg'),
+                          image: AssetImage(AppAssets.imageVirgenLourdes),
                           fit: BoxFit.fitHeight,
                         ),
                       ),
@@ -457,14 +456,14 @@ class _PrayScreenState extends State<PrayScreen> {
                 // Muestra un indicador de carga si las imágenes aún no se han cargado
                 if (_loadedImages == null) {
                   return const CircularProgressIndicator(
-                    color: ui.Color.fromARGB(255, 228, 207, 143), 
+                    color: AppColors.colorCircularProgressIndicator, 
                   );
                 }
 
                 // se obtienen las dimensiones de la pantalla 
                 //y se saca un porcentaje que se considera el margen adaptable a todas las pantallas
-                final double width = 0.9 * constraints.maxWidth;
-                final double height = 0.69 * constraints.maxHeight;  
+                final double width = AppLayout.rosaryWidthFactor * constraints.maxWidth;
+                final double height = AppLayout.rosaryHeightFactor * constraints.maxHeight;  
 
                 return 
                 SizedBox(
@@ -491,14 +490,17 @@ class _PrayScreenState extends State<PrayScreen> {
                 mainAxisSize: MainAxisSize.min, // La columna solo ocupa el espacio que necesitan sus hijos
                 children: [
                   Padding(
-                    padding: const EdgeInsets.all(20.0),
+                    padding: const EdgeInsets.all(AppLayout.sectionPadding),
                     child:Row(
                       mainAxisAlignment: MainAxisAlignment.end,
                       children:[
                         ElevatedButton(
                           style: ElevatedButton.styleFrom(
-                            backgroundColor: const Color.fromRGBO(255, 192, 121, 0.5),
-                            padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 20.0),
+                            backgroundColor: AppColors.colorButtonPrimary,
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: AppLayout.buttonHorizontalPadding,
+                              vertical: AppLayout.buttonVerticalPadding,
+                            ),
                           ),
                           onPressed: playPause,
                           //se cambia el ícono de acuerdo a si el audio está activado o no
@@ -508,22 +510,28 @@ class _PrayScreenState extends State<PrayScreen> {
                     )
                   ),
                   Padding(
-                        padding: const EdgeInsets.all(20.0),
+                        padding: const EdgeInsets.all(AppLayout.sectionPadding),
                         child: Row(
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children:[
                             ElevatedButton(
                               style: ElevatedButton.styleFrom(
-                                backgroundColor: const Color.fromRGBO(255, 192, 121, 0.5),
-                                padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 20.0),
+                                backgroundColor: AppColors.colorButtonPrimary,
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: AppLayout.buttonHorizontalPadding,
+                                  vertical: AppLayout.buttonVerticalPadding,
+                                ),
                               ),
                               onPressed: _decrementCounter,
                               child: const Icon(Icons.arrow_back),
                             ),
                             ElevatedButton(
                               style: ElevatedButton.styleFrom(
-                                backgroundColor: const Color.fromRGBO(255, 192, 121, 0.5),
-                                padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 20.0),
+                                backgroundColor: AppColors.colorButtonPrimary,
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: AppLayout.buttonHorizontalPadding,
+                                  vertical: AppLayout.buttonVerticalPadding,
+                                ),
                               ),
                               onPressed: _incrementCounter,
                               child: const Icon(Icons.arrow_forward),
@@ -532,14 +540,17 @@ class _PrayScreenState extends State<PrayScreen> {
                         ),
                   ),
                   Padding(
-                        padding: const EdgeInsets.all(20.0),
+                        padding: const EdgeInsets.all(AppLayout.sectionPadding),
                         child: Row(
                           mainAxisAlignment: MainAxisAlignment.spaceAround,
                           children:[
                             ElevatedButton(
                               style: ElevatedButton.styleFrom(
-                                backgroundColor: const Color.fromRGBO(255, 192, 121, 0.5),
-                                padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 20.0),
+                                backgroundColor: AppColors.colorButtonPrimary,
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: AppLayout.buttonHorizontalPadding,
+                                  vertical: AppLayout.buttonVerticalPadding,
+                                ),
                               ),
                               onPressed: () {
                                 // Muestra el diálogo con las oraciones actuales
@@ -558,8 +569,8 @@ class _PrayScreenState extends State<PrayScreen> {
                               child: Row(
                                 children: [
                                   Text(_currentPrayers[_orderPrayer]),
-                                  const SizedBox(width: 8), // Espacio entre el texto y el ícono
-                                  const Icon(Icons.info_outline, size: 20), //  ícono
+                                  const SizedBox(width: AppLayout.rowItemSpacing), // Espacio entre el texto y el ícono
+                                  const Icon(Icons.info_outline, size: AppLayout.infoIconSize), //  ícono
                                 ],
                               ),
                             ),
@@ -570,13 +581,13 @@ class _PrayScreenState extends State<PrayScreen> {
               ),
             ),
          // Muestra el mensaje de error si existe
-         if (_errorMessage!='Sin Error')
+         if (_errorMessage != AppSentinels.noError)
           Positioned(
-            top: 10,
-            left: 10,
-            right: 10,
+            top: AppLayout.errorBannerInset,
+            left: AppLayout.errorBannerInset,
+            right: AppLayout.errorBannerInset,
             child: AlertDialog(
-              backgroundColor: Colors.red.withOpacity(0.8),
+              backgroundColor: AppColors.colorBackgroundDialogError,
               content: Text(
                 _errorMessage,
                 style: const TextStyle(color: Colors.white),

@@ -54,7 +54,7 @@ Este documento traduce las recomendaciones de [analisis-estructura-proyecto.md](
 
 ### Fase 2 — Constantes
 
-- [ ] Crear `lib/constants/app_constants.dart`.
+- [*] Crear `lib/constants/app_constants.dart`.
 - [ ] Mover delays, porcentajes de layout, duraciones de transición, etc.
 - [ ] Sustituir literales en pantalla del rosario y, si aplica, en `home_screen`.
 
