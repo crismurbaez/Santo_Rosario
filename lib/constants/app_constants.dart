@@ -1,6 +1,6 @@
 import 'dart:ui';
 
-//UI
+//Strings de prayers_screen.dart
 abstract class AppColors {
   static const Color colorBackgroundBody = Color(0xFF1D404C);
   static const Color colorButtonPrimary = Color.fromRGBO(255, 192, 121, 0.5);
@@ -44,6 +44,8 @@ abstract class AppSentinels {
   static const noError = 'Sin Error';
 }
 
+//Strings de rosary_painter.dart
+
 abstract class AppRosarySizes {
   static const basic = 'basic';
   static const large = 'large';
@@ -54,6 +56,17 @@ abstract class AppRosaryAccounts {
   static const medalla = 'medalla';
   static const brillo = 'brillo';
   static const cruz = 'cruz';
+}
+
+abstract class AppRosaryMapKeys {
+  static const cuenta = 'cuenta';
+  static const angle = 'angle';
+  static const width = 'width';
+  static const height = 'height';
+  static const dstcuentas = 'dstcuentas';
+  static const cuentaCenter = 'cuentaCenter';
+  static const prayers = 'prayers';
+  static const order = 'order';
 }
 
 

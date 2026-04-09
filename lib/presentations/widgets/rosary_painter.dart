@@ -154,14 +154,14 @@ class CuentasPainter extends CustomPainter {
               }
 
           currentDetailElements.add({
-            'cuenta': currentCuentaName,
-            'angle': angle,
-            'width': detail.width,
-            'height': detail.height,
-            'dstcuentas': dstcuentas,
-            'cuentaCenter': cuentaCenter,
-            'prayers': detail.prayers, // Agrega las oraciones de la cuenta
-            'order': detail.order, // Agrega el orden de la cuenta
+            AppRosaryMapKeys.cuenta: currentCuentaName,
+            AppRosaryMapKeys.angle: angle,
+            AppRosaryMapKeys.width: detail.width,
+            AppRosaryMapKeys.height: detail.height,
+            AppRosaryMapKeys.dstcuentas: dstcuentas,
+            AppRosaryMapKeys.cuentaCenter: cuentaCenter,
+            AppRosaryMapKeys.prayers: detail.prayers, // Agrega las oraciones de la cuenta
+            AppRosaryMapKeys.order: detail.order, // Agrega el orden de la cuenta
           });
 
           i++; // Incremento de i para calcular el ángulo de la siguiente cuenta
@@ -224,13 +224,13 @@ class CuentasPainter extends CustomPainter {
               }
 
           currentDetailElements.add({
-            'cuenta': currentCuentaName,
-            'width': detail.width,
-            'height': detail.height,
-            'dstcuentas': dstcuentas,
-            'cuentaCenter': cuentaCenter,
-            'prayers': detail.prayers, // Agrega las oraciones de la cuenta
-            'order': detail.order, // Agrega el orden de la cuenta
+            AppRosaryMapKeys.cuenta: currentCuentaName,
+            AppRosaryMapKeys.width: detail.width,
+            AppRosaryMapKeys.height: detail.height,
+            AppRosaryMapKeys.dstcuentas: dstcuentas,
+            AppRosaryMapKeys.cuentaCenter: cuentaCenter,
+            AppRosaryMapKeys.prayers: detail.prayers, // Agrega las oraciones de la cuenta
+            AppRosaryMapKeys.order: detail.order, // Agrega el orden de la cuenta
           });
         }
         return currentDetailElements;
@@ -241,18 +241,21 @@ class CuentasPainter extends CustomPainter {
           // Se dibuja el brillo
           if (allRosaryElements.isNotEmpty) {
             var element = allRosaryElements[counter];
-            cuentaName = element['cuenta']; 
+            cuentaName = element[AppRosaryMapKeys.cuenta]; 
             // Verificamos que 'prayers' exista y sea una List<String> antes de castear y llamar.
-            if (element['prayers'] != null) {
-              onCuentaHighlighted(element['prayers'] as List<String>, element['order'] as int); // Pasa las oraciones y el orden de la cuenta resaltada
+            if (element[AppRosaryMapKeys.prayers] != null) {
+              onCuentaHighlighted(
+                element[AppRosaryMapKeys.prayers] as List<String>,
+                element[AppRosaryMapKeys.order] as int,
+              ); // Pasa las oraciones y el orden de la cuenta resaltada
             } else {
               // En caso de que, por alguna razón, no tenga la clave o el tipo correcto (poco probable ahora)
               onCuentaHighlighted([],0); // Pasa una lista vacía y un cero para evitar errores
             }
             
-            cuentaWidth = element['width'];
-            dstcuentas = element['dstcuentas'];
-            var cuentaCenter = element['cuentaCenter'];
+            cuentaWidth = element[AppRosaryMapKeys.width];
+            dstcuentas = element[AppRosaryMapKeys.dstcuentas];
+            var cuentaCenter = element[AppRosaryMapKeys.cuentaCenter];
             
             //se dibuja la cuenta brillo
             image = cuentas[AppRosaryAccounts.brillo]!;
