@@ -44,4 +44,16 @@ abstract class AppSentinels {
   static const noError = 'Sin Error';
 }
 
+abstract class AppRosarySizes {
+  static const basic = 'basic';
+  static const large = 'large';
+  static const largest = 'largest';
+}
+
+abstract class AppRosaryAccounts {
+  static const medalla = 'medalla';
+  static const brillo = 'brillo';
+  static const cruz = 'cruz';
+}
+
 

@@ -2,6 +2,7 @@ import 'dart:ui' as ui;
 import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:flutter/widgets.dart';
+import 'package:santo_rosario/constants/app_constants.dart';
 import '../../data/models/data.dart'; 
 
 class CuentasPainter extends CustomPainter {
@@ -118,19 +119,19 @@ class CuentasPainter extends CustomPainter {
               center.dy + sin(angle) * radius, //posición en y
             );
             //destination Rectangle, da la ubicación y la escala de la imagen
-            if (detail.width == 'basic') {
+            if (detail.width == AppRosarySizes.basic) {
               imageWidth = imageWidthBasic;
               imageHeight = imageHeightBasic; 
             }
-            if (detail.width == 'large') {
+            if (detail.width == AppRosarySizes.large) {
               imageWidth = imageWidthLarge; 
               imageHeight = imageHeightLarge;
             }
-            if (detail.width == 'largest') {
+            if (detail.width == AppRosarySizes.largest) {
               imageWidth = imageWidthLargest;
               imageHeight = imageHeightLargest;
             }
-            if (currentCuentaName == 'medalla') { //TODOhacer más universal, cómo marcar como inicio****************
+            if (currentCuentaName == AppRosaryAccounts.medalla) { //TODOhacer más universal, cómo marcar como inicio****************
               cuentaCenter = Offset(
                 center.dx + cos(angle) * radius, //posición en x
                 center.dy + (sin(angle) * radius) + imageHeightBasic * 0.8, //posición en y se traslada un poco hacia abajo
@@ -182,7 +183,7 @@ class CuentasPainter extends CustomPainter {
           String currentCuentaName = detail.cuenta; 
             image = cuentas[currentCuentaName]!;
             //destination Rectangle, da la ubicación y la escala de la imagen
-            if (detail.width == 'basic') {
+            if (detail.width == AppRosarySizes.basic) {
               imageWidth = imageWidthBasic;
               imageHeight = imageHeightBasic; 
               // se calcula el centro de la cuenta
@@ -191,7 +192,7 @@ class CuentasPainter extends CustomPainter {
                 cuentaCenter.dy + imageHeight * 0.57, //posición en y
               );
             }
-            if (detail.width == 'large') {
+            if (detail.width == AppRosarySizes.large) {
               imageWidth = imageWidthLarge; 
               imageHeight = imageHeightLarge;
               cuentaCenter = Offset(
@@ -199,7 +200,7 @@ class CuentasPainter extends CustomPainter {
                 cuentaCenter.dy + imageHeight * 0.25, //posición en y
               );
             }
-            if (detail.width == 'largest') {
+            if (detail.width == AppRosarySizes.largest) {
               imageWidth = imageWidthLargest;
               imageHeight = imageHeightLargest;
               cuentaCenter = Offset(
@@ -248,26 +249,24 @@ class CuentasPainter extends CustomPainter {
               // En caso de que, por alguna razón, no tenga la clave o el tipo correcto (poco probable ahora)
               onCuentaHighlighted([],0); // Pasa una lista vacía y un cero para evitar errores
             }
-            cuentaOrder = cuentasOrder;
-            cuentaCount = cuentasCount;
+            
             cuentaWidth = element['width'];
-            cuentaHeight = element['height'];
             dstcuentas = element['dstcuentas'];
             var cuentaCenter = element['cuentaCenter'];
             
             //se dibuja la cuenta brillo
-            image = cuentas['brillo']!;
+            image = cuentas[AppRosaryAccounts.brillo]!;
 
             
-            if (cuentaWidth == 'basic') {
+            if (cuentaWidth == AppRosarySizes.basic) {
               imageWidth = imageWidthBasic * 0.7;
               imageHeight = imageHeightBasic * 0.7; 
             }
-            if (cuentaWidth == 'large') {
+            if (cuentaWidth == AppRosarySizes.large) {
               imageWidth = imageWidthLarge * 0.4; 
               imageHeight = imageHeightLarge * 0.4;
             }
-            if (cuentaWidth == 'largest') {
+            if (cuentaWidth == AppRosarySizes.largest) {
               imageWidth = imageWidthLargest * 0.3;
               imageHeight = imageHeightLargest * 0.7;
             }
@@ -283,7 +282,7 @@ class CuentasPainter extends CustomPainter {
                 Color.fromRGBO(255, 255, 255, 0.7), 
                 BlendMode.modulate, // Multiplica los valores de color y alfa
               );
-            if (cuentaName == 'cruz') {
+            if (cuentaName == AppRosaryAccounts.cruz) {
               paintImage.colorFilter = const ColorFilter.mode(
                 Color.fromRGBO(255, 255, 255, 0.3), 
                 BlendMode.modulate, // Multiplica los valores de color y alfa
