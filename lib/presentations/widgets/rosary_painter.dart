@@ -47,15 +47,9 @@ class CuentasPainter extends CustomPainter {
       //se usa para dibujar la extensión del rosario
       Offset medallaCenter = center;
       // Offset brilloCenter = center;
-      int cuentasCount = 61; 
-      int cuentasOrder = 0;
 
       String cuentaName;
-      // String cuentaPrayer;
-      int cuentaCount;
-      int cuentaOrder;
       String cuentaWidth;
-      String cuentaHeight;
 
       double imageWidth=1;
       double imageHeight=1;

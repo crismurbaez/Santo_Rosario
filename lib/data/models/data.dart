@@ -142,8 +142,8 @@ static const List<MysteriesMeditations> meditations = [
         mystery: 'luminosos',
       ),
     ];
-    //TODOpara que se pueda cambiar el rosario de acuerdo a la configuración
-    //TODOagregar otra capa donde ponga cada elemeto que va a ser parte del rosario
+    //TODO: para que se pueda cambiar el rosario de acuerdo a la configuración
+    //TODO: agregar otra capa donde ponga cada elemeto que va a ser parte del rosario
      static const rosaryCircleBeadCount = 55;
      static const List<RosaryDetailCircle> rosaryDetailsCircle = [
       RosaryDetailCircle(cuenta: 'medalla', count: 1, order: 1,
