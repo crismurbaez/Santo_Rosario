@@ -80,14 +80,16 @@ Pendiente opcional: tipar también onDrawingError en rosary_painter.dart para el
 
 ### Fase 5 — Lógica de negocio fuera de widgets
 
-- [ ] Implementar `lib/utils/mystery_utils.dart` (o `MysteryForWeekday` según diseño).
-- [ ] Reducir `HomeScreen` a: leer resultado de la utilidad / provider y pintar.
+- [*] Implementar `lib/utils/mystery_utils.dart` (o `MysteryForWeekday` según diseño).
+- [*] Reducir `HomeScreen` a: leer resultado de la utilidad / provider y pintar.
+“Cumplido con utilidad (mystery_utils); provider se aborda en Fase 6.”
 
 ### Fase 6 — Estado global (opcional pero alineado al análisis)
 
-- [ ] Elegir stack: **Provider** (simple), **Riverpod** (testeable), **Bloc** (eventos explícitos).
-- [ ] Crear `mystery_provider` / `rosary_provider` según necesidad real (no antes de necesitarlo).
-- [ ] Registrar en `main.dart` o en el árbol bajo `MaterialApp`.
+- [*] Elegir stack: **Provider** (simple), **Riverpod** (testeable), **Bloc** (eventos explícitos).
+- [*] Crear `mystery_provider` / `rosary_provider` según necesidad real (no antes de necesitarlo).
+- [*] Registrar en `main.dart` o en el árbol bajo `MaterialApp`.
+“Se implementó mystery_provider; rosary_provider se posterga hasta necesidad real.”
 
 ### Fase 7 — Limpieza y datos
 

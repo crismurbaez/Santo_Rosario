@@ -1,12 +1,13 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:santo_rosario/providers/mystery_provider.dart';
 import 'package:santo_rosario/presentations/screens/calendar_screen.dart';
-import 'package:santo_rosario/utils/mystery_utils.dart';
 import 'pray_screen.dart';
 import '../../data/models/data.dart';
 import '../widgets/mystery_list_item.dart';
 import 'package:santo_rosario/constants/app_constants.dart';
 
-class HomeScreen extends StatefulWidget {
+class HomeScreen extends ConsumerStatefulWidget {
   const HomeScreen(
     {super.key, 
     required this.title,
@@ -16,26 +17,22 @@ class HomeScreen extends StatefulWidget {
   final int dateNow;
 
   @override
-  State<HomeScreen> createState() => _HomeScreenState();
+  ConsumerState<HomeScreen> createState() => _HomeScreenState();
 }
 
-class _HomeScreenState extends State<HomeScreen> {
-  int get weekdayNowInt => widget.dateNow;
-  late final String weekdayNow;
-  late String selectedMystery;
+class _HomeScreenState extends ConsumerState<HomeScreen> {
 
   @override
   void initState() {
     super.initState(); 
-
-    weekdayNow = MysteryUtils.weekdayName(weekdayNowInt);
-    selectedMystery = MysteryUtils.mysteryForWeekday(weekdayNowInt);
+    Future.microtask(() {
+      if (!mounted) return;
+      ref.read(mysteryProvider.notifier).initializeFromWeekday(widget.dateNow);
+    });
   }
 
   void _toggleMystery(String mystery, bool value) {
-    setState(() {
-      selectedMystery = value ? mystery : '';
-    });
+    ref.read(mysteryProvider.notifier).toggleMystery(mystery, value);
   }
     void _navigateToCalendar(){
       Navigator.of(context).push(
@@ -45,7 +42,7 @@ class _HomeScreenState extends State<HomeScreen> {
       );
     }
     void _navigateToPray() {
-      final mysteryType = selectedMystery.isNotEmpty ? selectedMystery : null;
+      final mysteryType = ref.read(mysteryProvider.notifier).mysteryToPray;
 
     if (mysteryType != null) {
       Navigator.of(context).push(
@@ -81,6 +78,8 @@ class _HomeScreenState extends State<HomeScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final mysteryState = ref.watch(mysteryProvider);
+
     return Scaffold(
       appBar: AppBar(
         backgroundColor: Theme.of(context).colorScheme.inversePrimary,
@@ -122,7 +121,7 @@ class _HomeScreenState extends State<HomeScreen> {
                               Align(
                                 alignment: Alignment.center,
                                 child: Text(
-                                  'Hoy es $weekdayNow',
+                                  'Hoy es ${mysteryState.weekdayNow}',
                                   style: Theme.of(context).textTheme.displaySmall,
                                   textAlign: TextAlign.left,
                                   softWrap: false,
@@ -155,7 +154,7 @@ class _HomeScreenState extends State<HomeScreen> {
                           title: mystery.title, 
                           subtitle: mystery.subtitle, 
                           imageAsset: mystery.imageAsset, 
-                          value: selectedMystery == mystery.mystery, 
+                          value: mysteryState.selectedMystery == mystery.mystery, 
                           onChanged:(value) => _toggleMystery(mystery.mystery, value),
                         ),
                       ],
