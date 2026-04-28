@@ -66,14 +66,16 @@ Nota: Quedan textos de UI para una futura fase de i18n/AppStrings
 
 - [*] Crear `lib/services/audio_service.dart` (reproducción oraciones + música de fondo, stop/dispose).
 - [*] Crear `lib/services/preferences_service.dart` o capa fina sobre `SharedPreferences` (flags de audio).
-- [ ] Conectar la pantalla del rosario al servicio; mantener misma UX que hoy.
-- [ ] Sustituir `print()` de depuración por `debugPrint` o un logger mínimo.
+- [*] Conectar la pantalla del rosario al servicio; mantener misma UX que hoy.
+- [*] Sustituir `print()` de depuración por `debugPrint` o un logger mínimo.
 
 ### Fase 4 — Errores y UX
 
-- [ ] Sustituir el patrón `_errorMessage != 'Sin Error'` por un modelo claro (enum, sealed class o nullable).
-- [ ] Unificar cómo se muestran errores al usuario (SnackBar, banner, diálogo) según gravedad.
-- [ ] Revisar `PrayerDialog` cuando `meditation == null` (mensaje útil, sin UI rota).
+- [*] Sustituir el patrón `_errorMessage != 'Sin Error'` por un modelo claro (enum, sealed class o nullable).
+- [*] Unificar cómo se muestran errores al usuario (SnackBar, banner, diálogo) según gravedad.
+- [*] Revisar `PrayerDialog` cuando `meditation == null` (mensaje útil, sin UI rota).
+Nota: El modelo tipado se implementó en lib/models/app_error.dart y se integró en pray_screen.dart y prayer_dialog.dart.
+Pendiente opcional: tipar también onDrawingError en rosary_painter.dart para eliminar strings técnicos en callbacks.
 
 ### Fase 5 — Lógica de negocio fuera de widgets
 

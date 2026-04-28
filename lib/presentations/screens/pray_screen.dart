@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:just_audio/just_audio.dart';
 import 'package:santo_rosario/constants/app_constants.dart';
+import 'package:santo_rosario/models/app_error.dart';
 import 'package:santo_rosario/services/audio_service.dart';
 import 'package:santo_rosario/services/preferences_service.dart';
 import '../../data/models/data.dart'; 
@@ -48,7 +49,7 @@ class _PrayScreenState extends State<PrayScreen> {
   
   
   late String message;
-  late String _errorMessage = AppSentinels.noError;
+  AppError? _currentError;
 
   bool _isBatterySaverActive = false; // Variable para controlar el wakelock
 
@@ -134,7 +135,14 @@ class _PrayScreenState extends State<PrayScreen> {
         if (_isExpectedAudioInterruption(e)) {
           return;
         }
-        _errorMessage = '❌ Error cargando música de fondo: $e';
+        _reportError(
+          AppError(
+            kind: ErrorKind.audio,
+            severity: ErrorSeverity.warning,
+            userMessage: 'No se pudo iniciar la música de fondo.',
+            technicalMessage: e.toString(),
+          ),
+        );
       }
     }
 
@@ -170,7 +178,14 @@ class _PrayScreenState extends State<PrayScreen> {
         if (_isExpectedAudioInterruption(e)) {
           return;
         }
-        _errorMessage = '❌ Error cargando sonido de oración: $e';  
+        _reportError(
+          AppError(
+            kind: ErrorKind.audio,
+            severity: ErrorSeverity.warning,
+            userMessage: 'No se pudo reproducir el audio de la oración actual.',
+            technicalMessage: e.toString(),
+          ),
+        );
       }
     }
 
@@ -189,6 +204,23 @@ class _PrayScreenState extends State<PrayScreen> {
       final text = error.toString().toLowerCase();
       return text.contains('loading interrupted') ||
           text.contains('playerinterruptedexception');
+    }
+
+    void _reportError(AppError error) {
+      if (!mounted) return;
+      setState(() {
+        _currentError = error;
+      });
+      if (error.severity != ErrorSeverity.error) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(error.userMessage)),
+        );
+      }
+      if (error.technicalMessage != null) {
+        debugPrint(
+          '[${error.kind.name}:${error.severity.name}] ${error.technicalMessage}',
+        );
+      }
     }
 
     void playPause() {
@@ -351,7 +383,15 @@ class _PrayScreenState extends State<PrayScreen> {
         final ui.FrameInfo frameInfo = await codec.getNextFrame();
         images[key] = frameInfo.image;
       } catch (e) {
-        _errorMessage='❌ Error cargando imagen: $key desde $assetPath - Error: $e';
+        _reportError(
+          AppError(
+            kind: ErrorKind.image,
+            severity: ErrorSeverity.error,
+            userMessage: 'No se pudo cargar una imagen necesaria del rosario.',
+            technicalMessage:
+                'Error cargando imagen: $key desde $assetPath - $e',
+          ),
+        );
       }
     }
 
@@ -361,10 +401,14 @@ class _PrayScreenState extends State<PrayScreen> {
   }
 
   void _handleDrawingError(String message) {
-  setState(() {
-    _errorMessage = message;
-  });
-  debugPrint(message); // Para depuración
+  _reportError(
+    AppError(
+      kind: ErrorKind.ui,
+      severity: ErrorSeverity.warning,
+      userMessage: 'Hubo un problema visual al dibujar el rosario.',
+      technicalMessage: message,
+    ),
+  );
   }
   
   @override
@@ -568,7 +612,7 @@ class _PrayScreenState extends State<PrayScreen> {
                                       prayer: _currentPrayers[_orderPrayer], 
                                       mystery: widget.mystery,
                                       currentMysteryOrder:_orderMystery, 
-                                      errorMessage: _errorMessage,
+                                      errorMessage: _currentError?.userMessage ?? '',
                                     );
                                   },
                                 );
@@ -588,7 +632,7 @@ class _PrayScreenState extends State<PrayScreen> {
               ),
             ),
          // Muestra el mensaje de error si existe
-         if (_errorMessage != AppSentinels.noError)
+         if (_currentError != null && _currentError!.severity == ErrorSeverity.error)
           Positioned(
             top: AppLayout.errorBannerInset,
             left: AppLayout.errorBannerInset,
@@ -596,7 +640,7 @@ class _PrayScreenState extends State<PrayScreen> {
             child: AlertDialog(
               backgroundColor: AppColors.colorBackgroundDialogError,
               content: Text(
-                _errorMessage,
+                _currentError!.userMessage,
                 style: const TextStyle(color: Colors.white),
               ),
             ),

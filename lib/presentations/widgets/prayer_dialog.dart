@@ -47,7 +47,7 @@ class PrayerDialog extends StatelessWidget {
                     fontSize: 20,
                   ),
             )
-          : Text(meditation==null ?  'Error' : meditation.meditation,
+          : Text(meditation == null ? 'Meditación no disponible' : meditation.meditation,
               textAlign: TextAlign.center,
               style: Theme.of(context).textTheme.headlineSmall?.copyWith(
                     color: const Color.fromARGB(255, 228, 207, 143), // Color de texto claro
@@ -68,8 +68,16 @@ class PrayerDialog extends StatelessWidget {
           ) : SingleChildScrollView(
                 child: Column(
                   children: [
-                    meditation==null ? Text('ERROR ❌:' )//const SizedBox.shrink() // Si meditation es null, no mostramos la imagen
-                        :
+                    if (meditation == null)
+                      Text(
+                        'No pudimos cargar esta meditación en este momento.\nPuedes continuar con la siguiente cuenta.',
+                        textAlign: TextAlign.center,
+                        style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                              color: Colors.white,
+                              fontSize: 16,
+                            ),
+                      )
+                    else
                     // Si meditation no es null, mostramos la imagen
                     Image.asset(meditation.image, 
                       height: 300, // Ajusta la altura de la imagen
@@ -78,7 +86,12 @@ class PrayerDialog extends StatelessWidget {
                     ),
                     Padding(
                       padding: const EdgeInsets.all(8.0),
-                      child: Text(meditation==null ? errorMessage : meditation.scriptural,
+                      child: Text(
+                      meditation == null
+                          ? (errorMessage.isEmpty
+                              ? 'Intenta nuevamente en unos segundos.'
+                              : errorMessage)
+                          : meditation.scriptural,
                       textAlign: TextAlign.center,
                       style: Theme.of(context).textTheme.headlineSmall?.copyWith(
                             color: Colors.white, // Color de texto claro
