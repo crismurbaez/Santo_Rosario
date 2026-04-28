@@ -55,13 +55,17 @@ Este documento traduce las recomendaciones de [analisis-estructura-proyecto.md](
 ### Fase 2 — Constantes
 
 - [*] Crear `lib/constants/app_constants.dart`.
-- [ ] Mover delays, porcentajes de layout, duraciones de transición, etc.
-- [ ] Sustituir literales en pantalla del rosario y, si aplica, en `home_screen`.
+- [*] Mover delays, porcentajes de layout, duraciones de transición, etc.
+- [*] Sustituir literales en pantalla del rosario y, si aplica, en `home_screen`.
+Nota: Quedan textos de UI para una futura fase de i18n/AppStrings 
+      ('Misterios del ${widget.title}'
+      'Hoy es $weekdayNow'
+      'Comenzar'), sin impacto funcional.
 
 ### Fase 3 — Audio y preferencias
 
-- [ ] Crear `lib/services/audio_service.dart` (reproducción oraciones + música de fondo, stop/dispose).
-- [ ] Crear `lib/services/preferences_service.dart` o capa fina sobre `SharedPreferences` (flags de audio).
+- [*] Crear `lib/services/audio_service.dart` (reproducción oraciones + música de fondo, stop/dispose).
+- [*] Crear `lib/services/preferences_service.dart` o capa fina sobre `SharedPreferences` (flags de audio).
 - [ ] Conectar la pantalla del rosario al servicio; mantener misma UX que hoy.
 - [ ] Sustituir `print()` de depuración por `debugPrint` o un logger mínimo.
 

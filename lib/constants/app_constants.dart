@@ -70,3 +70,33 @@ abstract class AppRosaryMapKeys {
 }
 
 
+//String de home_screen.dart
+abstract class AppHomeLayout {
+  static const appBarToolbarHeight = 50.0;
+  static const minHeightOffset = 130.0;
+  static const horizontalPadding = 20.0;
+  static const startButtonFontSize = 20.0;
+  static const transitionDuration = Duration(milliseconds: 500);
+}
+
+abstract class AppHomeColors {
+  static const startButtonBackground = Color.fromRGBO(255, 192, 121, 1);
+  static const startButtonForeground = Color.fromRGBO(0, 0, 0, 1);
+}
+
+abstract class AppMysteryTypes {
+  static const gozosos = 'gozosos';
+  static const dolorosos = 'dolorosos';
+  static const gloriosos = 'gloriosos';
+  static const luminosos = 'luminosos';
+}
+
+abstract class AppWeekdays {
+  static const lunes = 'Lunes';
+  static const martes = 'Martes';
+  static const miercoles = 'Miércoles';
+  static const jueves = 'Jueves';
+  static const viernes = 'Viernes';
+  static const sabado = 'Sábado';
+  static const domingo = 'Domingo';
+}

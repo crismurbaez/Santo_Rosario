@@ -3,6 +3,7 @@ import 'package:santo_rosario/presentations/screens/calendar_screen.dart';
 import 'pray_screen.dart';
 import '../../data/models/data.dart';
 import '../widgets/mystery_list_item.dart';
+import 'package:santo_rosario/constants/app_constants.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen(
@@ -36,35 +37,35 @@ class _HomeScreenState extends State<HomeScreen> {
 
     switch(weekdayNowInt) {
       case 1:
-        weekdayNow='Lunes';
+        weekdayNow=AppWeekdays.lunes;
         gozoso = true;
         break;
       case 2:
-        weekdayNow='Martes';
+        weekdayNow=AppWeekdays.martes;
         doloroso = true;
         break;
       case 3:
-        weekdayNow='Miércoles';
+        weekdayNow=AppWeekdays.miercoles;
         glorioso = true;
         break;
       case 4:
-        weekdayNow='Jueves';
+        weekdayNow=AppWeekdays.jueves;
         luminoso = true;
         break;
       case 5:
-        weekdayNow='Viernes';
+        weekdayNow=AppWeekdays.viernes;
         doloroso = true;
         break;
       case 6:
-        weekdayNow='Sábado';
+        weekdayNow=AppWeekdays.sabado;
         gozoso = true;
         break;
       case 7:
-        weekdayNow='Domingo';
+        weekdayNow=AppWeekdays.domingo;
         glorioso = true;
         break;
       default:
-        weekdayNow='Lunes';
+        weekdayNow=AppWeekdays.lunes;
         gozoso = true;
       break;
 
@@ -73,10 +74,10 @@ class _HomeScreenState extends State<HomeScreen> {
 
   void _toggleMystery(String mystery, bool value) {
     setState(() {
-      gozoso = mystery == 'gozosos' ? value : false;
-      doloroso = mystery == 'dolorosos' ? value : false;
-      luminoso = mystery == 'luminosos' ? value : false;
-      glorioso = mystery == 'gloriosos' ? value : false;
+      gozoso = mystery == AppMysteryTypes.gozosos ? value : false;
+      doloroso = mystery == AppMysteryTypes.dolorosos ? value : false;
+      luminoso = mystery == AppMysteryTypes.luminosos ? value : false;
+      glorioso = mystery == AppMysteryTypes.gloriosos ? value : false;
     });
   }
     void _navigateToCalendar(){
@@ -89,13 +90,13 @@ class _HomeScreenState extends State<HomeScreen> {
     void _navigateToPray() {
       String? mysteryType;
       if (gozoso) {
-        mysteryType = 'gozosos';
+        mysteryType = AppMysteryTypes.gozosos;
       } else if (glorioso) {
-        mysteryType = 'gloriosos';
+        mysteryType = AppMysteryTypes.gloriosos;
       } else if (doloroso) {
-        mysteryType = 'dolorosos';
+        mysteryType = AppMysteryTypes.dolorosos;
       } else if (luminoso) {
-        mysteryType = 'luminosos';
+        mysteryType = AppMysteryTypes.luminosos;
     }
 
     if (mysteryType != null) {
@@ -124,7 +125,7 @@ class _HomeScreenState extends State<HomeScreen> {
             //   child: child,
             // );
           },
-          transitionDuration: const Duration(milliseconds: 500), // Adjust duration as needed
+          transitionDuration: AppHomeLayout.transitionDuration, // Adjust duration as needed
         ),
       );
     }
@@ -132,13 +133,13 @@ class _HomeScreenState extends State<HomeScreen> {
 
     bool _getMysteryValue(String key) {
     switch (key) {
-      case 'gozosos':
+      case AppMysteryTypes.gozosos:
         return gozoso;
-      case 'gloriosos':
+      case AppMysteryTypes.gloriosos:
         return glorioso;
-      case 'dolorosos':
+      case AppMysteryTypes.dolorosos:
         return doloroso;
-      case 'luminosos':
+      case AppMysteryTypes.luminosos:
         return luminoso;
       default:
         return gozoso; 
@@ -150,7 +151,7 @@ class _HomeScreenState extends State<HomeScreen> {
     return Scaffold(
       appBar: AppBar(
         backgroundColor: Theme.of(context).colorScheme.inversePrimary,
-        toolbarHeight: 50.0,
+        toolbarHeight: AppHomeLayout.appBarToolbarHeight,
         title:  Column(
                   crossAxisAlignment: CrossAxisAlignment.start,// Alinea el texto a la izquierda
                   children: [
@@ -171,13 +172,13 @@ class _HomeScreenState extends State<HomeScreen> {
         decoration: BoxDecoration(color: Theme.of(context).colorScheme.inversePrimary),
         child: SingleChildScrollView(
           child: ConstrainedBox(
-            constraints: BoxConstraints(minHeight: MediaQuery.of(context).size.height - 130.0),
+            constraints: BoxConstraints(minHeight: MediaQuery.of(context).size.height - AppHomeLayout.minHeightOffset),
             child: IntrinsicHeight( // <--- Importante para que Column sepa su "altura ideal"
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.spaceAround,
                 children: <Widget>[
                   Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 20.0),
+                    padding: const EdgeInsets.symmetric(horizontal: AppHomeLayout.horizontalPadding),
                     child: Align(
                           alignment: Alignment.topLeft,
                           child: Column(
@@ -237,15 +238,15 @@ class _HomeScreenState extends State<HomeScreen> {
         color: Theme.of(context).colorScheme.inversePrimary,
             child: ElevatedButton(
               style: ElevatedButton.styleFrom(
-                backgroundColor: const Color.fromRGBO(255, 192, 121, 1),
-                foregroundColor: const Color.fromRGBO(0, 0, 0, 1),
+                backgroundColor: AppHomeColors.startButtonBackground,
+                foregroundColor: AppHomeColors.startButtonForeground,
               ),
               onPressed: _navigateToPray,
               child: const Text(
                 'Comenzar',
                 style: TextStyle(
-                  color: Color.fromRGBO(0, 0, 0, 1),
-                  fontSize: 20.0,
+                  color: AppHomeColors.startButtonForeground,
+                  fontSize: AppHomeLayout.startButtonFontSize,
                   fontWeight: FontWeight.bold,
                 ),
               ),
