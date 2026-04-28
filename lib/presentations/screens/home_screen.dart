@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:santo_rosario/presentations/screens/calendar_screen.dart';
+import 'package:santo_rosario/utils/mystery_utils.dart';
 import 'pray_screen.dart';
 import '../../data/models/data.dart';
 import '../widgets/mystery_list_item.dart';
@@ -19,65 +20,21 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
-  bool gozoso = false;
-  bool doloroso = false;
-  bool luminoso = false;
-  bool glorioso = false;
-
-  
-  
-
   int get weekdayNowInt => widget.dateNow;
   late final String weekdayNow;
+  late String selectedMystery;
 
   @override
   void initState() {
     super.initState(); 
 
-
-    switch(weekdayNowInt) {
-      case 1:
-        weekdayNow=AppWeekdays.lunes;
-        gozoso = true;
-        break;
-      case 2:
-        weekdayNow=AppWeekdays.martes;
-        doloroso = true;
-        break;
-      case 3:
-        weekdayNow=AppWeekdays.miercoles;
-        glorioso = true;
-        break;
-      case 4:
-        weekdayNow=AppWeekdays.jueves;
-        luminoso = true;
-        break;
-      case 5:
-        weekdayNow=AppWeekdays.viernes;
-        doloroso = true;
-        break;
-      case 6:
-        weekdayNow=AppWeekdays.sabado;
-        gozoso = true;
-        break;
-      case 7:
-        weekdayNow=AppWeekdays.domingo;
-        glorioso = true;
-        break;
-      default:
-        weekdayNow=AppWeekdays.lunes;
-        gozoso = true;
-      break;
-
-    }
+    weekdayNow = MysteryUtils.weekdayName(weekdayNowInt);
+    selectedMystery = MysteryUtils.mysteryForWeekday(weekdayNowInt);
   }
 
   void _toggleMystery(String mystery, bool value) {
     setState(() {
-      gozoso = mystery == AppMysteryTypes.gozosos ? value : false;
-      doloroso = mystery == AppMysteryTypes.dolorosos ? value : false;
-      luminoso = mystery == AppMysteryTypes.luminosos ? value : false;
-      glorioso = mystery == AppMysteryTypes.gloriosos ? value : false;
+      selectedMystery = value ? mystery : '';
     });
   }
     void _navigateToCalendar(){
@@ -88,16 +45,7 @@ class _HomeScreenState extends State<HomeScreen> {
       );
     }
     void _navigateToPray() {
-      String? mysteryType;
-      if (gozoso) {
-        mysteryType = AppMysteryTypes.gozosos;
-      } else if (glorioso) {
-        mysteryType = AppMysteryTypes.gloriosos;
-      } else if (doloroso) {
-        mysteryType = AppMysteryTypes.dolorosos;
-      } else if (luminoso) {
-        mysteryType = AppMysteryTypes.luminosos;
-    }
+      final mysteryType = selectedMystery.isNotEmpty ? selectedMystery : null;
 
     if (mysteryType != null) {
       Navigator.of(context).push(
@@ -128,21 +76,6 @@ class _HomeScreenState extends State<HomeScreen> {
           transitionDuration: AppHomeLayout.transitionDuration, // Adjust duration as needed
         ),
       );
-    }
-  }
-
-    bool _getMysteryValue(String key) {
-    switch (key) {
-      case AppMysteryTypes.gozosos:
-        return gozoso;
-      case AppMysteryTypes.gloriosos:
-        return glorioso;
-      case AppMysteryTypes.dolorosos:
-        return doloroso;
-      case AppMysteryTypes.luminosos:
-        return luminoso;
-      default:
-        return gozoso; 
     }
   }
 
@@ -222,7 +155,7 @@ class _HomeScreenState extends State<HomeScreen> {
                           title: mystery.title, 
                           subtitle: mystery.subtitle, 
                           imageAsset: mystery.imageAsset, 
-                          value: _getMysteryValue(mystery.mystery), 
+                          value: selectedMystery == mystery.mystery, 
                           onChanged:(value) => _toggleMystery(mystery.mystery, value),
                         ),
                       ],

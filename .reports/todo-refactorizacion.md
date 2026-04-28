@@ -74,6 +74,7 @@ Nota: Quedan textos de UI para una futura fase de i18n/AppStrings
 - [*] Sustituir el patrón `_errorMessage != 'Sin Error'` por un modelo claro (enum, sealed class o nullable).
 - [*] Unificar cómo se muestran errores al usuario (SnackBar, banner, diálogo) según gravedad.
 - [*] Revisar `PrayerDialog` cuando `meditation == null` (mensaje útil, sin UI rota).
+- Se mejoró la modal con la cual se muestran los errores al usuario final.
 Nota: El modelo tipado se implementó en lib/models/app_error.dart y se integró en pray_screen.dart y prayer_dialog.dart.
 Pendiente opcional: tipar también onDrawingError en rosary_painter.dart para eliminar strings técnicos en callbacks.
 

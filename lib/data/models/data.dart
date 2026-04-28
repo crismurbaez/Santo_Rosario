@@ -9,7 +9,7 @@
       'rosa': 'assets/images/rosa.png',
       'medalla': 'assets/images/medalla.png',
       'cruz': 'assets/images/cruz.png',
-      'brillo': 'assets/images/brillos.png',
+      'brillo': 'assets/images/brillo.png',
     };
 
     static const Map<String, String> prayers = {
