@@ -206,6 +206,12 @@ class _PrayScreenState extends State<PrayScreen> {
           text.contains('playerinterruptedexception');
     }
 
+    void _dismissError() {
+      setState(() {
+        _currentError = null;
+      });
+    }
+
     void _reportError(AppError error) {
       if (!mounted) return;
       setState(() {
@@ -631,17 +637,76 @@ class _PrayScreenState extends State<PrayScreen> {
                 ],
               ),
             ),
-         // Muestra el mensaje de error si existe
-         if (_currentError != null && _currentError!.severity == ErrorSeverity.error)
-          Positioned(
+         Positioned(
             top: AppLayout.errorBannerInset,
             left: AppLayout.errorBannerInset,
             right: AppLayout.errorBannerInset,
-            child: AlertDialog(
-              backgroundColor: AppColors.colorBackgroundDialogError,
-              content: Text(
-                _currentError!.userMessage,
-                style: const TextStyle(color: Colors.white),
+            child: IgnorePointer(
+              ignoring: !(_currentError != null &&
+                  _currentError!.severity == ErrorSeverity.error),
+              child: AnimatedSlide(
+                offset: (_currentError != null &&
+                        _currentError!.severity == ErrorSeverity.error)
+                    ? Offset.zero
+                    : const Offset(0, -0.2),
+                duration: const Duration(milliseconds: 220),
+                curve: Curves.easeOut,
+                child: AnimatedOpacity(
+                  opacity: (_currentError != null &&
+                          _currentError!.severity == ErrorSeverity.error)
+                      ? 1
+                      : 0,
+                  duration: const Duration(milliseconds: 180),
+                  curve: Curves.easeOut,
+                  child: Material(
+                    color: Colors.transparent,
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 12,
+                        vertical: 10,
+                      ),
+                      decoration: BoxDecoration(
+                        color: AppColors.colorBackgroundDialogError,
+                        borderRadius: BorderRadius.circular(14),
+                      ),
+                      child: Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Padding(
+                            padding: EdgeInsets.only(top: 2),
+                            child: Icon(
+                              Icons.error_outline,
+                              color: Colors.white,
+                              size: 20,
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: Text(
+                              _currentError?.userMessage ?? '',
+                              style: const TextStyle(color: Colors.white),
+                            ),
+                          ),
+                          IconButton(
+                            visualDensity: VisualDensity.compact,
+                            padding: EdgeInsets.zero,
+                            constraints: const BoxConstraints(
+                              minWidth: 28,
+                              minHeight: 28,
+                            ),
+                            icon: const Icon(
+                              Icons.close,
+                              color: Colors.white,
+                              size: 18,
+                            ),
+                            onPressed: _dismissError,
+                            tooltip: 'Cerrar',
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
               ),
             ),
           ),
