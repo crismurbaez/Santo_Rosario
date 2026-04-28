@@ -1,12 +1,13 @@
 import 'dart:ui' as ui;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:just_audio/just_audio.dart';
 import 'package:santo_rosario/constants/app_constants.dart';
-import 'package:shared_preferences/shared_preferences.dart';
+import 'package:santo_rosario/services/audio_service.dart';
+import 'package:santo_rosario/services/preferences_service.dart';
 import '../../data/models/data.dart'; 
 import '../widgets/rosary_painter.dart';
 import '../widgets/prayer_dialog.dart';
-import 'package:just_audio/just_audio.dart';
 import 'package:wakelock_plus/wakelock_plus.dart';
 import 'package:flutter/scheduler.dart';
 
@@ -37,12 +38,13 @@ class _PrayScreenState extends State<PrayScreen> {
   
   Map<String, String> rosaryprayersSounds = Data.prayersSounds;
   late String prayerSound;
-  final player = AudioPlayer();
-  final playerBackground = AudioPlayer();
+  final _audioService = AudioService();
+  final _preferencesService = PreferencesService();
   bool _isplaying = false; //variable para controlar el audio
   bool _isBackgroundMusicPlaying = true; // Nuevo: controla si la música de fondo está activa
   bool _isPrayersAudioPlaying = true; // Nuevo: controla si el audio de las oraciones está activo
   bool _isIncrementingInProgress = false; //evita que se incremente dos veces al completar el audio automáticamente
+  int _audioRequestId = 0; // Evita errores por carreras al tocar muy rapido.
   
   
   late String message;
@@ -59,7 +61,7 @@ class _PrayScreenState extends State<PrayScreen> {
     _loadAllImages(); // Inicia la carga de todas las imágenes  
 
     // Configura un listener que detecta cuando termina la reproducción
-    player.playerStateStream.listen((playerState) {
+    _audioService.prayerPlayerStateStream.listen((playerState) {
       if (playerState.processingState == ProcessingState.completed) {
         if (!_isIncrementingInProgress) {
         // Se adelanta una oración cuando el audio termina
@@ -85,28 +87,24 @@ class _PrayScreenState extends State<PrayScreen> {
     // Limpia los recursos del reproductor cuando el widget se desecha y el bloqueo de pantalla se desactiva
     @override
     void dispose() {
-      player.stop();
-      player.dispose();
-      playerBackground.stop();
-      playerBackground.dispose();
+      _audioService.dispose();
       WakelockPlus.disable(); // Desactiva el wakelock (pantalla se apagará)
       super.dispose();
     }
 
     Future<void> _loadPrefs() async {
-      final prefs = await SharedPreferences.getInstance();
+      final prayersAudioPlaying = await _preferencesService.getPrayerAudioPlaying();
+      final backgroundMusicPlaying =
+          await _preferencesService.getBackgroundMusicPlaying();
       setState(() {
-        _isPrayersAudioPlaying = prefs.getBool(AppPreferencesKeys.prayersAudioPlaying) ?? true;
-        _isBackgroundMusicPlaying = prefs.getBool(AppPreferencesKeys.backgroundMusicPlaying) ?? true;
+        _isPrayersAudioPlaying = prayersAudioPlaying;
+        _isBackgroundMusicPlaying = backgroundMusicPlaying;
       });
     }
 
     Future<void> _savePrefs() async {
-      final prefs = await SharedPreferences.getInstance();
-      setState(() {
-        prefs.setBool(AppPreferencesKeys.prayersAudioPlaying, _isPrayersAudioPlaying);
-        prefs.setBool(AppPreferencesKeys.backgroundMusicPlaying, _isBackgroundMusicPlaying);
-      });
+      await _preferencesService.setPrayerAudioPlaying(_isPrayersAudioPlaying);
+      await _preferencesService.setBackgroundMusicPlaying(_isBackgroundMusicPlaying);
     }
 
     // Activa o desactiva el wakelock según la variable _isBatterySaverActive
@@ -131,21 +129,25 @@ class _PrayScreenState extends State<PrayScreen> {
       if (!_isBackgroundMusicPlaying) return; // Si la música de fondo no está activa, salimos
 
       try {
-        await playerBackground.setAsset(AppAssets.soundAveMariaBackground); 
-        await playerBackground.setLoopMode(LoopMode.all); // Repetir la canción en bucle
-        await playerBackground.setVolume(AppAudio.backgroundMusicVolume); // volumen de la música de fondo 
-        playerBackground.play();
+        await _audioService.playBackgroundMusic();
       } catch (e) {
+        if (_isExpectedAudioInterruption(e)) {
+          return;
+        }
         _errorMessage = '❌ Error cargando música de fondo: $e';
       }
     }
 
     void initAudio() async {
       if (!_isPrayersAudioPlaying) return; // Si el audio de las oraciones no está activo, salimos
+      final requestId = ++_audioRequestId;
       // Introduce un pequeño retraso
       // Esto le da tiempo al reproductor para finalizar cualquier proceso interno
       await Future.delayed(AppDelays.delayAudio);
       try {
+        if (requestId != _audioRequestId || !_isplaying) {
+          return;
+        }
         if (rosaryprayersSounds[_currentPrayers[_orderPrayer]] != null) {
           prayerSound = rosaryprayersSounds[_currentPrayers[_orderPrayer]]!;
         }
@@ -156,32 +158,37 @@ class _PrayScreenState extends State<PrayScreen> {
         }
 
         if (_isplaying) {
-          //Desactiva la reproducción anterior y libera los recursos antes de reproducir el siguiente
-          await player.stop();
-          //Carga el asset del sonido
-          await player.setAsset(prayerSound);
           //retraso de 15 segundos si el sonido es 'Señal de la Cruz' y la música de fondo está activa
           prayerSound == AppAssets.soundSignalOfTheCross && _isBackgroundMusicPlaying?
           await Future.delayed(AppDelays.delayMusic)
           : null;
-          // Activa la reproducción
-          player.play();
+          await _audioService.playPrayer(prayerSound);
           
           _isIncrementingInProgress = false;
         }
       } catch (e) {
+        if (_isExpectedAudioInterruption(e)) {
+          return;
+        }
         _errorMessage = '❌ Error cargando sonido de oración: $e';  
       }
     }
 
     void stopAudioBackground() async {
-      await playerBackground.stop();
+      await _audioService.stopBackgroundMusic();
       await Future.delayed(AppDelays.delayAudio);
     }
 
     void stopAudio() async {
-      await player.stop();
+      _audioRequestId++;
+      await _audioService.stopPrayer();
       await Future.delayed(AppDelays.delayAudio);
+    }
+
+    bool _isExpectedAudioInterruption(Object error) {
+      final text = error.toString().toLowerCase();
+      return text.contains('loading interrupted') ||
+          text.contains('playerinterruptedexception');
     }
 
     void playPause() {
@@ -242,7 +249,7 @@ class _PrayScreenState extends State<PrayScreen> {
         if (_isBackgroundMusicPlaying && _isplaying) {
           _loadBackgroundMusic(); // Si se activa, la carga y reproduce
         } else {
-          playerBackground.stop(); // Si se desactiva, la detiene
+          _audioService.stopBackgroundMusic(); // Si se desactiva, la detiene
         }
       });
       _showAudioStatusSnackBar();
@@ -256,7 +263,7 @@ class _PrayScreenState extends State<PrayScreen> {
         if (_isPrayersAudioPlaying && _isplaying) { // Si se activa y el audio principal está encendido
           initAudio(); // Reproduce la oración actual
         } else {
-          player.stop(); // Si se desactiva, detiene el audio de la oración
+          _audioService.stopPrayer(); // Si se desactiva, detiene el audio de la oración
         }
       });
       _showAudioStatusSnackBar();
@@ -357,7 +364,7 @@ class _PrayScreenState extends State<PrayScreen> {
   setState(() {
     _errorMessage = message;
   });
-  print(message); // Para depuración
+  debugPrint(message); // Para depuración
   }
   
   @override
