@@ -1,6 +1,36 @@
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
+import 'package:santo_rosario/constants/app_constants.dart';
 import 'presentations/screens/home_screen.dart';
 import 'presentations/screens/pray_screen.dart';
+
+/// Títulos: serif tipo mock (Playfair). Cuerpo / subtítulos: Poppins local.
+TextTheme _appTextTheme() {
+  return TextTheme(
+    displayLarge: GoogleFonts.playfairDisplay(
+      fontSize: 22,
+      height: 1.12,
+      fontWeight: FontWeight.w700,
+      letterSpacing: -0.35,
+      color: AppHomeColors.titleText,
+    ),
+    displayMedium: GoogleFonts.playfairDisplay(
+      fontSize: 16,
+      height: 1.2,
+      fontWeight: FontWeight.w700,
+      letterSpacing: -0.2,
+      color: AppHomeColors.titleText,
+    ),
+    displaySmall: const TextStyle(
+      fontFamily: 'Poppins',
+      fontSize: 13,
+      height: 1.4,
+      fontWeight: FontWeight.w400,
+      letterSpacing: 0.1,
+      color: AppHomeColors.subtitleText,
+    ),
+  );
+}
 
 class SantoRosarioApp extends StatelessWidget {
   const SantoRosarioApp({super.key});
@@ -13,23 +43,7 @@ class SantoRosarioApp extends StatelessWidget {
         colorScheme: ColorScheme.fromSeed(seedColor: const Color(0x88BBC9D9)),
         useMaterial3: true,
         fontFamily: 'Poppins',
-        textTheme: const TextTheme(
-          displayLarge: TextStyle(
-            fontSize: 20,
-            fontWeight: FontWeight.w700,
-            color: Color(0xFF242C3B),
-          ),
-          displayMedium: TextStyle(
-            fontSize: 15,
-            fontWeight: FontWeight.w600,
-            color: Color(0xFF242C3B),
-          ),
-          displaySmall: TextStyle(
-            fontSize: 13,
-            fontWeight: FontWeight.w500,
-            color: Color.fromRGBO(10, 101, 172, 1),
-          ),
-        ),
+        textTheme: _appTextTheme(),
       ),
       home: HomeScreen(
         title: 'Santo Rosario',
