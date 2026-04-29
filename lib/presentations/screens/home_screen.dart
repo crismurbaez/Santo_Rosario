@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:google_fonts/google_fonts.dart';
 import 'package:santo_rosario/providers/mystery_provider.dart';
 import 'package:santo_rosario/presentations/screens/calendar_screen.dart';
 import 'pray_screen.dart';
@@ -307,7 +306,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                 child: Center(
                   child: Text(
                     'Comenzar',
-                    style: GoogleFonts.poppins(
+                    style: TextStyle(
+                      fontFamily: 'Poppins',
                       color: AppHomeColors.startButtonForeground,
                       fontSize: AppHomeLayout.startButtonFontSize,
                       fontWeight: FontWeight.w700,
