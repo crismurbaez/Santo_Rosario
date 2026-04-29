@@ -260,8 +260,8 @@ class CuentasPainter extends CustomPainter {
               imageHeight = imageHeightBasic * 0.7; 
             }
             if (cuentaWidth == AppRosarySizes.large) {
-              imageWidth = imageWidthLarge * 0.4; 
-              imageHeight = imageHeightLarge * 0.4;
+              imageWidth = imageWidthLarge * 0.8; 
+              imageHeight = imageHeightLarge * 1.2;
             }
             if (cuentaWidth == AppRosarySizes.largest) {
               imageWidth = imageWidthLargest * 0.3;
