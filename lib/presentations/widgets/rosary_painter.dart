@@ -69,10 +69,10 @@ class CuentasPainter extends CustomPainter {
         radius = min((size.width / 2),((size.height - cuentasAdicionales) / 2)); 
         imageWidthBasic = radius * 0.20;
         imageHeightBasic = radius * 0.20;
-        imageWidthLarge = radius * 0.60;
-        imageHeightLarge = radius * 0.60;
-        imageWidthLargest = radius * 0.90;
-        imageHeightLargest = radius * 0.90;
+        imageWidthLarge = radius * 0.50;
+        imageHeightLarge = radius * 0.50;
+        imageWidthLargest = radius * 0.80;
+        imageHeightLargest = radius * 0.80;
         cuentasAdicionales = 5 * imageHeightBasic;
         center = Offset(center.dx, center.dy - cuentasAdicionales);
         //la extensión se dibuja debajo del rosario
@@ -128,7 +128,7 @@ class CuentasPainter extends CustomPainter {
             if (currentCuentaName == AppRosaryAccounts.medalla) { //TODOhacer más universal, cómo marcar como inicio****************
               cuentaCenter = Offset(
                 center.dx + cos(angle) * radius, //posición en x
-                center.dy + (sin(angle) * radius) + imageHeightBasic * 0.8, //posición en y se traslada un poco hacia abajo
+                center.dy + (sin(angle) * radius) + imageHeightBasic, //posición en y se traslada un poco hacia abajo
               );
               //se guarda la ubicación de la medalla para dibujar la extensión
               medallaCenter = cuentaCenter;
@@ -166,7 +166,7 @@ class CuentasPainter extends CustomPainter {
       //desplazamiento inicial de la extensión a partir de la ubicación de la medalla
       Offset cuentaCenter = Offset(
                 medallaCenter.dx, //posición en x
-                medallaCenter.dy + imageWidthBasic, //posición en y
+                medallaCenter.dy + imageWidthBasic * 1.16, //posición en y
               );
             
       List<dynamic> rosaryElementsExtension = Data.rosaryDetailsExtension.expand((detail) {
@@ -198,8 +198,8 @@ class CuentasPainter extends CustomPainter {
               imageWidth = imageWidthLargest;
               imageHeight = imageHeightLargest;
               cuentaCenter = Offset(
-                cuentaCenter.dx + imageWidthBasic * 0.1, //posición en x
-                cuentaCenter.dy + imageHeight * 0.45, //posición en y
+                cuentaCenter.dx, //posición en x
+                cuentaCenter.dy + imageHeight * 0.57, //posición en y
               );
             }
 

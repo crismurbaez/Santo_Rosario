@@ -16,7 +16,7 @@ abstract class AppDelays {
 abstract class AppAssets {
   static const soundAveMariaBackground = 'assets/sounds/Ave_Maria_Background.mp3';
   static const soundSignalOfTheCross = 'assets/sounds/Senal_de_la_cruz.mp3';
-  static const imageVirgenLourdes = 'assets/images/VirgenLourdes.jpg';
+  static const imageVirgenLourdes = 'assets/images/VirgenLourdes.png';
 }
 
 abstract class AppAudio {
