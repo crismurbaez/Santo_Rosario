@@ -711,7 +711,8 @@ class _PrayScreenState extends State<PrayScreen> {
                           trailing: const Icon(
                             Icons.info_outline,
                             size: AppLayout.infoIconSize,
-                            color: AppPrayGlass.onGlassText,
+                            // Mismo color que el texto del botón inferior.
+                            color: AppColors.colorCircularProgressIndicator,
                           ),
                         );
                       },
@@ -978,8 +979,9 @@ Widget _prayGlassPillButton({
   const TextStyle pillTextStyle = TextStyle(
     fontFamily: 'PlayfairDisplay',
     fontSize: 17,
-    fontWeight: FontWeight.w600,
-    color: AppPrayGlass.onGlassText,
+    fontWeight: FontWeight.w700,
+    // Mismo dorado del título en PrayerDialog para mantener coherencia visual.
+    color: AppColors.colorCircularProgressIndicator,
   );
 
   final Widget row = width != null
@@ -1036,7 +1038,9 @@ Widget _prayGlassPillButton({
           ),
           child: Container(
             width: width != null ? double.infinity : null,
-            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
+            // Igualamos la altura del pill con los botones circulares.
+            height: AppPrayGlass.roundButtonSize,
+            padding: const EdgeInsets.symmetric(horizontal: 24),
             decoration: BoxDecoration(
               borderRadius: BorderRadius.circular(AppPrayGlass.pillRadius),
               color: AppPrayGlass.frostedTint,
