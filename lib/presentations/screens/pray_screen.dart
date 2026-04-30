@@ -53,7 +53,10 @@ class _PrayScreenState extends State<PrayScreen> {
 
   bool _isBatterySaverActive = false; // Variable para controlar el wakelock
 
-
+  /// Clave fijada al botón del menú (☰) para calcular dónde abrir [showMenu]:
+  /// se usa el [RenderBox] del botón y el del [Overlay] y así el panel queda
+  /// alineado bajo el icono (esquina superior derecha del botón).
+  final GlobalKey _prayAudioMenuButtonKey = GlobalKey();
 
   @override
   void initState() {
@@ -416,84 +419,179 @@ class _PrayScreenState extends State<PrayScreen> {
     ),
   );
   }
+
+  /// Menú de audio (música de fondo / audios de oraciones) con estilo glass.
+  ///
+  /// No usamos [PopupMenuButton] aquí porque su superficie Material no deja
+  /// aplicar bien blur + transparencia como el resto de la UI; en su lugar
+  /// [showMenu] con `color: Colors.transparent` y un único ítem deshabilitado
+  /// que contiene el panel personalizado (toques → [Navigator.pop] con un id).
+  Future<void> _showPrayGlassAudioMenu() async {
+    final BuildContext? buttonContext = _prayAudioMenuButtonKey.currentContext;
+    if (buttonContext == null || !buttonContext.mounted) return;
+
+    final RenderBox button =
+        buttonContext.findRenderObject()! as RenderBox;
+    final RenderBox overlay = Overlay.of(buttonContext)
+        .context
+        .findRenderObject()! as RenderBox;
+
+    // Rectángulo del botón en coordenadas del overlay: Flutter coloca el menú
+    // justo debajo de este ancla (comportamiento estándar de [showMenu]).
+    final RelativeRect position = RelativeRect.fromRect(
+      Rect.fromPoints(
+        button.localToGlobal(Offset.zero, ancestor: overlay),
+        button.localToGlobal(
+          button.size.bottomRight(Offset.zero),
+          ancestor: overlay,
+        ),
+      ),
+      Offset.zero & overlay.size,
+    );
+
+    final String? choice = await showMenu<String>(
+      context: context,
+      position: position,
+      // Sin tinte opaco del Material del menú: solo se ve nuestro panel glass.
+      color: Colors.transparent,
+      surfaceTintColor: Colors.transparent,
+      elevation: 0,
+      shadowColor: Colors.transparent,
+      // Nota: en algunas versiones de Flutter [showMenu] no expone [barrierColor];
+      // si la tuya lo permite, puedes añadir p. ej. `barrierColor: Colors.black54`
+      // para atenuar el fondo al abrir el menú.
+      // Solo redondeo aquí; el borde fino va en el panel para coincidir con botones glass.
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(AppPrayGlass.menuBorderRadius),
+      ),
+      items: <PopupMenuEntry<String>>[
+        PopupMenuItem<String>(
+          // El ítem en sí no envía valor al pulsarlo: cada fila hace pop manual.
+          enabled: false,
+          padding: EdgeInsets.zero,
+          // Altura fija: en SDKs donde [height] no admite null, hay que reservar
+          // espacio para las dos filas + divisor (ajústala si cambias paddings).
+          height: 120,
+          child: Builder(
+            builder: (BuildContext menuContext) {
+              return _prayGlassAudioMenuPanel(
+                menuContext: menuContext,
+                isBackgroundMusicPlaying: _isBackgroundMusicPlaying,
+                isPrayersAudioPlaying: _isPrayersAudioPlaying,
+              );
+            },
+          ),
+        ),
+      ],
+    );
+
+    if (!mounted) return;
+    if (choice == 'toggleBackgroundMusic') {
+      _toggleBackgroundMusic();
+    } else if (choice == 'togglePrayersAudio') {
+      _togglePrayersAudio();
+    }
+  }
   
   @override
   Widget build(BuildContext context) {
 
     return Scaffold(
+      // Permite que el [body] (imagen de la Virgen) dibuje detrás del AppBar;
+      // así el blur del flexibleSpace ve el mismo fondo que el resto de la pantalla.
+      extendBodyBehindAppBar: true,
       appBar: AppBar(
-        backgroundColor: Theme.of(context).colorScheme.inversePrimary,
+        // Sin color sólido: el “vidrio” lo pinta [flexibleSpace].
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        scrolledUnderElevation: 0,
         toolbarHeight: AppLayout.appBarToolbarHeight,
-         title: 
-             Column(
-              children: [
-                ListTile(
-                  title: Align(
-                    alignment: Alignment.centerLeft,
-                    child: Text(
-                      'Santo Rosario',
-                      style: Theme.of(context).textTheme.displayLarge,
-                      textAlign: TextAlign.left
-                    ),
-                  ),
-                  subtitle: Align(
-                    alignment: Alignment.centerLeft,
-                    child: Text(
-                      'Misterios ${widget.mystery}',
-                      style: Theme.of(context).textTheme.displaySmall,
-                      textAlign: TextAlign.left,
-                    ),
+        centerTitle: true,
+        // Iconos de estado (batería, hora…) en claro sobre fondo oscuro.
+        systemOverlayStyle: SystemUiOverlayStyle.light,
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back_ios_new, size: 20),
+          color: AppPrayGlass.onGlassText,
+          onPressed: () => Navigator.maybePop(context),
+        ),
+        // Capa bajo los iconos y títulos: blur + degradé + línea inferior.
+        flexibleSpace: ClipRect(
+          // Evita que el blur se “salga” del rectángulo del AppBar.
+          child: BackdropFilter(
+            filter: ui.ImageFilter.blur(
+              sigmaX: AppPrayGlass.blurSigma,
+              sigmaY: AppPrayGlass.blurSigma,
+            ),
+            child: Container(
+              alignment: Alignment.bottomCenter,
+              decoration: BoxDecoration(
+                border: Border(
+                  bottom: BorderSide(
+                    color: AppPrayGlass.borderLight.withValues(alpha: 0.45),
                   ),
                 ),
-              ],
+                gradient: const LinearGradient(
+                  begin: Alignment.topCenter,
+                  end: Alignment.bottomCenter,
+                  colors: [
+                    AppPrayGlass.navBarGradientTop,
+                    AppPrayGlass.navBarGradientBottom,
+                  ],
+                ),
+              ),
+            ),
+          ),
+        ),
+        title: Column(
+          mainAxisSize: MainAxisSize.min,
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Text(
+              'Santo Rosario',
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                fontFamily: 'PlayfairDisplay',
+                fontSize: 20,
+                fontWeight: FontWeight.w700,
+                height: 1.15,
+                color: AppPrayGlass.onGlassText,
+              ),
+            ),
+            const SizedBox(height: 2),
+            Text(
+              'Misterios ${widget.mystery}',
+              textAlign: TextAlign.center,
+              style: const TextStyle(
+                fontFamily: 'Poppins',
+                fontSize: 13,
+                fontWeight: FontWeight.w400,
+                height: 1.2,
+                color: AppPrayGlass.onGlassTextMuted,
+              ),
+            ),
+          ],
         ),
         actions: [
           IconButton(
             icon: Icon(
               _isBatterySaverActive ? Icons.battery_saver : Icons.highlight,
-              color: Theme.of(context).textTheme.displaySmall!.color,
+              color: AppPrayGlass.onGlassText,
             ),
             onPressed: _toggleWakelock, // Cambia el estado del wakelock
             tooltip: _isBatterySaverActive ? 'Activar Ahorro Batería' : 'Pantalla Siempre Encendida',
           ),
-          // Nuevo: Botón de menú de configuración de audio
-          PopupMenuButton<String>(
-            icon: Icon(
-              Icons.menu, // Ícono de configuración
-              color: Theme.of(context).textTheme.displaySmall!.color,
+          IconButton(
+            key: _prayAudioMenuButtonKey,
+            icon: const Icon(
+              Icons.menu,
+              color: AppPrayGlass.onGlassText,
             ),
-            onSelected: (value) {
-              if (value == 'toggleBackgroundMusic') {
-                _toggleBackgroundMusic();
-              } else if (value == 'togglePrayersAudio') {
-                _togglePrayersAudio();
-              }
-            },
-            itemBuilder: (BuildContext context) => <PopupMenuEntry<String>>[
-              PopupMenuItem<String>(
-                value: 'toggleBackgroundMusic',
-                child: Row(
-                  children: [
-                    Icon(_isBackgroundMusicPlaying ? Icons.music_note : Icons.music_off),
-                    const SizedBox(width: 8),
-                    Text(_isBackgroundMusicPlaying ? 'Música de Fondo: ON' : 'Música de Fondo: OFF'),
-                  ],
-                ),
-              ),
-              PopupMenuItem<String>(
-                value: 'togglePrayersAudio',
-                child: Row(
-                  children: [
-                    Icon(_isPrayersAudioPlaying ? Icons.record_voice_over : Icons.volume_mute),
-                    const SizedBox(width: 8),
-                    Text(_isPrayersAudioPlaying ? 'Audios Oraciones: ON' : 'Audios Oraciones: OFF'),
-                  ],
-                ),
-              ),
-            ],
+            tooltip: 'Opciones de audio',
+            onPressed: _showPrayGlassAudioMenu,
           ),
         ],
       ),
+      // Fondo + rosario + controles en capas. El orden importa: lo primero queda detrás.
       body: Stack (
         children: <Widget>[
           Container(
@@ -507,135 +605,121 @@ class _PrayScreenState extends State<PrayScreen> {
                         ),
                       ),
           ),
-          Center(
-            child: LayoutBuilder(
-              builder: (BuildContext context, BoxConstraints constraints) { 
-                // Muestra un indicador de carga si las imágenes aún no se han cargado
-                if (_loadedImages == null) {
-                  return const CircularProgressIndicator(
-                    color: AppColors.colorCircularProgressIndicator, 
-                  );
-                }
-
-                // se obtienen las dimensiones de la pantalla 
-                //y se saca un porcentaje que se considera el margen adaptable a todas las pantallas
-                final double width = AppLayout.rosaryWidthFactor * constraints.maxWidth;
-                final double height = AppLayout.rosaryHeightFactor * constraints.maxHeight;  
-
-                return 
-                SizedBox(
-                  width: width,
-                  height: height,
-                  child: 
-                  CustomPaint(
-                    painter : CuentasPainter(
-                      cuentas: _loadedImages!,
-                      counter: _counter,
-                      rosaryBeadCount: rosaryBeadCount,
-                      rosaryCircleBeadCount: rosaryCircleBeadCount,
-                      onCuentaHighlighted: _handleCuentaHighlighted, 
-                      orderPrayer: _orderPrayer, 
-                      onDrawingError: _handleDrawingError,
-                    )
-                  ),
-                );
-            }),
+          // Reserva espacio bajo el AppBar transparente para que el rosario no quede tapado.
+          Padding(
+            padding: EdgeInsets.only(
+              top: MediaQuery.paddingOf(context).top + AppLayout.appBarToolbarHeight,
             ),
+            child: Center(
+              child: LayoutBuilder(
+                builder: (BuildContext context, BoxConstraints constraints) {
+                  // Muestra un indicador de carga si las imágenes aún no se han cargado
+                  if (_loadedImages == null) {
+                    return const CircularProgressIndicator(
+                      color: AppColors.colorCircularProgressIndicator,
+                    );
+                  }
+
+                  // se obtienen las dimensiones de la pantalla
+                  //y se saca un porcentaje que se considera el margen adaptable a todas las pantallas
+                  final double width =
+                      AppLayout.rosaryWidthFactor * constraints.maxWidth;
+                  final double height =
+                      AppLayout.rosaryHeightFactor * constraints.maxHeight;
+
+                  return SizedBox(
+                    width: width,
+                    height: height,
+                    child: CustomPaint(
+                      painter: CuentasPainter(
+                        cuentas: _loadedImages!,
+                        counter: _counter,
+                        rosaryBeadCount: rosaryBeadCount,
+                        rosaryCircleBeadCount: rosaryCircleBeadCount,
+                        onCuentaHighlighted: _handleCuentaHighlighted,
+                        orderPrayer: _orderPrayer,
+                        onDrawingError: _handleDrawingError,
+                      ),
+                    ),
+                  );
+                },
+              ),
+            ),
+          ),
+            // Controles inferiores: mismo lenguaje visual glass que la AppBar.
             Align(
               alignment: Alignment.bottomCenter,
-              child: Column(
-                mainAxisSize: MainAxisSize.min, // La columna solo ocupa el espacio que necesitan sus hijos
+              child: SafeArea(
+                child: Column(
+                // La columna solo ocupa el espacio que necesitan sus hijos
+                mainAxisSize: MainAxisSize.min,
                 children: [
                   Padding(
                     padding: const EdgeInsets.all(AppLayout.sectionPadding),
-                    child:Row(
+                    child: Row(
                       mainAxisAlignment: MainAxisAlignment.end,
-                      children:[
-                        ElevatedButton(
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: AppColors.colorButtonPrimary,
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: AppLayout.buttonHorizontalPadding,
-                              vertical: AppLayout.buttonVerticalPadding,
-                            ),
-                          ),
+                      children: [
+                        _prayGlassRoundButton(
                           onPressed: playPause,
-                          //se cambia el ícono de acuerdo a si el audio está activado o no
-                          child: Icon(_isplaying ? Icons.volume_up : Icons.volume_off),
+                          child: Icon(
+                            _isplaying ? Icons.volume_up : Icons.volume_off,
+                          ),
                         ),
-                      ]
-                    )
+                      ],
+                    ),
                   ),
                   Padding(
-                        padding: const EdgeInsets.all(AppLayout.sectionPadding),
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children:[
-                            ElevatedButton(
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: AppColors.colorButtonPrimary,
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: AppLayout.buttonHorizontalPadding,
-                                  vertical: AppLayout.buttonVerticalPadding,
-                                ),
-                              ),
-                              onPressed: _decrementCounter,
-                              child: const Icon(Icons.arrow_back),
-                            ),
-                            ElevatedButton(
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: AppColors.colorButtonPrimary,
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: AppLayout.buttonHorizontalPadding,
-                                  vertical: AppLayout.buttonVerticalPadding,
-                                ),
-                              ),
-                              onPressed: _incrementCounter,
-                              child: const Icon(Icons.arrow_forward),
-                            ),
-                          ]
+                    padding: const EdgeInsets.all(AppLayout.sectionPadding),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        _prayGlassRoundButton(
+                          onPressed: _decrementCounter,
+                          child: const Icon(Icons.arrow_back),
                         ),
+                        _prayGlassRoundButton(
+                          onPressed: _incrementCounter,
+                          child: const Icon(Icons.arrow_forward),
+                        ),
+                      ],
+                    ),
                   ),
                   Padding(
-                        padding: const EdgeInsets.all(AppLayout.sectionPadding),
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceAround,
-                          children:[
-                            ElevatedButton(
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: AppColors.colorButtonPrimary,
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: AppLayout.buttonHorizontalPadding,
-                                  vertical: AppLayout.buttonVerticalPadding,
-                                ),
-                              ),
-                              onPressed: () {
-                                // Muestra el diálogo con las oraciones actuales
-                                showDialog(
-                                  context: context,
-                                  builder: (BuildContext dialogContext) {
-                                    return PrayerDialog(
-                                      prayer: _currentPrayers[_orderPrayer], 
-                                      mystery: widget.mystery,
-                                      currentMysteryOrder:_orderMystery, 
-                                      errorMessage: _currentError?.userMessage ?? '',
-                                    );
-                                  },
+                    padding: const EdgeInsets.all(AppLayout.sectionPadding),
+                    // Mismo ancho interior que la fila de flechas: de borde a borde
+                    // de los dos círculos (LayoutBuilder = ancho tras el padding).
+                    child: LayoutBuilder(
+                      builder: (BuildContext context, BoxConstraints constraints) {
+                        return _prayGlassPillButton(
+                          width: constraints.maxWidth,
+                          label: _currentPrayers[_orderPrayer],
+                          onPressed: () {
+                            // Muestra el diálogo con las oraciones actuales
+                            showDialog(
+                              context: context,
+                              builder: (BuildContext dialogContext) {
+                                return PrayerDialog(
+                                  prayer: _currentPrayers[_orderPrayer],
+                                  mystery: widget.mystery,
+                                  currentMysteryOrder: _orderMystery,
+                                  errorMessage:
+                                      _currentError?.userMessage ?? '',
                                 );
                               },
-                              child: Row(
-                                children: [
-                                  Text(_currentPrayers[_orderPrayer]),
-                                  const SizedBox(width: AppLayout.rowItemSpacing), // Espacio entre el texto y el ícono
-                                  const Icon(Icons.info_outline, size: AppLayout.infoIconSize), //  ícono
-                                ],
-                              ),
-                            ),
-                          ]
-                        ),
+                            );
+                          },
+                          trailing: const Icon(
+                            Icons.info_outline,
+                            size: AppLayout.infoIconSize,
+                            color: AppPrayGlass.onGlassText,
+                          ),
+                        );
+                      },
+                    ),
                   ),
                 ],
               ),
+            ),
             ),
          Positioned(
             top: AppLayout.errorBannerInset,
@@ -714,5 +798,260 @@ class _PrayScreenState extends State<PrayScreen> {
       )
     );
   }
+}
+
+/// Contenido visual del menú de audio: mismo patrón que los botones (blur + tinte + borde).
+///
+/// **Parámetros**
+/// - [menuContext]: contexto del menú abierto por [showMenu]; obligatorio para que
+///   [Navigator.pop] cierre el overlay del menú y devuelva el [String] a `_showPrayGlassAudioMenu`.
+/// - [isBackgroundMusicPlaying] / [isPrayersAudioPlaying]: reflejan el estado actual;
+///   si cambias los textos o iconos, hazlo aquí.
+///
+/// **Personalización rápida**
+/// - Más aire entre filas: aumenta el `vertical` del [Padding] de cada [InkWell].
+/// - Tipografía del menú: cambia [rowStyle] (por defecto Poppins como el subtítulo de la AppBar).
+/// - Colores de los iconos: [AppPrayGlass.menuIconMusic] y [AppPrayGlass.menuIconPrayers].
+Widget _prayGlassAudioMenuPanel({
+  required BuildContext menuContext,
+  required bool isBackgroundMusicPlaying,
+  required bool isPrayersAudioPlaying,
+}) {
+  const TextStyle rowStyle = TextStyle(
+    fontFamily: 'Poppins',
+    fontSize: 15,
+    fontWeight: FontWeight.w500,
+    color: AppPrayGlass.onGlassText,
+  );
+
+  return ClipRRect(
+    borderRadius: BorderRadius.circular(AppPrayGlass.menuBorderRadius),
+    child: BackdropFilter(
+      filter: ui.ImageFilter.blur(
+        sigmaX: AppPrayGlass.blurSigma,
+        sigmaY: AppPrayGlass.blurSigma,
+      ),
+      child: Container(
+        decoration: BoxDecoration(
+          color: AppPrayGlass.frostedTint,
+          borderRadius: BorderRadius.circular(AppPrayGlass.menuBorderRadius),
+          border: Border.all(color: AppPrayGlass.borderLight),
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            InkWell(
+              onTap: () => Navigator.pop<String>(
+                menuContext,
+                'toggleBackgroundMusic',
+              ),
+              child: Padding(
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                child: Row(
+                  children: [
+                    Icon(
+                      isBackgroundMusicPlaying
+                          ? Icons.music_note
+                          : Icons.music_off,
+                      color: AppPrayGlass.menuIconMusic,
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Text(
+                        isBackgroundMusicPlaying
+                            ? 'Música de Fondo: ON'
+                            : 'Música de Fondo: OFF',
+                        style: rowStyle,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+            Divider(
+              height: 1,
+              thickness: 1,
+              color: AppPrayGlass.borderLight.withValues(alpha: 0.35),
+            ),
+            InkWell(
+              onTap: () => Navigator.pop<String>(
+                menuContext,
+                'togglePrayersAudio',
+              ),
+              child: Padding(
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                child: Row(
+                  children: [
+                    Icon(
+                      isPrayersAudioPlaying
+                          ? Icons.record_voice_over
+                          : Icons.volume_mute,
+                      color: AppPrayGlass.menuIconPrayers,
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Text(
+                        isPrayersAudioPlaying
+                            ? 'Audios Oraciones: ON'
+                            : 'Audios Oraciones: OFF',
+                        style: rowStyle,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    ),
+  );
+}
+
+/// Botón circular glass (volumen, anterior, siguiente).
+///
+/// Estructura: [Material] transparente → [InkWell] con hitTest circular → [ClipOval]
+/// → [BackdropFilter] (desenfoque del contenido detrás) → [Container] con tinte y borde.
+/// Los iconos heredan color y tamaño vía [IconTheme].
+///
+/// **Para modificar**
+/// - Tamaño: [AppPrayGlass.roundButtonSize].
+/// - Intensidad del efecto: [AppPrayGlass.blurSigma], [frostedTint], [borderLight].
+Widget _prayGlassRoundButton({
+  required VoidCallback onPressed,
+  required Widget child,
+}) {
+  return Material(
+    color: Colors.transparent,
+    child: InkWell(
+      onTap: onPressed,
+      customBorder: const CircleBorder(),
+      child: ClipOval(
+        child: BackdropFilter(
+          filter: ui.ImageFilter.blur(
+            sigmaX: AppPrayGlass.blurSigma,
+            sigmaY: AppPrayGlass.blurSigma,
+          ),
+          child: Container(
+            width: AppPrayGlass.roundButtonSize,
+            height: AppPrayGlass.roundButtonSize,
+            alignment: Alignment.center,
+            decoration: BoxDecoration(
+              color: AppPrayGlass.frostedTint,
+              shape: BoxShape.circle,
+              border: Border.all(color: AppPrayGlass.borderLight),
+            ),
+            child: IconTheme(
+              data: const IconThemeData(
+                color: AppPrayGlass.onGlassText,
+                size: 24,
+              ),
+              child: child,
+            ),
+          ),
+        ),
+      ),
+    ),
+  );
+}
+
+/// Botón ancho tipo “pastilla” para el nombre de la oración actual + icono de info.
+///
+/// Mismo stack que el circular pero con [ClipRRect] y [AppPrayGlass.pillRadius].
+/// El texto usa Playfair para alinearlo con el título “Santo Rosario”.
+///
+/// Si pasas [width] (p. ej. el `maxWidth` de un [LayoutBuilder] con el mismo
+/// [Padding] que la fila de flechas), la pastilla ocupa todo ese ancho: alineado
+/// visualmente con el espacio entre los dos botones circulares.
+///
+/// **Para modificar**
+/// - Márgenes internos del texto: `padding` del [Container] interior.
+/// - Máximo de líneas del título: [Text.maxLines] (ahora 2 + ellipsis).
+Widget _prayGlassPillButton({
+  required String label,
+  required VoidCallback onPressed,
+  Widget? trailing,
+  double? width,
+}) {
+  const TextStyle pillTextStyle = TextStyle(
+    fontFamily: 'PlayfairDisplay',
+    fontSize: 17,
+    fontWeight: FontWeight.w600,
+    color: AppPrayGlass.onGlassText,
+  );
+
+  final Widget row = width != null
+      ? Row(
+          mainAxisSize: MainAxisSize.max,
+          mainAxisAlignment: MainAxisAlignment.center,
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: [
+            Expanded(
+              child: Text(
+                label,
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+                textAlign: TextAlign.center,
+                style: pillTextStyle,
+              ),
+            ),
+            if (trailing != null) ...[
+              const SizedBox(width: AppLayout.rowItemSpacing),
+              trailing,
+            ],
+          ],
+        )
+      : Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Flexible(
+              child: Text(
+                label,
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+                textAlign: TextAlign.center,
+                style: pillTextStyle,
+              ),
+            ),
+            if (trailing != null) ...[
+              const SizedBox(width: AppLayout.rowItemSpacing),
+              trailing,
+            ],
+          ],
+        );
+
+  final Widget core = Material(
+    color: Colors.transparent,
+    child: InkWell(
+      onTap: onPressed,
+      borderRadius: BorderRadius.circular(AppPrayGlass.pillRadius),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(AppPrayGlass.pillRadius),
+        child: BackdropFilter(
+          filter: ui.ImageFilter.blur(
+            sigmaX: AppPrayGlass.blurSigma,
+            sigmaY: AppPrayGlass.blurSigma,
+          ),
+          child: Container(
+            width: width != null ? double.infinity : null,
+            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(AppPrayGlass.pillRadius),
+              color: AppPrayGlass.frostedTint,
+              border: Border.all(color: AppPrayGlass.borderLight),
+            ),
+            child: row,
+          ),
+        ),
+      ),
+    ),
+  );
+
+  if (width != null) {
+    return SizedBox(width: width, child: core);
+  }
+  return core;
 }
 

@@ -35,6 +35,62 @@ abstract class AppLayout {
   static const errorBannerInset = 10.0;
 }
 
+/// Estilo “glassmorphism” compartido por la pantalla del rosario ([PrayScreen]):
+/// barra superior, botones flotantes y menú de opciones de audio.
+///
+/// **Cómo retocar el aspecto**
+/// - Más o menos desenfoque del fondo: [blurSigma] (mismo valor en X e Y).
+/// - Botones circulares más grandes o pequeños: [roundButtonSize].
+/// - Botón inferior (oración): [pillRadius], padding en `_prayGlassPillButton`, y
+///   en `pray_screen` un [LayoutBuilder] pasa `width` para igualar el ancho útil
+///   de la fila de los dos círculos (flechas).
+/// - Más “vidrio” blanco: sube la opacidad del canal alpha en [frostedTint] y
+///   [borderLight] (p. ej. `0x44FFFFFF` → `0x55FFFFFF`).
+/// - Barra superior más oscura o clara: [navBarGradientTop] y [navBarGradientBottom].
+/// - Texto más legible: [onGlassText] y [onGlassTextMuted].
+/// - Panel del menú hamburguesa: [menuBorderRadius] y el padding interno del panel
+///   en `_prayGlassAudioMenuPanel` de `pray_screen.dart`.
+/// - Iconos del menú de audio: [menuIconMusic] (fila música) y [menuIconPrayers] (fila oraciones).
+abstract class AppPrayGlass {
+  /// Intensidad del desenfoque gaussiano aplicado detrás del “vidrio”
+  /// (`BackdropFilter`). Valores altos = más borroso y más costoso en GPU.
+  static const double blurSigma = 7;
+
+  /// Diámetro en píxeles lógicos de los botones circulares (volumen, flechas).
+  static const double roundButtonSize = 70;
+
+  /// Radio de las esquinas del botón ancho inferior (oración + info).
+  static const double pillRadius = 26;
+
+  /// Radio de las esquinas del menú emergente de audio (misma familia visual que el pill).
+  static const double menuBorderRadius = 14;
+
+  /// Capa de color semitransparente encima del blur. No pongas opacidad 0 si
+  /// quieres que se note el cristal; combínala con [blurSigma].
+  static const Color frostedTint = Color.fromRGBO(5, 26, 34, 0.2);
+
+  /// Color del trazo del borde del vidrio (navbar, botones, menú).
+  static const Color borderLight = Color(0x55FFFFFF);
+
+  /// Color superior del degradé bajo el blur del AppBar (más contraste arriba).
+  static const Color navBarGradientTop = Color.fromRGBO(5, 26, 34, 0.447);
+
+  /// Color inferior del degradé del AppBar (transición hacia el contenido).
+  static const Color navBarGradientBottom = Color(0x480A1E28);
+
+  /// Color principal del texto e iconos sobre superficies glass.
+  static const Color onGlassText = Color(0xFFF8FBFF);
+
+  /// Color secundario (subtítulos, textos menos prominentes).
+  static const Color onGlassTextMuted = Color(0xD0E2ECF5);
+
+  /// Icono de la fila «Música de Fondo» en el menú de audio (nota / música apagada).
+  static const Color menuIconMusic = onGlassText;
+
+  /// Icono de la fila «Audios Oraciones» en el menú (voz / silencio).
+  static const Color menuIconPrayers = onGlassText;
+}
+
 abstract class AppPreferencesKeys {
   static const prayersAudioPlaying = 'isPrayersAudioPlaying';
   static const backgroundMusicPlaying = 'isBackgroundMusicPlaying';
