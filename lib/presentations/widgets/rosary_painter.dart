@@ -34,6 +34,8 @@ class CuentasPainter extends CustomPainter {
       //tener en cuenta el tamaño de pantalla s8 que es el que mejor se dapta al tamaño actual de las imágenes
       double imageWidthBasic;
       double imageHeightBasic;
+      double imageWidthMedium;
+      double imageHeightMedium;
       double imageWidthLarge;
       double imageHeightLarge;
       double imageWidthLargest;
@@ -69,6 +71,8 @@ class CuentasPainter extends CustomPainter {
         radius = min((size.width / 2),((size.height - cuentasAdicionales) / 2)); 
         imageWidthBasic = radius * 0.20;
         imageHeightBasic = radius * 0.20;
+        imageWidthMedium = radius * 0.21;
+        imageHeightMedium = radius * 0.21;
         imageWidthLarge = radius * 0.50;
         imageHeightLarge = radius * 0.50;
         imageWidthLargest = radius * 0.80;
@@ -90,6 +94,8 @@ class CuentasPainter extends CustomPainter {
         radius = min((size.width / 2),((size.height) / 2)); 
         imageWidthBasic = radius * 0.20;
         imageHeightBasic = radius * 0.20;
+        imageWidthMedium = radius * 0.21;
+        imageHeightMedium = radius * 0.21;
         imageWidthLarge = radius * 0.50;
         imageHeightLarge = radius * 0.50;
         imageWidthLargest = radius * 0.70;
@@ -116,6 +122,10 @@ class CuentasPainter extends CustomPainter {
             if (detail.width == AppRosarySizes.basic) {
               imageWidth = imageWidthBasic;
               imageHeight = imageHeightBasic; 
+            }
+            if (detail.width == AppRosarySizes.medium) {
+              imageWidth = imageWidthMedium;
+              imageHeight = imageHeightMedium;
             }
             if (detail.width == AppRosarySizes.large) {
               imageWidth = imageWidthLarge; 
@@ -184,6 +194,14 @@ class CuentasPainter extends CustomPainter {
               cuentaCenter = Offset(
                 cuentaCenter.dx, //posición en x
                 cuentaCenter.dy + imageHeight * 0.57, //posición en y
+              );
+            }
+            if (detail.width == AppRosarySizes.medium) {
+              imageWidth = imageWidthMedium;
+              imageHeight = imageHeightMedium;
+              cuentaCenter = Offset(
+                cuentaCenter.dx, //posición en x
+                cuentaCenter.dy + imageHeight * 0.40, //posición en y
               );
             }
             if (detail.width == AppRosarySizes.large) {
@@ -258,6 +276,10 @@ class CuentasPainter extends CustomPainter {
             if (cuentaWidth == AppRosarySizes.basic) {
               imageWidth = imageWidthBasic * 0.7;
               imageHeight = imageHeightBasic * 0.7; 
+            }
+            if (cuentaWidth == AppRosarySizes.medium) {
+              imageWidth = imageWidthMedium * 1.1;
+              imageHeight = imageHeightMedium * 1.1;
             }
             if (cuentaWidth == AppRosarySizes.large) {
               imageWidth = imageWidthLarge * 0.8; 

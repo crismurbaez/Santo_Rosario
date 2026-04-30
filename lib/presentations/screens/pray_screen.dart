@@ -554,7 +554,7 @@ class _PrayScreenState extends State<PrayScreen> {
                 fontSize: 20,
                 fontWeight: FontWeight.w700,
                 height: 1.15,
-                color: AppPrayGlass.onGlassText,
+                color: AppColors.colorCircularProgressIndicator,
               ),
             ),
             const SizedBox(height: 2),
@@ -978,7 +978,7 @@ Widget _prayGlassPillButton({
 }) {
   const TextStyle pillTextStyle = TextStyle(
     fontFamily: 'PlayfairDisplay',
-    fontSize: 17,
+    fontSize: 20,
     fontWeight: FontWeight.w700,
     // Mismo dorado del título en PrayerDialog para mantener coherencia visual.
     color: AppColors.colorCircularProgressIndicator,

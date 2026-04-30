@@ -104,6 +104,7 @@ abstract class AppSentinels {
 
 abstract class AppRosarySizes {
   static const basic = 'basic';
+  static const medium = 'medium';
   static const large = 'large';
   static const largest = 'largest';
 }
