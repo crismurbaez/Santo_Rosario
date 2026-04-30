@@ -94,6 +94,8 @@ abstract class AppPrayGlass {
 abstract class AppPreferencesKeys {
   static const prayersAudioPlaying = 'isPrayersAudioPlaying';
   static const backgroundMusicPlaying = 'isBackgroundMusicPlaying';
+  static const helpMessageDismissedPrefix = 'help_message_dismissed_';
+  static const errorLogs = 'error_logs';
 }
 
 abstract class AppSentinels {

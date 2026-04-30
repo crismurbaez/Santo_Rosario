@@ -193,7 +193,7 @@ class CuentasPainter extends CustomPainter {
               // se calcula el centro de la cuenta
               cuentaCenter = Offset(
                 cuentaCenter.dx, //posición en x
-                cuentaCenter.dy + imageHeight * 0.57, //posición en y
+                cuentaCenter.dy + imageHeight * 0.60, //posición en y
               );
             }
             if (detail.width == AppRosarySizes.medium) {
@@ -201,7 +201,7 @@ class CuentasPainter extends CustomPainter {
               imageHeight = imageHeightMedium;
               cuentaCenter = Offset(
                 cuentaCenter.dx, //posición en x
-                cuentaCenter.dy + imageHeight * 0.40, //posición en y
+                cuentaCenter.dy + imageHeight * 0.70, //posición en y
               );
             }
             if (detail.width == AppRosarySizes.large) {
@@ -209,7 +209,7 @@ class CuentasPainter extends CustomPainter {
               imageHeight = imageHeightLarge;
               cuentaCenter = Offset(
                 cuentaCenter.dx, //posición en x
-                cuentaCenter.dy + imageHeight * 0.25, //posición en y
+                cuentaCenter.dy + imageHeight * 0.40, //posición en y
               );
             }
             if (detail.width == AppRosarySizes.largest) {
