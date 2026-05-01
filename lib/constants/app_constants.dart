@@ -96,6 +96,25 @@ abstract class AppPreferencesKeys {
   static const backgroundMusicPlaying = 'isBackgroundMusicPlaying';
   static const helpMessageDismissedPrefix = 'help_message_dismissed_';
   static const errorLogs = 'error_logs';
+  static const savePrayerProgressEnabled = 'save_prayer_progress_enabled';
+  static const prayerProgressSnapshot = 'prayer_progress_snapshot';
+}
+
+/// Identificadores de los tips “No volver a mostrar” en [PrayScreen].
+/// Mantener sincronizado con `_buildHelpMessageQueueOnce`.
+abstract class AppHelpMessageIds {
+  static const prayKeepScreenOn = 'pray_keep_screen_on';
+  static const prayNavigation = 'pray_navigation';
+  static const prayAudioBehavior = 'pray_audio_behavior';
+  static const prayAudioMenu = 'pray_audio_menu';
+
+  /// Todos los consejos persistidos al marcar «No mostrar de nuevo».
+  static const List<String> prayScreenTips = [
+    prayKeepScreenOn,
+    prayNavigation,
+    prayAudioBehavior,
+    prayAudioMenu,
+  ];
 }
 
 abstract class AppSentinels {

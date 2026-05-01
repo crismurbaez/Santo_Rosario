@@ -1,5 +1,6 @@
 import 'dart:convert';
 
+import 'package:flutter/foundation.dart';
 import 'package:santo_rosario/models/app_error.dart';
 import 'package:santo_rosario/services/preferences_service.dart';
 
@@ -9,6 +10,8 @@ class ErrorLogService {
 
   final PreferencesService _preferencesService;
 
+  /// Persiste la entrada para diagnóstico y la escribe en consola / device log (desarrollo).
+  /// No muestra UI al usuario: los datos están pensados para el desarrollador.
   Future<void> logError(AppError error, {required String screen}) async {
     final payload = <String, dynamic>{
       'timestamp': DateTime.now().toIso8601String(),
@@ -18,7 +21,9 @@ class ErrorLogService {
       'userMessage': error.userMessage,
       'technicalMessage': error.technicalMessage ?? '',
     };
-    await _preferencesService.appendErrorLog(jsonEncode(payload));
+    final serialized = jsonEncode(payload);
+    debugPrint('[AppErrorLog] $serialized');
+    await _preferencesService.appendErrorLog(serialized);
   }
 
   Future<String> buildReportBody(AppError error, {required String screen}) async {

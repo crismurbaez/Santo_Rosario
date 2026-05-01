@@ -6,6 +6,7 @@ import 'pray_screen.dart';
 import '../../data/models/data.dart';
 import '../widgets/mystery_list_item.dart';
 import 'package:santo_rosario/constants/app_constants.dart';
+import 'package:santo_rosario/services/preferences_service.dart';
 
 class HomeScreen extends ConsumerStatefulWidget {
   const HomeScreen(
@@ -21,13 +22,18 @@ class HomeScreen extends ConsumerStatefulWidget {
 }
 
 class _HomeScreenState extends ConsumerState<HomeScreen> {
+  final _preferencesService = PreferencesService();
+
+  bool _savePrayerProgressEnabled = true;
 
   @override
   void initState() {
-    super.initState(); 
-    Future.microtask(() {
+    super.initState();
+    Future.microtask(() async {
       if (!mounted) return;
       ref.read(mysteryProvider.notifier).initializeFromWeekday(widget.dateNow);
+      final save = await _preferencesService.getSavePrayerProgressEnabled();
+      if (mounted) setState(() => _savePrayerProgressEnabled = save);
     });
   }
 
@@ -76,6 +82,365 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     }
   }
 
+  void _showHomeSettings() {
+    showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (sheetContext) {
+        return StatefulBuilder(
+          builder: (context, setModalState) {
+            final bottomInset = MediaQuery.paddingOf(sheetContext).bottom;
+            return Padding(
+              padding: EdgeInsets.fromLTRB(12, 8, 12, 12 + bottomInset),
+              child: ClipRRect(
+                borderRadius: const BorderRadius.vertical(
+                  top: Radius.circular(22),
+                ),
+                child: ColoredBox(
+                  color: AppHomeColors.screenBackground,
+                  child: Padding(
+                    padding: const EdgeInsets.fromLTRB(16, 10, 16, 20),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        Center(
+                          child: Container(
+                            width: 40,
+                            height: 4,
+                            margin: const EdgeInsets.only(bottom: 14),
+                            decoration: BoxDecoration(
+                              color: AppHomeColors.todayChipIcon
+                                  .withValues(alpha: 0.28),
+                              borderRadius: BorderRadius.circular(999),
+                            ),
+                          ),
+                        ),
+                        Text(
+                          'Configuración',
+                          textAlign: TextAlign.center,
+                          style: Theme.of(context)
+                              .textTheme
+                              .titleLarge
+                              ?.copyWith(
+                                color: AppHomeColors.titleText,
+                                fontWeight: FontWeight.w700,
+                                fontFamily: 'Poppins',
+                                fontSize: 22,
+                                letterSpacing: 0.2,
+                              ),
+                        ),
+                        const SizedBox(height: 6),
+                        Text(
+                          'Personalizá tu experiencia durante la oración',
+                          textAlign: TextAlign.center,
+                          style: Theme.of(context)
+                              .textTheme
+                              .bodyMedium
+                              ?.copyWith(
+                                color: AppHomeColors.subtitleText,
+                                fontFamily: 'Poppins',
+                                fontSize: 13,
+                              ),
+                        ),
+                        const SizedBox(height: 22),
+                        Text(
+                          'Tutorial de la aplicación',
+                          style: Theme.of(context)
+                              .textTheme
+                              .titleSmall
+                              ?.copyWith(
+                                color: AppHomeColors.titleText,
+                                fontWeight: FontWeight.w600,
+                                fontFamily: 'Poppins',
+                              ),
+                        ),
+                        const SizedBox(height: 8),
+                        Material(
+                          color: Colors.transparent,
+                          child: InkWell(
+                            borderRadius: BorderRadius.circular(26),
+                            onTap: () async {
+                              Navigator.of(sheetContext).pop();
+                              await _preferencesService
+                                  .resetPrayScreenHelpTips();
+                              if (!mounted || !context.mounted) return;
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(
+                                  behavior: SnackBarBehavior.floating,
+                                  backgroundColor: AppHomeColors.titleText,
+                                  content: const Text(
+                                    'La próxima vez que entres en la pantalla de oración verás de nuevo el tutorial de la aplicación.',
+                                    style: TextStyle(
+                                      fontFamily: 'Poppins',
+                                      color: Colors.white,
+                                      fontSize: 14,
+                                    ),
+                                  ),
+                                ),
+                              );
+                            },
+                            child: Ink(
+                              decoration: BoxDecoration(
+                                borderRadius: BorderRadius.circular(26),
+                                gradient: const LinearGradient(
+                                  begin: Alignment.topCenter,
+                                  end: Alignment.bottomCenter,
+                                  colors: [
+                                    AppHomeColors.startButtonTop,
+                                    AppHomeColors.startButtonBottom,
+                                  ],
+                                ),
+                                border: Border(
+                                  bottom: BorderSide(
+                                    color: AppHomeColors
+                                        .button3DBottomHighlight,
+                                    width: 3,
+                                  ),
+                                ),
+                                boxShadow: const [
+                                  BoxShadow(
+                                    color: AppHomeColors.buttonShadowDark,
+                                    blurRadius: 16,
+                                    spreadRadius: 0,
+                                    offset: Offset(0, 8),
+                                  ),
+                                  BoxShadow(
+                                    color: AppHomeColors.buttonShadowMid,
+                                    blurRadius: 6,
+                                    offset: Offset(0, 3),
+                                  ),
+                                  BoxShadow(
+                                    color: AppHomeColors.buttonShadowLight,
+                                    blurRadius: 4,
+                                    offset: Offset(0, -1),
+                                  ),
+                                ],
+                              ),
+                              child: Padding(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 18,
+                                  vertical: 16,
+                                ),
+                                child: Row(
+                                  children: [
+                                    const Icon(
+                                      Icons.school_rounded,
+                                      color:
+                                          AppHomeColors.startButtonForeground,
+                                      size: 26,
+                                    ),
+                                    const SizedBox(width: 14),
+                                    Expanded(
+                                      child: Column(
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.start,
+                                        children: [
+                                          Text(
+                                            'Mostrar de nuevo el tutorial de la aplicación',
+                                            style: Theme.of(context)
+                                                .textTheme
+                                                .titleSmall
+                                                ?.copyWith(
+                                                  color: AppHomeColors
+                                                      .startButtonForeground,
+                                                  fontFamily: 'Poppins',
+                                                  fontWeight: FontWeight.w700,
+                                                  fontSize: 16,
+                                                ),
+                                          ),
+                                          const SizedBox(height: 4),
+                                          Text(
+                                            'Tocá este botón: los mensajes '
+                                            'que ocultaste vuelven al pulsar '
+                                            'Comenzar.',
+                                            style: Theme.of(context)
+                                                .textTheme
+                                                .bodySmall
+                                                ?.copyWith(
+                                                  color: AppHomeColors
+                                                      .startButtonForeground
+                                                      .withValues(
+                                                          alpha: 0.82),
+                                                  fontFamily: 'Poppins',
+                                                  fontSize: 12.5,
+                                                  height: 1.35,
+                                                ),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                    Icon(
+                                      Icons.arrow_forward_ios_rounded,
+                                      size: 18,
+                                      color: AppHomeColors.startButtonForeground
+                                          .withValues(alpha: 0.75),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ),
+                          ),
+                        ),
+                        const SizedBox(height: 24),
+                        Text(
+                          'Avance del rosario',
+                          style: Theme.of(context)
+                              .textTheme
+                              .titleSmall
+                              ?.copyWith(
+                                color: AppHomeColors.titleText,
+                                fontWeight: FontWeight.w600,
+                                fontFamily: 'Poppins',
+                              ),
+                        ),
+                        const SizedBox(height: 10),
+                        Container(
+                          padding: const EdgeInsets.fromLTRB(16, 14, 12, 16),
+                          decoration: BoxDecoration(
+                            color: AppHomeColors.todayChipBackground,
+                            borderRadius: BorderRadius.circular(
+                              AppHomeLayout.todayCardRadius,
+                            ),
+                            boxShadow: const [
+                              BoxShadow(
+                                color: Color(0x45304055),
+                                blurRadius: 14,
+                                offset: Offset(0, 5),
+                              ),
+                              BoxShadow(
+                                color: Color(0x33FFFFFF),
+                                blurRadius: 2,
+                                offset: Offset(0, -1),
+                              ),
+                            ],
+                          ),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Row(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Padding(
+                                    padding: const EdgeInsets.only(top: 2),
+                                    child: Icon(
+                                      Icons.bookmark_added_outlined,
+                                      color: AppHomeColors.todayChipIcon,
+                                      size: 22,
+                                    ),
+                                  ),
+                                  const SizedBox(width: 12),
+                                  Expanded(
+                                    child: Text(
+                                      'Guardar avance',
+                                      style: Theme.of(context)
+                                          .textTheme
+                                          .titleSmall
+                                          ?.copyWith(
+                                            color: AppHomeColors.titleText,
+                                            fontWeight: FontWeight.w600,
+                                            fontFamily: 'Poppins',
+                                          ),
+                                    ),
+                                  ),
+                                  Theme(
+                                    data: Theme.of(context).copyWith(
+                                      switchTheme: SwitchThemeData(
+                                        thumbColor:
+                                            WidgetStateProperty.resolveWith(
+                                          (states) {
+                                            if (states.contains(
+                                                WidgetState.selected)) {
+                                              return AppHomeColors
+                                                  .switchActiveThumb;
+                                            }
+                                            return AppHomeColors
+                                                .switchInactiveThumb;
+                                          },
+                                        ),
+                                        trackColor:
+                                            WidgetStateProperty.resolveWith(
+                                          (states) {
+                                            if (states.contains(
+                                                WidgetState.selected)) {
+                                              return AppHomeColors
+                                                  .switchActiveTrack;
+                                            }
+                                            return AppHomeColors
+                                                .switchInactiveTrack;
+                                          },
+                                        ),
+                                        trackOutlineColor:
+                                            WidgetStateProperty.resolveWith(
+                                          (states) {
+                                            if (states.contains(
+                                                WidgetState.selected)) {
+                                              return AppHomeColors
+                                                  .switchActiveTrackBorder;
+                                            }
+                                            return AppHomeColors.subtitleText
+                                                .withValues(alpha: 0.25);
+                                          },
+                                        ),
+                                      ),
+                                    ),
+                                    child: Switch.adaptive(
+                                      value: _savePrayerProgressEnabled,
+                                      materialTapTargetSize:
+                                          MaterialTapTargetSize.shrinkWrap,
+                                      onChanged: (value) async {
+                                        await _preferencesService
+                                            .setSavePrayerProgressEnabled(
+                                                value);
+                                        if (!value) {
+                                          await _preferencesService
+                                              .clearPrayerProgressSnapshot();
+                                        }
+                                        setState(() =>
+                                            _savePrayerProgressEnabled =
+                                                value);
+                                        setModalState(() {});
+                                      },
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              const SizedBox(height: 10),
+                              Padding(
+                                padding: const EdgeInsets.only(left: 34),
+                                child: Text(
+                                  'Si salís sin terminar, al volver con el mismo '
+                                  'tipo de misterios continuás donde dejaste. '
+                                  'Cambiar de misterio reinicia ese avance. '
+                                  'Al desactivar se borra lo guardado.',
+                                  style: Theme.of(context)
+                                      .textTheme
+                                      .bodySmall
+                                      ?.copyWith(
+                                        color: AppHomeColors.subtitleText,
+                                        fontFamily: 'Poppins',
+                                        fontSize: 12.5,
+                                        height: 1.4,
+                                      ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        const SizedBox(height: 8),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            );
+          },
+        );
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final mysteryState = ref.watch(mysteryProvider);
@@ -84,6 +449,14 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
       appBar: AppBar(
         backgroundColor: AppHomeColors.screenBackground,
         toolbarHeight: AppHomeLayout.appBarToolbarHeight,
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.settings_rounded),
+            tooltip: 'Configuración',
+            color: AppHomeColors.titleText,
+            onPressed: _showHomeSettings,
+          ),
+        ],
         title:  Column(
                   crossAxisAlignment: CrossAxisAlignment.start,// Alinea el texto a la izquierda
                   children: [

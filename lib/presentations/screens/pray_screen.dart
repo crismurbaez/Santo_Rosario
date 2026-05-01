@@ -6,8 +6,10 @@ import 'package:flutter/services.dart';
 import 'package:just_audio/just_audio.dart';
 import 'package:santo_rosario/constants/app_constants.dart';
 import 'package:santo_rosario/models/app_error.dart';
+import 'package:santo_rosario/models/prayer_progress_snapshot.dart';
 import 'package:santo_rosario/services/audio_service.dart';
 import 'package:santo_rosario/services/error_log_service.dart';
+import 'package:santo_rosario/services/error_reporter.dart';
 import 'package:santo_rosario/services/preferences_service.dart';
 import '../../data/models/data.dart'; 
 import '../widgets/rosary_painter.dart';
@@ -27,7 +29,8 @@ class PrayScreen extends StatefulWidget {
 }
 
 
-class _PrayScreenState extends State<PrayScreen> with SingleTickerProviderStateMixin {
+class _PrayScreenState extends State<PrayScreen>
+    with SingleTickerProviderStateMixin, WidgetsBindingObserver {
   Map<String, ui.Image>? _loadedImages;
   int _counter = 0;
   int rosaryBeadCount = Data.rosaryCircleBeadCount + Data.rosaryExtensionBeadCount;
@@ -48,9 +51,9 @@ class _PrayScreenState extends State<PrayScreen> with SingleTickerProviderStateM
   bool _isPrayersAudioPlaying = true; // Nuevo: controla si el audio de las oraciones está activo
   bool _isIncrementingInProgress = false; //evita que se incremente dos veces al completar el audio automáticamente
   int _audioRequestId = 0; // Evita errores por carreras al tocar muy rapido.
-  
-  
+
   AppError? _currentError;
+
   String? _currentInfoMessage;
   Timer? _infoMessageTimer;
   final List<_HelpMessageDefinition> _helpMessageQueue = [];
@@ -58,6 +61,9 @@ class _PrayScreenState extends State<PrayScreen> with SingleTickerProviderStateM
   bool _didBuildHelpQueue = false;
 
   bool _isBatterySaverActive = false; // Variable para controlar el wakelock
+
+  /// Tras cargar estado guardado; la primera cuenta resaltada no debe pisar `_orderPrayer`.
+  bool _pendingProgressRestore = false;
 
   final GlobalKey _wakelockButtonKey = GlobalKey();
   final GlobalKey _playPauseButtonKey = GlobalKey();
@@ -70,6 +76,7 @@ class _PrayScreenState extends State<PrayScreen> with SingleTickerProviderStateM
   /// alineado bajo el icono (esquina superior derecha del botón).
   final GlobalKey _prayAudioMenuButtonKey = GlobalKey();
   final _errorLogService = ErrorLogService();
+  final _errorReporter = ErrorReporter();
 
   late final AnimationController _tutorialArrowPulseController;
   late final Animation<double> _tutorialArrowPulse;
@@ -77,7 +84,7 @@ class _PrayScreenState extends State<PrayScreen> with SingleTickerProviderStateM
   void _syncTutorialArrowAnimation() {
     if (!mounted) return;
     final showArrows = _activeHelpMessage != null &&
-        _activeHelpMessage!.id != 'pray_audio_behavior';
+        _activeHelpMessage!.id != AppHelpMessageIds.prayAudioBehavior;
     if (showArrows) {
       if (!_tutorialArrowPulseController.isAnimating) {
         _tutorialArrowPulseController.repeat(reverse: true);
@@ -92,6 +99,7 @@ class _PrayScreenState extends State<PrayScreen> with SingleTickerProviderStateM
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
     _tutorialArrowPulseController = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 700),
@@ -119,6 +127,8 @@ class _PrayScreenState extends State<PrayScreen> with SingleTickerProviderStateM
     // Limpia los recursos del reproductor cuando el widget se desecha y el bloqueo de pantalla se desactiva
     @override
     void dispose() {
+      WidgetsBinding.instance.removeObserver(this);
+      _persistProgressSnapshotFromState();
       _infoMessageTimer?.cancel();
       _tutorialArrowPulseController.dispose();
       _audioService.dispose();
@@ -126,11 +136,101 @@ class _PrayScreenState extends State<PrayScreen> with SingleTickerProviderStateM
       super.dispose();
     }
 
+    @override
+    void didChangeAppLifecycleState(AppLifecycleState state) {
+      switch (state) {
+        case AppLifecycleState.paused:
+        case AppLifecycleState.detached:
+          _persistProgressSnapshotFromState();
+          break;
+        case AppLifecycleState.resumed:
+        case AppLifecycleState.inactive:
+        case AppLifecycleState.hidden:
+          break;
+      }
+    }
+
+    bool _hasMeaningfulPrayers() {
+      if (_currentPrayers.isEmpty) return false;
+      if (_currentPrayers.length > 1) return true;
+      return _currentPrayers[0].trim().isNotEmpty;
+    }
+
+    bool _isRosaryComplete() {
+      return PrayerProgressSnapshot.computeComplete(
+        counter: _counter,
+        orderPrayer: _orderPrayer,
+        rosaryBeadCount: rosaryBeadCount,
+        currentPrayersLength: _currentPrayers.length,
+        prayersMeaningful: _hasMeaningfulPrayers(),
+      );
+    }
+
+    void _persistProgressSnapshotFromState() {
+      final mysteryStr = widget.mystery ?? '';
+      if (mysteryStr.isEmpty || _loadedImages == null) return;
+      final capturedCounter = _counter;
+      final capturedOrderPrayer = _orderPrayer;
+      final capturedOrderMystery = _orderMystery;
+      final plist = List<String>.from(_currentPrayers);
+      final beadTotal = rosaryBeadCount;
+      Future.microtask(() async {
+        try {
+          if (!(await _preferencesService.getSavePrayerProgressEnabled())) {
+            return;
+          }
+          final meaningful = plist.isNotEmpty &&
+              (plist.length > 1 || plist.first.trim().isNotEmpty);
+          final complete = PrayerProgressSnapshot.computeComplete(
+            counter: capturedCounter,
+            orderPrayer: capturedOrderPrayer,
+            rosaryBeadCount: beadTotal,
+            currentPrayersLength: plist.length,
+            prayersMeaningful: meaningful,
+          );
+          if (complete) {
+            await _preferencesService.clearPrayerProgressSnapshot();
+            return;
+          }
+          await _preferencesService.savePrayerProgressSnapshot(
+            PrayerProgressSnapshot(
+              mystery: mysteryStr,
+              counter: capturedCounter.clamp(0, beadTotal - 1),
+              orderPrayer: capturedOrderPrayer,
+              orderMystery: capturedOrderMystery,
+            ),
+          );
+        } catch (_) {
+          /* no bloquear cierre ni navegación */
+        }
+      });
+    }
+
+    Future<void> _tryRestorePrayerProgress() async {
+      final mysteryStr = widget.mystery;
+      if (mysteryStr == null || mysteryStr.isEmpty) return;
+      if (!(await _preferencesService.getSavePrayerProgressEnabled())) return;
+      final snap = await _preferencesService.loadPrayerProgressSnapshot();
+      if (snap == null || snap.mystery != mysteryStr) return;
+      final maxBeadIndex = rosaryBeadCount - 1;
+      final c = snap.counter.clamp(0, maxBeadIndex);
+      if (!mounted) return;
+      setState(() {
+        _counter = c;
+        _orderPrayer = snap.orderPrayer;
+        _orderMystery = snap.orderMystery;
+        _pendingProgressRestore = true;
+        _oldCounter = c;
+        _oldOrderPrayer = snap.orderPrayer;
+      });
+    }
+
     Future<void> _loadPrefs() async {
       final prayersAudioPlaying = await _preferencesService.getPrayerAudioPlaying();
       final backgroundMusicPlaying =
           await _preferencesService.getBackgroundMusicPlaying();
       await _buildHelpMessageQueueOnce();
+      await _tryRestorePrayerProgress();
       if (!mounted) return;
       setState(() {
         _isPrayersAudioPlaying = prayersAudioPlaying;
@@ -148,22 +248,22 @@ class _PrayScreenState extends State<PrayScreen> with SingleTickerProviderStateM
       _didBuildHelpQueue = true;
       final helpCatalog = <_HelpMessageDefinition>[
         const _HelpMessageDefinition(
-          id: 'pray_keep_screen_on',
+          id: AppHelpMessageIds.prayKeepScreenOn,
           text:
               'Tip: esta pantalla queda activa para acompañar la oración. Puedes cambiarlo con el ícono de bombilla (arriba a la derecha).',
         ),
         const _HelpMessageDefinition(
-          id: 'pray_navigation',
+          id: AppHelpMessageIds.prayNavigation,
           text:
               'Tip: usa las flechas para avanzar o volver cuenta por cuenta, y haz click en el botón inferior para leer la oración.',
         ),
         const _HelpMessageDefinition(
-          id: 'pray_audio_behavior',
+          id: AppHelpMessageIds.prayAudioBehavior,
           text:
               'Cuando el audio esta activado junto con las oraciones guiadas por voz, el avance de oraciones es automático. Si lo desactivas, el avance es manual.',
         ),
         const _HelpMessageDefinition(
-          id: 'pray_audio_menu',
+          id: AppHelpMessageIds.prayAudioMenu,
           text:
               'Tip: en el menú (arriba a la derecha) puedes activar o desactivar por separado la música de fondo y las oraciones guiadas por voz.',
         ),
@@ -241,7 +341,7 @@ class _PrayScreenState extends State<PrayScreen> with SingleTickerProviderStateM
     /// Flechas del tutorial según el tip activo (posiciones en coordenadas de pantalla).
     List<Widget> _buildTutorialArrowOverlays(double screenWidth) {
       final id = _activeHelpMessage?.id;
-      if (id == null || id == 'pray_audio_behavior') {
+      if (id == null || id == AppHelpMessageIds.prayAudioBehavior) {
         return const <Widget>[];
       }
 
@@ -293,7 +393,7 @@ class _PrayScreenState extends State<PrayScreen> with SingleTickerProviderStateM
       }
 
       switch (id) {
-        case 'pray_keep_screen_on':
+        case AppHelpMessageIds.prayKeepScreenOn:
           final r = _rectFromGlobalKey(_wakelockButtonKey);
           if (r == null) return const <Widget>[];
           return [
@@ -303,7 +403,7 @@ class _PrayScreenState extends State<PrayScreen> with SingleTickerProviderStateM
               icon: Icons.keyboard_arrow_up_rounded,
             ),
           ];
-        case 'pray_audio_menu':
+        case AppHelpMessageIds.prayAudioMenu:
           final r = _rectFromGlobalKey(_prayAudioMenuButtonKey);
           if (r == null) return const <Widget>[];
           return [
@@ -313,7 +413,7 @@ class _PrayScreenState extends State<PrayScreen> with SingleTickerProviderStateM
               icon: Icons.keyboard_arrow_up_rounded,
             ),
           ];
-        case 'pray_navigation':
+        case AppHelpMessageIds.prayNavigation:
           final back = _rectFromGlobalKey(_prevButtonKey);
           final next = _rectFromGlobalKey(_nextButtonKey);
           final pill = _rectFromGlobalKey(_pillButtonKey);
@@ -340,38 +440,6 @@ class _PrayScreenState extends State<PrayScreen> with SingleTickerProviderStateM
         default:
           return const <Widget>[];
       }
-    }
-
-    Future<void> _showErrorReportDialog() async {
-      final error = _currentError;
-      if (error == null) return;
-      final reportBody = await _errorLogService.buildReportBody(
-        error,
-        screen: 'PrayScreen',
-      );
-      if (!mounted) return;
-      await showDialog<void>(
-        context: context,
-        builder: (context) => AlertDialog(
-          title: const Text('Reporte para desarrollador'),
-          content: SingleChildScrollView(child: Text(reportBody)),
-          actions: [
-            TextButton(
-              onPressed: () async {
-                await Clipboard.setData(ClipboardData(text: reportBody));
-                if (!context.mounted) return;
-                Navigator.of(context).pop();
-                _showTopInfoMessage('Reporte copiado. Puedes enviarlo al desarrollador.');
-              },
-              child: const Text('Copiar reporte'),
-            ),
-            TextButton(
-              onPressed: () => Navigator.of(context).pop(),
-              child: const Text('Cerrar'),
-            ),
-          ],
-        ),
-      );
     }
 
     // Activa o desactiva el wakelock según la variable _isBatterySaverActive
@@ -474,20 +542,62 @@ class _PrayScreenState extends State<PrayScreen> with SingleTickerProviderStateM
       });
     }
 
-    void _reportError(AppError error) {
-      if (!mounted) return;
-      setState(() {
-        _currentError = error;
-      });
-      _errorLogService.logError(error, screen: 'PrayScreen');
-      if (error.severity != ErrorSeverity.error) {
-        _showTopInfoMessage(error.userMessage);
-      }
-      if (error.technicalMessage != null) {
-        debugPrint(
-          '[${error.kind.name}:${error.severity.name}] ${error.technicalMessage}',
+    /// Envía el informe completo por HTTP (EmailJS o webhook configurado en app.env).
+    Future<void> _sendErrorReportToDeveloper() async {
+      final error = _currentError;
+      if (error == null || !mounted) return;
+      try {
+        final reportBody = await _errorLogService.buildReportBody(
+          error,
+          screen: 'PrayScreen',
+        );
+        if (!mounted) return;
+        await _errorReporter.submitReport(
+          error: error,
+          screen: 'PrayScreen',
+          reportBody: reportBody,
+          stackTrace: StackTrace.current,
+        );
+        if (!mounted) return;
+        _dismissError();
+        if (!mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text(
+              'Información técnica enviada al desarrollador.',
+            ),
+            behavior: SnackBarBehavior.floating,
+            duration: Duration(seconds: 5),
+          ),
+        );
+      } on ErrorReporterException catch (e) {
+        if (!mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(e.message),
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+      } catch (e, st) {
+        debugPrint('[sendErrorReportToDeveloper] $e\n$st');
+        if (!mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('No se pudo enviar el reporte. ${e.toString()}'),
+            behavior: SnackBarBehavior.floating,
+          ),
         );
       }
+    }
+
+    void _reportError(AppError error) {
+      if (!mounted) return;
+      _errorLogService.logError(error, screen: 'PrayScreen');
+      if (error.severity == ErrorSeverity.error) {
+        setState(() => _currentError = error);
+        return;
+      }
+      _showTopInfoMessage(error.userMessage);
     }
 
     void playPause() {
@@ -553,6 +663,15 @@ class _PrayScreenState extends State<PrayScreen> with SingleTickerProviderStateM
           }
       });
 
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted || !_hasMeaningfulPrayers()) return;
+        if (_isRosaryComplete()) {
+          Future.microtask(() async {
+            await _preferencesService.clearPrayerProgressSnapshot();
+          });
+        }
+      });
+
     }
     void _decrementCounter() {
       setState(() {
@@ -584,10 +703,18 @@ class _PrayScreenState extends State<PrayScreen> with SingleTickerProviderStateM
             setState(() {
               _currentPrayers = prayers; // Actualiza las oraciones actuales
               _orderMystery = orderMystery; // Actualiza el orden del misterio
-              if (_isDecrement) {
-                _orderPrayer = prayers.length - 1; // Si es decremento, va al último elemento del array de oraciones
+              if (_pendingProgressRestore &&
+                  prayers.isNotEmpty &&
+                  (prayers.length > 1 ||
+                      prayers.first.trim().isNotEmpty)) {
+                final maxPrayer = prayers.length - 1;
+                _orderPrayer = _orderPrayer.clamp(0, maxPrayer);
+                _pendingProgressRestore = false;
+                _isDecrement = false;
+              } else if (_isDecrement) {
+                _orderPrayer = prayers.length - 1;
               } else {
-                _orderPrayer = 0; // Si es incremento, reinicia el orden de oración
+                _orderPrayer = 0;
               }
             });
           });
@@ -729,12 +856,12 @@ class _PrayScreenState extends State<PrayScreen> with SingleTickerProviderStateM
     // Baja el panel de texto cuando hay flecha bajo iconos del AppBar para no taparla.
     double helpPanelTop = tutorialTop;
     final helpId = _activeHelpMessage?.id;
-    if (helpId == 'pray_keep_screen_on') {
+    if (helpId == AppHelpMessageIds.prayKeepScreenOn) {
       final r = _rectFromGlobalKey(_wakelockButtonKey);
       if (r != null) {
         helpPanelTop = max(tutorialTop, r.bottom + 8 + 44 + 14);
       }
-    } else if (helpId == 'pray_audio_menu') {
+    } else if (helpId == AppHelpMessageIds.prayAudioMenu) {
       final r = _rectFromGlobalKey(_prayAudioMenuButtonKey);
       if (r != null) {
         helpPanelTop = max(tutorialTop, r.bottom + 8 + 44 + 14);
@@ -838,7 +965,8 @@ class _PrayScreenState extends State<PrayScreen> with SingleTickerProviderStateM
         ],
       ),
       // Fondo + rosario + controles en capas. El orden importa: lo primero queda detrás.
-      body: Stack (
+      body: Stack(
+        clipBehavior: Clip.none,
         children: <Widget>[
           Container(
             color: AppColors.colorBackgroundBody,
@@ -952,8 +1080,7 @@ class _PrayScreenState extends State<PrayScreen> with SingleTickerProviderStateM
                                   prayer: _currentPrayers[_orderPrayer],
                                   mystery: widget.mystery,
                                   currentMysteryOrder: _orderMystery,
-                                  errorMessage:
-                                      _currentError?.userMessage ?? '',
+                                  errorMessage: _currentError?.userMessage ?? '',
                                 );
                               },
                             );
@@ -1073,94 +1200,94 @@ class _PrayScreenState extends State<PrayScreen> with SingleTickerProviderStateM
               ),
             ),
           ),
-         Positioned(
-            top: tutorialTop,
-            left: AppLayout.errorBannerInset,
-            right: AppLayout.errorBannerInset,
-            child: IgnorePointer(
-              ignoring: !(_currentError != null &&
-                  _currentError!.severity == ErrorSeverity.error),
-              child: AnimatedSlide(
-                offset: (_currentError != null &&
-                        _currentError!.severity == ErrorSeverity.error)
-                    ? Offset.zero
-                    : const Offset(0, -0.2),
-                duration: const Duration(milliseconds: 220),
-                curve: Curves.easeOut,
-                child: AnimatedOpacity(
-                  opacity: (_currentError != null &&
-                          _currentError!.severity == ErrorSeverity.error)
-                      ? 1
-                      : 0,
-                  duration: const Duration(milliseconds: 180),
-                  curve: Curves.easeOut,
-                  child: Material(
-                    color: Colors.transparent,
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 12,
-                        vertical: 10,
+          if (_currentError != null &&
+              _currentError!.severity == ErrorSeverity.error)
+            Positioned(
+              top: tutorialTop,
+              left: AppLayout.errorBannerInset,
+              right: AppLayout.errorBannerInset,
+              child: Material(
+                elevation: 8,
+                shadowColor: Colors.black45,
+                borderRadius: BorderRadius.circular(14),
+                color: AppColors.colorBackgroundDialogError,
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 10,
+                  ),
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Padding(
+                        padding: EdgeInsets.only(top: 2),
+                        child: Icon(
+                          Icons.error_outline,
+                          color: Colors.white,
+                          size: 20,
+                        ),
                       ),
-                      decoration: BoxDecoration(
-                        color: AppColors.colorBackgroundDialogError,
-                        borderRadius: BorderRadius.circular(14),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              _currentError!.userMessage,
+                              style: const TextStyle(
+                                color: Colors.white,
+                                fontWeight: FontWeight.w600,
+                                fontSize: 14,
+                              ),
+                            ),
+                            const SizedBox(height: 6),
+                            Text(
+                              'Para colaborar con el desarrollador para mejorar esta aplicación, pulse el ícono de enviar.',
+                              style: TextStyle(
+                                color: Colors.white.withValues(alpha: 0.88),
+                                fontSize: 12,
+                                height: 1.25,
+                              ),
+                            ),
+                          ],
+                        ),
                       ),
-                      child: Row(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          const Padding(
-                            padding: EdgeInsets.only(top: 2),
-                            child: Icon(
-                              Icons.error_outline,
-                              color: Colors.white,
-                              size: 20,
-                            ),
-                          ),
-                          const SizedBox(width: 8),
-                          Expanded(
-                            child: Text(
-                              _currentError?.userMessage ?? '',
-                              style: const TextStyle(color: Colors.white),
-                            ),
-                          ),
-                          IconButton(
-                            visualDensity: VisualDensity.compact,
-                            padding: EdgeInsets.zero,
-                            constraints: const BoxConstraints(
-                              minWidth: 28,
-                              minHeight: 28,
-                            ),
-                            icon: const Icon(
-                              Icons.send_outlined,
-                              color: Colors.white,
-                              size: 18,
-                            ),
-                            onPressed: _showErrorReportDialog,
-                            tooltip: 'Enviar al desarrollador',
-                          ),
-                          IconButton(
-                            visualDensity: VisualDensity.compact,
-                            padding: EdgeInsets.zero,
-                            constraints: const BoxConstraints(
-                              minWidth: 28,
-                              minHeight: 28,
-                            ),
-                            icon: const Icon(
-                              Icons.close,
-                              color: Colors.white,
-                              size: 18,
-                            ),
-                            onPressed: _dismissError,
-                            tooltip: 'Cerrar',
-                          ),
-                        ],
+                      IconButton(
+                        style: IconButton.styleFrom(
+                          foregroundColor: Colors.white,
+                          tapTargetSize: MaterialTapTargetSize.padded,
+                          minimumSize: const Size(48, 48),
+                          padding: const EdgeInsets.all(8),
+                        ),
+                        icon: const Icon(
+                          Icons.send_outlined,
+                          size: 22,
+                        ),
+                        onPressed: () {
+                          _sendErrorReportToDeveloper();
+                        },
+                        tooltip:
+                            'Enviar información técnica al desarrollador',
                       ),
-                    ),
+                      IconButton(
+                        style: IconButton.styleFrom(
+                          foregroundColor: Colors.white,
+                          tapTargetSize: MaterialTapTargetSize.padded,
+                          minimumSize: const Size(48, 48),
+                          padding: const EdgeInsets.all(8),
+                        ),
+                        icon: const Icon(
+                          Icons.close,
+                          size: 22,
+                        ),
+                        onPressed: _dismissError,
+                        tooltip: 'Cerrar',
+                      ),
+                    ],
                   ),
                 ),
               ),
             ),
-          ),
         ]
       )
     );
