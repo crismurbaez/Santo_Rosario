@@ -1193,7 +1193,7 @@ class _PrayScreenState extends State<PrayScreen>
                     padding: const EdgeInsets.all(AppLayout.sectionPadding),
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      crossAxisAlignment: CrossAxisAlignment.start,
+                      crossAxisAlignment: CrossAxisAlignment.end,
                       children: [
                         Opacity(
                           opacity: widget.mystery != null ? 1 : 0.45,
@@ -1203,48 +1203,38 @@ class _PrayScreenState extends State<PrayScreen>
                               mainAxisSize: MainAxisSize.min,
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                SizedBox(
-                                  height: 32,
-                                  width: AppPrayGlass.roundButtonSize,
-                                  child: _mysteryGlassLabelReady
-                                      ? Text(
-                                          '$_mysteryGlassLabelOrderº misterio',
-                                          textAlign: TextAlign.center,
-                                          maxLines: 2,
-                                          overflow: TextOverflow.ellipsis,
-                                          style: const TextStyle(
-                                            fontFamily: 'Poppins',
-                                            fontSize: 11,
-                                            fontWeight: FontWeight.w600,
-                                            color: AppPrayGlass.onGlassText,
-                                            height: 1.15,
-                                            shadows: [
-                                              Shadow(
-                                                blurRadius: 4,
-                                                color: Colors.black45,
-                                              ),
-                                            ],
-                                          ),
-                                        )
-                                      : const SizedBox.shrink(),
-                                ),
-                                const SizedBox(height: 6),
-                                _prayGlassRoundButton(
-                                  onPressed: () =>
-                                      _showDecadeMysteryDialog(context),
-                                  child: const Icon(
-                                    Icons.menu_book_rounded,
+                                if (_mysteryGlassLabelReady)
+                                  Padding(
+                                    padding: const EdgeInsets.only(bottom: 3),
+                                    child: SizedBox(
+                                      width: _prayGlassMysteryTripleTotalWidth,
+                                      child: Text(
+                                        '$_mysteryGlassLabelOrderº misterio',
+                                        textAlign: TextAlign.center,
+                                        maxLines: 2,
+                                        overflow: TextOverflow.ellipsis,
+                                        style: const TextStyle(
+                                          fontFamily: 'PlayfairDisplay',
+                                          fontSize: 17,
+                                          fontWeight: FontWeight.w700,
+                                          height: 1.12,
+                                          color: AppColors
+                                              .colorCircularProgressIndicator,
+                                        ),
+                                      ),
+                                    ),
                                   ),
-                                ),
-                                const SizedBox(height: 10),
-                                _prayGlassSplitMysteryNav(
-                                  enabled: widget.mystery != null &&
-                                      _loadedImages != null,
+                                _prayGlassMysteryTripleBar(
+                                  clusterEnabled:
+                                      widget.mystery != null &&
+                                          _loadedImages != null,
                                   canGoPrevious: canJumpPreviousMisterio,
                                   canGoNext: canJumpNextMisterio,
                                   onPrevious: canJumpPreviousMisterio
                                       ? () => _onJumpToAdjacentMisterio(-1)
                                       : null,
+                                  onBook: () =>
+                                      _showDecadeMysteryDialog(context),
                                   onNext: canJumpNextMisterio
                                       ? () => _onJumpToAdjacentMisterio(1)
                                       : null,
@@ -1253,24 +1243,13 @@ class _PrayScreenState extends State<PrayScreen>
                             ),
                           ),
                         ),
-                        SizedBox(
-                          width: AppPrayGlass.roundButtonSize,
-                          child: Column(
-                            mainAxisSize: MainAxisSize.min,
-                            crossAxisAlignment: CrossAxisAlignment.center,
-                            children: [
-                              _prayGlassRoundButton(
-                                widgetKey: _playPauseButtonKey,
-                                onPressed: playPause,
-                                child: Icon(
-                                  _isplaying
-                                      ? Icons.volume_up
-                                      : Icons.volume_off,
-                                ),
-                              ),
-                              const SizedBox(height: 6),
-                              const SizedBox(height: 32),
-                            ],
+                        _prayGlassRoundButton(
+                          widgetKey: _playPauseButtonKey,
+                          onPressed: playPause,
+                          child: Icon(
+                            _isplaying
+                                ? Icons.volume_up
+                                : Icons.volume_off,
                           ),
                         ),
                       ],
@@ -1655,48 +1634,68 @@ Widget _prayGlassAudioMenuPanel({
   );
 }
 
-/// Ancho del control partido de misterios en ratio respecto a [AppPrayGlass.roundButtonSize].
-const double _prayGlassSplitMysteryNavWidthFactor = 1.38;
+// --- Tamaño del control triple de misterios (prev · libro · sig.) ------------
+//
+// Diseñado en `_prayGlassMysteryTripleBar` (misma sección) y el ancho del texto
+// arriba reusa `_prayGlassMysteryTripleTotalWidth`.
+//
+// • [_prayGlassMysteryTripleBarSize] — alto de la píldora y diámetro del círculo del libro.
+// • [_prayGlassMysteryTripleChevronSlot] — ancho de cada zona táctil de la flecha.
+// • [_prayGlassMysteryTripleBookGap] — separación flecha ↔ libro (sin líneas divisorias).
+// [_prayGlassMysteryTripleTotalWidth] se deriva para alinear el texto de arriba.
+//
+const double _prayGlassMysteryTripleBarSize =
+    AppPrayGlass.roundButtonSize;
+const double _prayGlassMysteryTripleChevronSlot = 28;
+const double _prayGlassMysteryTripleBookGap = 0;
+const double _prayGlassMysteryTripleTotalWidth =
+    _prayGlassMysteryTripleChevronSlot * 2 +
+        _prayGlassMysteryTripleBookGap * 2 +
+        _prayGlassMysteryTripleBarSize;
 
-/// Flechas «misterio anterior / siguiente» con estilo glass y mitades separadas.
-Widget _prayGlassSplitMysteryNav({
-  required bool enabled,
+/// Prev · ver misterio (libro) · sig., una sola píldora glass (sin tramitas verticales).
+Widget _prayGlassMysteryTripleBar({
+  required bool clusterEnabled,
   required bool canGoPrevious,
   required bool canGoNext,
   required VoidCallback? onPrevious,
+  required VoidCallback onBook,
   required VoidCallback? onNext,
 }) {
-  const double h = AppPrayGlass.roundButtonSize;
-  final double w = h * _prayGlassSplitMysteryNavWidthFactor;
-  const iconTheme = IconThemeData(
-    color: AppPrayGlass.onGlassText,
-    size: 26,
-  );
+  final double h = _prayGlassMysteryTripleBarSize;
+  final double w = _prayGlassMysteryTripleTotalWidth;
+  final double r = h / 2;
+  final double slot = _prayGlassMysteryTripleChevronSlot;
+  final double gap = _prayGlassMysteryTripleBookGap;
 
-  Widget semicircularSide({
+  Widget sideTap({
     required String tooltip,
     required IconData icon,
     required bool active,
     required VoidCallback? onTap,
     required BorderRadius splashRadius,
+    required Alignment iconAlignment,
   }) {
-    return Expanded(
-      child: Tooltip(
-        message: tooltip,
+    return Tooltip(
+      message: tooltip,
+      child: SizedBox(
+        width: slot,
+        height: h,
         child: Material(
           color: Colors.transparent,
           child: InkWell(
-            onTap: (enabled && active) ? onTap : null,
+            onTap: clusterEnabled && active ? onTap : null,
             borderRadius: splashRadius,
-            child: SizedBox(
-              height: h,
-              child: Center(
-                child: IconTheme(
-                  data: iconTheme,
-                  child: Opacity(
-                    opacity: enabled && active ? 1 : 0.42,
-                    child: Icon(icon),
-                  ),
+            child: Align(
+              alignment: iconAlignment,
+              child: IconTheme(
+                data: const IconThemeData(
+                  color: AppPrayGlass.onGlassText,
+                  size: 24,
+                ),
+                child: Opacity(
+                  opacity: clusterEnabled && active ? 1 : 0.42,
+                  child: Icon(icon),
                 ),
               ),
             ),
@@ -1706,7 +1705,6 @@ Widget _prayGlassSplitMysteryNav({
     );
   }
 
-  final double r = h / 2;
   return Material(
     color: Colors.transparent,
     child: ClipRRect(
@@ -1725,27 +1723,53 @@ Widget _prayGlassSplitMysteryNav({
             border: Border.all(color: AppPrayGlass.borderLight),
           ),
           child: Row(
+            mainAxisSize: MainAxisSize.min,
+            mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              semicircularSide(
+              sideTap(
                 tooltip: 'Misterio anterior',
                 icon: Icons.chevron_left,
                 active: canGoPrevious,
                 onTap: onPrevious,
                 splashRadius:
                     BorderRadius.horizontal(left: Radius.circular(r)),
+                iconAlignment: Alignment.centerRight,
               ),
-              Container(
-                width: 1,
-                height: h * 0.55,
-                color: AppPrayGlass.borderLight.withValues(alpha: 0.75),
+              SizedBox(width: gap),
+              SizedBox(
+                width: h-20,
+                height: h,
+                child: Tooltip(
+                  message: 'Ver meditación del misterio',
+                  child: Material(
+                    color: Colors.transparent,
+                    child: InkWell(
+                      customBorder: const CircleBorder(),
+                      onTap: clusterEnabled ? onBook : null,
+                      child: Center(
+                        child: IconTheme(
+                          data: IconThemeData(
+                            color: AppPrayGlass.onGlassText.withValues(
+                              alpha: clusterEnabled ? 1 : 0.42,
+                            ),
+                            size: 22,
+                          ),
+                          child: const Icon(Icons.menu_book_rounded),
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
               ),
-              semicircularSide(
+              SizedBox(width: gap),
+              sideTap(
                 tooltip: 'Siguiente misterio',
                 icon: Icons.chevron_right,
                 active: canGoNext,
                 onTap: onNext,
                 splashRadius:
                     BorderRadius.horizontal(right: Radius.circular(r)),
+                iconAlignment: Alignment.centerLeft,
               ),
             ],
           ),
