@@ -72,6 +72,10 @@ class _PrayScreenState extends State<PrayScreen>
   int _mysteryGlassLabelOrder = 1;
 
   final GlobalKey _wakelockButtonKey = GlobalKey();
+
+  /// Origen para convertir [GlobalKey] del AppBar / body a coordenadas del
+  /// [Stack] del [Scaffold.body]; [Positioned] del body no usa coordenadas globales.
+  final GlobalKey _prayBodyStackKey = GlobalKey();
   final GlobalKey _playPauseButtonKey = GlobalKey();
   final GlobalKey _prevButtonKey = GlobalKey();
   final GlobalKey _nextButtonKey = GlobalKey();
@@ -155,6 +159,15 @@ class _PrayScreenState extends State<PrayScreen>
       case AppLifecycleState.hidden:
         break;
     }
+  }
+
+  /// Rotación o cambios de tamaño/viewPadding: tras el layout hay que recomputar
+  /// anchors de [_rectInPrayBodyStack]; durante el mismo [build] el [RenderBox]
+  /// puede ser aún el del frame anterior.
+  @override
+  void didChangeMetrics() {
+    super.didChangeMetrics();
+    _refreshTutorialArrowsAfterLayout(doublePostFrame: true);
   }
 
   bool _hasMeaningfulPrayers() {
@@ -308,7 +321,7 @@ class _PrayScreenState extends State<PrayScreen>
       _activeHelpMessage = _helpMessageQueue.first;
     });
     _syncTutorialArrowAnimation();
-    _refreshTutorialArrowsAfterLayout();
+    _refreshTutorialArrowsAfterLayout(doublePostFrame: false);
   }
 
   Future<void> _dismissActiveHelpMessage({
@@ -329,18 +342,35 @@ class _PrayScreenState extends State<PrayScreen>
           : null;
     });
     _syncTutorialArrowAnimation();
-    _refreshTutorialArrowsAfterLayout();
+    _refreshTutorialArrowsAfterLayout(doublePostFrame: false);
   }
 
-  void _refreshTutorialArrowsAfterLayout() {
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (!mounted || _activeHelpMessage == null) return;
-      setState(() {
-        // Rebuild sin cambiar estado para recalcular los anchors por GlobalKey
-        // cuando los RenderBox ya tienen tamaño real.
+  /// Fuerza un [setState] **después** del layout para re-leer posiciones por
+  /// [GlobalKey] (tutorial y panel). [doublePostFrame] ayuda al pasar retrato ↔
+  /// horizontal, donde una sola espera puede dejar anchors viejos.
+  void _refreshTutorialArrowsAfterLayout({required bool doublePostFrame}) {
+    void scheduleRebuild() {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted || _activeHelpMessage == null) {
+          return;
+        }
+        setState(() {
+          // Sin campos: solo repaint con RenderBox ya actualizado.
+        });
+        _syncTutorialArrowAnimation();
       });
-      _syncTutorialArrowAnimation();
-    });
+    }
+
+    if (doublePostFrame) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted) {
+          return;
+        }
+        scheduleRebuild();
+      });
+    } else {
+      scheduleRebuild();
+    }
   }
 
   void _showTopInfoMessage(String text) {
@@ -357,25 +387,49 @@ class _PrayScreenState extends State<PrayScreen>
     });
   }
 
-  Rect? _rectFromGlobalKey(GlobalKey key) {
-    final targetContext = key.currentContext;
-    if (targetContext == null) return null;
-    final render = targetContext.findRenderObject();
-    if (render is! RenderBox || !render.hasSize) return null;
-    final offset = render.localToGlobal(Offset.zero);
-    return Rect.fromLTWH(
-      offset.dx,
-      offset.dy,
-      render.size.width,
-      render.size.height,
-    );
+  /// Posición Y en el [Stack] del body equivalente a una Y en coordenadas globales.
+  double _yGlobalToPrayBodyStack(BuildContext context, double yGlobal) {
+    final stackBox =
+        _prayBodyStackKey.currentContext?.findRenderObject() as RenderBox?;
+    if (stackBox == null || !stackBox.hasSize) {
+      return yGlobal;
+    }
+    return stackBox.globalToLocal(Offset(0, yGlobal)).dy;
   }
 
-  /// Flechas del tutorial según el tip activo (posiciones en coordenadas de pantalla).
-  List<Widget> _buildTutorialArrowOverlays(double screenWidth) {
+  /// [Rect] del widget [targetKey] en coordenadas del [Stack] del body.
+  Rect? _rectInPrayBodyStack(GlobalKey targetKey) {
+    final stackContext = _prayBodyStackKey.currentContext;
+    final targetContext = targetKey.currentContext;
+    if (stackContext == null || targetContext == null) {
+      return null;
+    }
+    final stackRender = stackContext.findRenderObject();
+    final targetRender = targetContext.findRenderObject();
+    if (stackRender is! RenderBox ||
+        targetRender is! RenderBox ||
+        !stackRender.hasSize ||
+        !targetRender.hasSize) {
+      return null;
+    }
+    final topLeft = stackRender.globalToLocal(
+      targetRender.localToGlobal(Offset.zero),
+    );
+    final size = targetRender.size;
+    return Rect.fromLTWH(topLeft.dx, topLeft.dy, size.width, size.height);
+  }
+
+  /// Flechas del tutorial según el tip activo (coords. del [Stack] del body).
+  List<Widget> _buildTutorialArrowOverlays(BuildContext context) {
     final id = _activeHelpMessage?.id;
     if (id == null || id == AppHelpMessageIds.prayAudioBehavior) {
       return const <Widget>[];
+    }
+
+    double clampW = MediaQuery.sizeOf(context).width;
+    final stackRo = _prayBodyStackKey.currentContext?.findRenderObject();
+    if (stackRo is RenderBox && stackRo.hasSize) {
+      clampW = stackRo.size.width;
     }
 
     const double arrowSize = 44;
@@ -405,7 +459,7 @@ class _PrayScreenState extends State<PrayScreen>
         ),
       );
       return Positioned(
-        left: left.clamp(8.0, screenWidth - arrowSize - 8.0),
+        left: left.clamp(8.0, clampW - arrowSize - 8.0),
         top: top,
         child: IgnorePointer(
           child: AnimatedBuilder(
@@ -427,7 +481,7 @@ class _PrayScreenState extends State<PrayScreen>
 
     switch (id) {
       case AppHelpMessageIds.prayKeepScreenOn:
-        final r = _rectFromGlobalKey(_wakelockButtonKey);
+        final r = _rectInPrayBodyStack(_wakelockButtonKey);
         if (r == null) return const <Widget>[];
         return [
           arrowLayer(
@@ -437,7 +491,7 @@ class _PrayScreenState extends State<PrayScreen>
           ),
         ];
       case AppHelpMessageIds.prayAudioMenu:
-        final r = _rectFromGlobalKey(_prayAudioMenuButtonKey);
+        final r = _rectInPrayBodyStack(_prayAudioMenuButtonKey);
         if (r == null) return const <Widget>[];
         return [
           arrowLayer(
@@ -447,9 +501,9 @@ class _PrayScreenState extends State<PrayScreen>
           ),
         ];
       case AppHelpMessageIds.prayNavigation:
-        final back = _rectFromGlobalKey(_prevButtonKey);
-        final next = _rectFromGlobalKey(_nextButtonKey);
-        final pill = _rectFromGlobalKey(_pillButtonKey);
+        final back = _rectInPrayBodyStack(_prevButtonKey);
+        final next = _rectInPrayBodyStack(_nextButtonKey);
+        final pill = _rectInPrayBodyStack(_pillButtonKey);
         return <Widget>[
           if (back != null)
             arrowLayer(
@@ -999,20 +1053,23 @@ class _PrayScreenState extends State<PrayScreen>
 
   @override
   Widget build(BuildContext context) {
-    final double tutorialTop =
+    final double topBelowAppBarGlobal =
         MediaQuery.paddingOf(context).top + AppLayout.appBarToolbarHeight + 8;
-    final double screenWidth = MediaQuery.sizeOf(context).width;
+    final double tutorialTop = _yGlobalToPrayBodyStack(
+      context,
+      topBelowAppBarGlobal,
+    );
 
     // Baja el panel de texto cuando hay flecha bajo iconos del AppBar para no taparla.
     double helpPanelTop = tutorialTop;
     final helpId = _activeHelpMessage?.id;
     if (helpId == AppHelpMessageIds.prayKeepScreenOn) {
-      final r = _rectFromGlobalKey(_wakelockButtonKey);
+      final r = _rectInPrayBodyStack(_wakelockButtonKey);
       if (r != null) {
         helpPanelTop = max(tutorialTop, r.bottom + 8 + 44 + 14);
       }
     } else if (helpId == AppHelpMessageIds.prayAudioMenu) {
-      final r = _rectFromGlobalKey(_prayAudioMenuButtonKey);
+      final r = _rectInPrayBodyStack(_prayAudioMenuButtonKey);
       if (r != null) {
         helpPanelTop = max(tutorialTop, r.bottom + 8 + 44 + 14);
       }
@@ -1130,6 +1187,7 @@ class _PrayScreenState extends State<PrayScreen>
       ),
       // Fondo + rosario + controles en capas. El orden importa: lo primero queda detrás.
       body: Stack(
+        key: _prayBodyStackKey,
         clipBehavior: Clip.none,
         children: <Widget>[
           Container(color: AppColors.colorBackgroundBody),
@@ -1383,7 +1441,7 @@ class _PrayScreenState extends State<PrayScreen>
               ),
             ),
           ),
-          ..._buildTutorialArrowOverlays(screenWidth),
+          ..._buildTutorialArrowOverlays(context),
           Positioned(
             top: tutorialTop,
             left: AppLayout.errorBannerInset,
