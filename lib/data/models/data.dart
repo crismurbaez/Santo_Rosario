@@ -119,25 +119,25 @@ static const List<MysteriesMeditations> meditations = [
      static const List<MysteryDetail> mysteries = [
       MysteryDetail(
         title: 'Misterios Gozosos',
-        subtitle: 'Se rezan los días Lunes y Sábado',
+        subtitle: 'Lunes y Sábado',
         imageAsset: 'assets/images/gozosos1.png',
         mystery: 'gozosos',
       ),
       MysteryDetail(
         title: 'Misterios Gloriosos',
-        subtitle: 'Se rezan los días Miércoles y Domingo',
+        subtitle: 'Miércoles y Domingo',
         imageAsset: 'assets/images/gloriosos1.png',
         mystery: 'gloriosos',
       ),
       MysteryDetail(
         title: 'Misterios Dolorosos',
-        subtitle: 'Se rezan los días Martes y Viernes',
+        subtitle: 'Martes y Viernes',
         imageAsset: 'assets/images/dolorosos1.png',
         mystery: 'dolorosos',
       ),
       MysteryDetail(
         title: 'Misterios Luminosos',
-        subtitle: 'Se rezan los días Jueves',
+        subtitle: 'Jueves',
         imageAsset: 'assets/images/luminosos1.png',
         mystery: 'luminosos',
       ),

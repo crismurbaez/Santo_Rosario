@@ -21,6 +21,7 @@ class MysteryListItem extends StatelessWidget {
   final String imageAsset;
   final bool value;
   final ValueChanged<bool> onChanged;
+
   /// Si es true, el padre debe dar altura finita (p. ej. [Expanded]): la tarjeta
   /// usa todo ese alto e imagen proporcional al hueco y al ancho.
   final bool expandToParentSlot;
@@ -48,8 +49,10 @@ class MysteryListItem extends StatelessWidget {
               context,
               marginV: 0,
               compact: false,
-              contentPadding:
-                  EdgeInsets.symmetric(horizontal: 12, vertical: safeH > 96 ? 6 : 4),
+              contentPadding: EdgeInsets.symmetric(
+                horizontal: 12,
+                vertical: safeH > 96 ? 6 : 4,
+              ),
               horizontalTitleGap: 12,
               minTileHeight: safeH.isFinite ? safeH : 96,
               imgW: imgW,
@@ -154,7 +157,10 @@ class MysteryListItem extends StatelessWidget {
                     children: [
                       Text(
                         title,
-                        style: Theme.of(context).textTheme.displayMedium?.copyWith(
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                        style: Theme.of(context).textTheme.displayMedium
+                            ?.copyWith(
                               color: AppHomeColors.titleText,
                               fontWeight: FontWeight.w700,
                             ),
@@ -162,10 +168,10 @@ class MysteryListItem extends StatelessWidget {
                       const SizedBox(height: 2),
                       Text(
                         subtitle,
-                        style:
-                            Theme.of(context).textTheme.displaySmall?.copyWith(
-                                  color: AppHomeColors.subtitleText,
-                                ),
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                        style: Theme.of(context).textTheme.displaySmall
+                            ?.copyWith(color: AppHomeColors.subtitleText),
                       ),
                     ],
                   ),
