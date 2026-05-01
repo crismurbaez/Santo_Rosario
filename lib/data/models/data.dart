@@ -191,6 +191,50 @@ static const List<MysteriesMeditations> meditations = [
           width: 'largest', height: 'largest'
           , prayers:['Señal de la Cruz']),
      ];
+
+    static List<RosaryBeadStepInfo>? _rosaryBeadStepsCache;
+    static List<RosaryMysteryAnchorInfo>? _rosaryMysteryAnchorsCache;
+
+    /// Oraciones y orden de misterio por índice de cuenta (coincide con [CuentasPainter.counter]).
+    static List<RosaryBeadStepInfo> get rosaryBeadSteps {
+      _rosaryBeadStepsCache ??= _buildRosaryBeadSteps();
+      return _rosaryBeadStepsCache!;
+    }
+
+    /// Índices de cuenta + índice de oración «Misterio» para saltos de misterio.
+    static List<RosaryMysteryAnchorInfo> get rosaryMysteryAnchors {
+      _rosaryMysteryAnchorsCache ??= _computeRosaryMysteryAnchors();
+      return _rosaryMysteryAnchorsCache!;
+    }
+
+    static List<RosaryBeadStepInfo> _buildRosaryBeadSteps() {
+      final out = <RosaryBeadStepInfo>[];
+      for (final d in rosaryDetailsCircle) {
+        for (var i = 0; i < d.count; i++) {
+          out.add(RosaryBeadStepInfo(prayers: d.prayers, orderMystery: d.order));
+        }
+      }
+      for (final d in rosaryDetailsExtension) {
+        for (var i = 0; i < d.count; i++) {
+          out.add(RosaryBeadStepInfo(prayers: d.prayers, orderMystery: d.order));
+        }
+      }
+      return out;
+    }
+
+    static List<RosaryMysteryAnchorInfo> _computeRosaryMysteryAnchors() {
+      final steps = rosaryBeadSteps;
+      final out = <RosaryMysteryAnchorInfo>[];
+      for (var i = 0; i < steps.length; i++) {
+        final ix = steps[i].prayers.indexOf('Misterio');
+        if (ix >= 0) {
+          out.add(
+            RosaryMysteryAnchorInfo(beadIndex: i, misterioPrayerIndex: ix),
+          );
+        }
+      }
+      return out;
+    }
   }
   
  class MysteryDetail {
@@ -258,6 +302,28 @@ static const List<MysteriesMeditations> meditations = [
       required this.prayers,
     });
   }
+
+/// Una cuenta del rosario (misma secuencia que expande `CuentasPainter`).
+class RosaryBeadStepInfo {
+  final List<String> prayers;
+  final int orderMystery;
+
+  const RosaryBeadStepInfo({
+    required this.prayers,
+    required this.orderMystery,
+  });
+}
+
+/// Posición de la oración «Misterio» dentro de una cuenta.
+class RosaryMysteryAnchorInfo {
+  final int beadIndex;
+  final int misterioPrayerIndex;
+
+  const RosaryMysteryAnchorInfo({
+    required this.beadIndex,
+    required this.misterioPrayerIndex,
+  });
+}
 
   class MysteriesMeditations  {
     final String mystery;

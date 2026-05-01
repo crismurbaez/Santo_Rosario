@@ -65,6 +65,10 @@ class _PrayScreenState extends State<PrayScreen>
   /// Tras cargar estado guardado; la primera cuenta resaltada no debe pisar `_orderPrayer`.
   bool _pendingProgressRestore = false;
 
+  /// Tras un salto misterio→misterio: la primera actualización del pintor no debe poner `_orderPrayer` en 0.
+  bool _explicitOrderPrayerAfterHighlight = false;
+  int _explicitOrderPrayerTargetIndex = 0;
+
   /// Texto «Nº misterio»: sólo se actualiza cuando [_currentPrayers]/[_orderPrayer] es «Misterio».
   bool _mysteryGlassLabelReady = false;
   int _mysteryGlassLabelOrder = 1;
@@ -719,7 +723,16 @@ class _PrayScreenState extends State<PrayScreen>
             setState(() {
               _currentPrayers = prayers; // Actualiza las oraciones actuales
               _orderMystery = orderMystery; // Actualiza el orden del misterio
-              if (_pendingProgressRestore &&
+              if (_explicitOrderPrayerAfterHighlight) {
+                final maxPrayer =
+                    prayers.isEmpty ? 0 : prayers.length - 1;
+                _orderPrayer = _explicitOrderPrayerTargetIndex.clamp(
+                  0,
+                  maxPrayer,
+                );
+                _explicitOrderPrayerAfterHighlight = false;
+                _isDecrement = false;
+              } else if (_pendingProgressRestore &&
                   prayers.isNotEmpty &&
                   (prayers.length > 1 ||
                       prayers.first.trim().isNotEmpty)) {
@@ -807,6 +820,63 @@ class _PrayScreenState extends State<PrayScreen>
         );
       },
     );
+  }
+
+  RosaryMysteryAnchorInfo? _previousMisterioAnchorPosition() {
+    RosaryMysteryAnchorInfo? best;
+    for (final a in Data.rosaryMysteryAnchors) {
+      if (a.beadIndex < _counter ||
+          (a.beadIndex == _counter && a.misterioPrayerIndex < _orderPrayer)) {
+        best = a;
+      }
+    }
+    return best;
+  }
+
+  RosaryMysteryAnchorInfo? _nextMisterioAnchorPosition() {
+    for (final a in Data.rosaryMysteryAnchors) {
+      if (a.beadIndex > _counter ||
+          (a.beadIndex == _counter && a.misterioPrayerIndex > _orderPrayer)) {
+        return a;
+      }
+    }
+    return null;
+  }
+
+  void _applyMisterioAnchorJump(RosaryMysteryAnchorInfo anchor) {
+    if (_loadedImages == null) return;
+
+    final sameBead = anchor.beadIndex == _counter;
+    if (sameBead) {
+      setState(() {
+        final maxIx =
+            _currentPrayers.isEmpty ? 0 : _currentPrayers.length - 1;
+        _orderPrayer =
+            anchor.misterioPrayerIndex.clamp(0, maxIx);
+        _isDecrement = false;
+        _pendingProgressRestore = false;
+      });
+      return;
+    }
+
+    _explicitOrderPrayerAfterHighlight = true;
+    _explicitOrderPrayerTargetIndex = anchor.misterioPrayerIndex;
+    setState(() {
+      _counter = anchor.beadIndex.clamp(0, rosaryBeadCount - 1);
+      _orderPrayer = anchor.misterioPrayerIndex;
+      _isDecrement = false;
+      _pendingProgressRestore = false;
+    });
+  }
+
+  void _onJumpToAdjacentMisterio(int direction) {
+    if (widget.mystery == null || _loadedImages == null) return;
+    final target = direction < 0
+        ? _previousMisterioAnchorPosition()
+        : _nextMisterioAnchorPosition();
+    if (target == null) return;
+    HapticFeedback.selectionClick();
+    _applyMisterioAnchorJump(target);
   }
 
    // Función asíncrona para cargar todas las imágenes
@@ -944,6 +1014,20 @@ class _PrayScreenState extends State<PrayScreen>
         helpPanelTop = max(tutorialTop, r.bottom + 8 + 44 + 14);
       }
     }
+
+    final bool mysteryNavAnchorsAllowed = widget.mystery != null &&
+        _loadedImages != null &&
+        !_explicitOrderPrayerAfterHighlight;
+    RosaryMysteryAnchorInfo? prevMysteryAnchorNav;
+    RosaryMysteryAnchorInfo? nextMysteryAnchorNav;
+    if (mysteryNavAnchorsAllowed) {
+      prevMysteryAnchorNav = _previousMisterioAnchorPosition();
+      nextMysteryAnchorNav = _nextMisterioAnchorPosition();
+    }
+    final bool canJumpPreviousMisterio =
+        mysteryNavAnchorsAllowed && prevMysteryAnchorNav != null;
+    final bool canJumpNextMisterio =
+        mysteryNavAnchorsAllowed && nextMysteryAnchorNav != null;
 
     return Scaffold(
       // Permite que el [body] (imagen de la Virgen) dibuje detrás del AppBar;
@@ -1119,14 +1203,6 @@ class _PrayScreenState extends State<PrayScreen>
                               mainAxisSize: MainAxisSize.min,
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                _prayGlassRoundButton(
-                                  onPressed: () =>
-                                      _showDecadeMysteryDialog(context),
-                                  child: const Icon(
-                                    Icons.menu_book_rounded,
-                                  ),
-                                ),
-                                const SizedBox(height: 6),
                                 SizedBox(
                                   height: 32,
                                   width: AppPrayGlass.roundButtonSize,
@@ -1151,6 +1227,27 @@ class _PrayScreenState extends State<PrayScreen>
                                           ),
                                         )
                                       : const SizedBox.shrink(),
+                                ),
+                                const SizedBox(height: 6),
+                                _prayGlassRoundButton(
+                                  onPressed: () =>
+                                      _showDecadeMysteryDialog(context),
+                                  child: const Icon(
+                                    Icons.menu_book_rounded,
+                                  ),
+                                ),
+                                const SizedBox(height: 10),
+                                _prayGlassSplitMysteryNav(
+                                  enabled: widget.mystery != null &&
+                                      _loadedImages != null,
+                                  canGoPrevious: canJumpPreviousMisterio,
+                                  canGoNext: canJumpNextMisterio,
+                                  onPrevious: canJumpPreviousMisterio
+                                      ? () => _onJumpToAdjacentMisterio(-1)
+                                      : null,
+                                  onNext: canJumpNextMisterio
+                                      ? () => _onJumpToAdjacentMisterio(1)
+                                      : null,
                                 ),
                               ],
                             ),
@@ -1552,6 +1649,106 @@ Widget _prayGlassAudioMenuPanel({
               ),
             ),
           ],
+        ),
+      ),
+    ),
+  );
+}
+
+/// Ancho del control partido de misterios en ratio respecto a [AppPrayGlass.roundButtonSize].
+const double _prayGlassSplitMysteryNavWidthFactor = 1.38;
+
+/// Flechas «misterio anterior / siguiente» con estilo glass y mitades separadas.
+Widget _prayGlassSplitMysteryNav({
+  required bool enabled,
+  required bool canGoPrevious,
+  required bool canGoNext,
+  required VoidCallback? onPrevious,
+  required VoidCallback? onNext,
+}) {
+  const double h = AppPrayGlass.roundButtonSize;
+  final double w = h * _prayGlassSplitMysteryNavWidthFactor;
+  const iconTheme = IconThemeData(
+    color: AppPrayGlass.onGlassText,
+    size: 26,
+  );
+
+  Widget semicircularSide({
+    required String tooltip,
+    required IconData icon,
+    required bool active,
+    required VoidCallback? onTap,
+    required BorderRadius splashRadius,
+  }) {
+    return Expanded(
+      child: Tooltip(
+        message: tooltip,
+        child: Material(
+          color: Colors.transparent,
+          child: InkWell(
+            onTap: (enabled && active) ? onTap : null,
+            borderRadius: splashRadius,
+            child: SizedBox(
+              height: h,
+              child: Center(
+                child: IconTheme(
+                  data: iconTheme,
+                  child: Opacity(
+                    opacity: enabled && active ? 1 : 0.42,
+                    child: Icon(icon),
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  final double r = h / 2;
+  return Material(
+    color: Colors.transparent,
+    child: ClipRRect(
+      borderRadius: BorderRadius.circular(r),
+      child: BackdropFilter(
+        filter: ui.ImageFilter.blur(
+          sigmaX: AppPrayGlass.blurSigma,
+          sigmaY: AppPrayGlass.blurSigma,
+        ),
+        child: Container(
+          height: h,
+          width: w,
+          decoration: BoxDecoration(
+            color: AppPrayGlass.frostedTint,
+            borderRadius: BorderRadius.circular(r),
+            border: Border.all(color: AppPrayGlass.borderLight),
+          ),
+          child: Row(
+            children: [
+              semicircularSide(
+                tooltip: 'Misterio anterior',
+                icon: Icons.chevron_left,
+                active: canGoPrevious,
+                onTap: onPrevious,
+                splashRadius:
+                    BorderRadius.horizontal(left: Radius.circular(r)),
+              ),
+              Container(
+                width: 1,
+                height: h * 0.55,
+                color: AppPrayGlass.borderLight.withValues(alpha: 0.75),
+              ),
+              semicircularSide(
+                tooltip: 'Siguiente misterio',
+                icon: Icons.chevron_right,
+                active: canGoNext,
+                onTap: onNext,
+                splashRadius:
+                    BorderRadius.horizontal(right: Radius.circular(r)),
+              ),
+            ],
+          ),
         ),
       ),
     ),
