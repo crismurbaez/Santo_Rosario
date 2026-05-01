@@ -1,6 +1,6 @@
 # Variables de EmailJS / webhook locales (opcional si no quieres versionar credenciales)
 # Haz una copia de assets/env/app.env.example → assets/env/app.env
-# assets/env/app.env
+assets/env/app.env
 
 # Miscellaneous
 *.class
