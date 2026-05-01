@@ -65,6 +65,10 @@ class _PrayScreenState extends State<PrayScreen>
   /// Tras cargar estado guardado; la primera cuenta resaltada no debe pisar `_orderPrayer`.
   bool _pendingProgressRestore = false;
 
+  /// Texto «Nº misterio»: sólo se actualiza cuando [_currentPrayers]/[_orderPrayer] es «Misterio».
+  bool _mysteryGlassLabelReady = false;
+  int _mysteryGlassLabelOrder = 1;
+
   final GlobalKey _wakelockButtonKey = GlobalKey();
   final GlobalKey _playPauseButtonKey = GlobalKey();
   final GlobalKey _prevButtonKey = GlobalKey();
@@ -155,6 +159,17 @@ class _PrayScreenState extends State<PrayScreen>
       if (_currentPrayers.length > 1) return true;
       return _currentPrayers[0].trim().isNotEmpty;
     }
+
+    /// [_orderPrayer] puede quedar fuera de rango al restaurar avance antes de que el
+    /// pintor asigne [_currentPrayers] de la cuenta actual (evita [RangeError] en UI/audio).
+    int get _safeOrderPrayerIndex {
+      if (_currentPrayers.isEmpty) return 0;
+      final max = _currentPrayers.length - 1;
+      return _orderPrayer.clamp(0, max);
+    }
+
+    String get _safeCurrentPrayerLabel =>
+        _currentPrayers.isEmpty ? '' : _currentPrayers[_safeOrderPrayerIndex];
 
     bool _isRosaryComplete() {
       return PrayerProgressSnapshot.computeComplete(
@@ -486,11 +501,12 @@ class _PrayScreenState extends State<PrayScreen>
         if (requestId != _audioRequestId || !_isplaying) {
           return;
         }
-        if (rosaryprayersSounds[_currentPrayers[_orderPrayer]] != null) {
-          prayerSound = rosaryprayersSounds[_currentPrayers[_orderPrayer]]!;
+        final prayerLabel = _safeCurrentPrayerLabel;
+        if (rosaryprayersSounds[prayerLabel] != null) {
+          prayerSound = rosaryprayersSounds[prayerLabel]!;
         }
 
-        if (_currentPrayers[_orderPrayer] == 'Misterio') {
+        if (prayerLabel == 'Misterio') {
           String soundMystery = '${widget.mystery}${_orderMystery.toString()}';
           prayerSound = rosaryprayersSounds[soundMystery]!;
         }
@@ -687,7 +703,7 @@ class _PrayScreenState extends State<PrayScreen>
           _isDecrement = true;
         }
       });
- 
+
     }
     // Esta función se llama cuando una cuenta es resaltada
     // y actualiza las oraciones actuales y el orden del misterio.
@@ -716,6 +732,7 @@ class _PrayScreenState extends State<PrayScreen>
               } else {
                 _orderPrayer = 0;
               }
+              _maybeUpdateMysteryGlassLabelFromPill();
             });
           });
         } 
@@ -727,10 +744,70 @@ class _PrayScreenState extends State<PrayScreen>
             setState(() {
               _oldOrderPrayer = _orderPrayer;
               _oldCounter = _counter;
+              _maybeUpdateMysteryGlassLabelFromPill();
             });
           }
         });
     }
+
+  /// Orden que debe mostrar el botón de misterio según la oración actual.
+  ///
+  /// Si en la cuenta actual estamos antes del ítem «Misterio», se considera aún
+  /// el misterio anterior (útil al retroceder por oraciones dentro de la misma cuenta).
+  int _mysteryOrderFromCurrentPrayerPosition() {
+    final decadeOrder = _decadeMeditationOrder();
+    if (_currentPrayers.isEmpty) return decadeOrder;
+    final mysteryPrayerIndex = _currentPrayers.indexOf('Misterio');
+    if (mysteryPrayerIndex == -1) return decadeOrder;
+    if (_safeOrderPrayerIndex < mysteryPrayerIndex) {
+      return max(1, decadeOrder - 1);
+    }
+    return decadeOrder;
+  }
+
+  /// Avanza la etiqueta en «Misterio»; al retroceder de década/oración baja aunque la pastilla no diga «Misterio».
+  void _maybeUpdateMysteryGlassLabelFromPill() {
+    final visibleOrder = _mysteryOrderFromCurrentPrayerPosition();
+    if (_mysteryGlassLabelReady && visibleOrder < _mysteryGlassLabelOrder) {
+      _mysteryGlassLabelOrder = visibleOrder;
+      return;
+    }
+    if (!_hasMeaningfulPrayers()) return;
+    if (_orderPrayer < 0 || _orderPrayer >= _currentPrayers.length) return;
+    if (_safeCurrentPrayerLabel != 'Misterio') return;
+    _mysteryGlassLabelOrder = visibleOrder;
+    _mysteryGlassLabelReady = true;
+  }
+
+  /// Mismo orden que muestra la etiqueta bajo el botón libro (y el diálogo asociado).
+  int _effectiveMeditationOrderForMysteryGlass() =>
+      _mysteryGlassLabelReady
+          ? _mysteryGlassLabelOrder
+          : _decadeMeditationOrder();
+
+  /// Orden de meditación (1–5) según la década resaltada; extensión usa `order` 6 → 5.
+  int _decadeMeditationOrder() {
+    final o = _orderMystery;
+    if (o <= 0) return 1;
+    if (o >= 6) return 5;
+    return o.clamp(1, 5);
+  }
+
+  void _showDecadeMysteryDialog(BuildContext context) {
+    final m = widget.mystery;
+    if (m == null || !mounted) return;
+    showDialog(
+      context: context,
+      builder: (BuildContext dialogContext) {
+        return PrayerDialog(
+          prayer: 'Misterio',
+          mystery: m,
+          currentMysteryOrder: _effectiveMeditationOrderForMysteryGlass(),
+          errorMessage: _currentError?.userMessage ?? '',
+        );
+      },
+    );
+  }
 
    // Función asíncrona para cargar todas las imágenes
   Future<void> _loadAllImages() async {
@@ -1031,13 +1108,72 @@ class _PrayScreenState extends State<PrayScreen>
                   Padding(
                     padding: const EdgeInsets.all(AppLayout.sectionPadding),
                     child: Row(
-                      mainAxisAlignment: MainAxisAlignment.end,
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        _prayGlassRoundButton(
-                          widgetKey: _playPauseButtonKey,
-                          onPressed: playPause,
-                          child: Icon(
-                            _isplaying ? Icons.volume_up : Icons.volume_off,
+                        Opacity(
+                          opacity: widget.mystery != null ? 1 : 0.45,
+                          child: IgnorePointer(
+                            ignoring: widget.mystery == null,
+                            child: Column(
+                              mainAxisSize: MainAxisSize.min,
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                _prayGlassRoundButton(
+                                  onPressed: () =>
+                                      _showDecadeMysteryDialog(context),
+                                  child: const Icon(
+                                    Icons.menu_book_rounded,
+                                  ),
+                                ),
+                                const SizedBox(height: 6),
+                                SizedBox(
+                                  height: 32,
+                                  width: AppPrayGlass.roundButtonSize,
+                                  child: _mysteryGlassLabelReady
+                                      ? Text(
+                                          '$_mysteryGlassLabelOrderº misterio',
+                                          textAlign: TextAlign.center,
+                                          maxLines: 2,
+                                          overflow: TextOverflow.ellipsis,
+                                          style: const TextStyle(
+                                            fontFamily: 'Poppins',
+                                            fontSize: 11,
+                                            fontWeight: FontWeight.w600,
+                                            color: AppPrayGlass.onGlassText,
+                                            height: 1.15,
+                                            shadows: [
+                                              Shadow(
+                                                blurRadius: 4,
+                                                color: Colors.black45,
+                                              ),
+                                            ],
+                                          ),
+                                        )
+                                      : const SizedBox.shrink(),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                        SizedBox(
+                          width: AppPrayGlass.roundButtonSize,
+                          child: Column(
+                            mainAxisSize: MainAxisSize.min,
+                            crossAxisAlignment: CrossAxisAlignment.center,
+                            children: [
+                              _prayGlassRoundButton(
+                                widgetKey: _playPauseButtonKey,
+                                onPressed: playPause,
+                                child: Icon(
+                                  _isplaying
+                                      ? Icons.volume_up
+                                      : Icons.volume_off,
+                                ),
+                              ),
+                              const SizedBox(height: 6),
+                              const SizedBox(height: 32),
+                            ],
                           ),
                         ),
                       ],
@@ -1070,17 +1206,25 @@ class _PrayScreenState extends State<PrayScreen>
                         return _prayGlassPillButton(
                           widgetKey: _pillButtonKey,
                           width: constraints.maxWidth,
-                          label: _currentPrayers[_orderPrayer],
+                          label: _safeCurrentPrayerLabel.isEmpty
+                              ? '…'
+                              : _safeCurrentPrayerLabel,
                           onPressed: () {
                             // Muestra el diálogo con las oraciones actuales
                             showDialog(
                               context: context,
                               builder: (BuildContext dialogContext) {
+                                final label = _safeCurrentPrayerLabel;
+                                final isMisterio = label == 'Misterio';
                                 return PrayerDialog(
-                                  prayer: _currentPrayers[_orderPrayer],
+                                  prayer: label.isEmpty ? '…' : label,
                                   mystery: widget.mystery,
-                                  currentMysteryOrder: _orderMystery,
-                                  errorMessage: _currentError?.userMessage ?? '',
+                                  currentMysteryOrder: isMisterio &&
+                                          widget.mystery != null
+                                      ? _effectiveMeditationOrderForMysteryGlass()
+                                      : null,
+                                  errorMessage:
+                                      _currentError?.userMessage ?? '',
                                 );
                               },
                             );
