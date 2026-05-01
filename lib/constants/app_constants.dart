@@ -4,17 +4,28 @@ import 'dart:ui';
 abstract class AppColors {
   static const Color colorBackgroundBody = Color(0xFF1D404C);
   static const Color colorButtonPrimary = Color.fromRGBO(255, 192, 121, 0.5);
-  static const Color colorBackgroundDialogError = Color.fromRGBO(255, 121, 121, 0.8);
-  static const Color colorCircularProgressIndicator = Color.fromARGB(255, 228, 207, 143);
+  static const Color colorBackgroundDialogError = Color.fromRGBO(
+    255,
+    121,
+    121,
+    0.8,
+  );
+  static const Color colorCircularProgressIndicator = Color.fromARGB(
+    255,
+    228,
+    207,
+    143,
+  );
 }
 
 abstract class AppDelays {
-  static const delayAudio =  Duration(milliseconds: 100);
-  static const delayMusic =  Duration(milliseconds: 15000);
+  static const delayAudio = Duration(milliseconds: 100);
+  static const delayMusic = Duration(milliseconds: 15000);
 }
 
 abstract class AppAssets {
-  static const soundAveMariaBackground = 'assets/sounds/Ave_Maria_Background.mp3';
+  static const soundAveMariaBackground =
+      'assets/sounds/Ave_Maria_Background.mp3';
   static const soundSignalOfTheCross = 'assets/sounds/Senal_de_la_cruz.mp3';
   static const imageVirgenLourdes = 'assets/images/VirgenLourdes.png';
 }
@@ -27,6 +38,14 @@ abstract class AppLayout {
   static const appBarToolbarHeight = 70.0;
   static const rosaryWidthFactor = 0.9;
   static const rosaryHeightFactor = 0.69;
+
+  /// Margen vertical compacto entre las filas de controles glass en [PrayScreen]
+  /// (misterio/volumen, flechas, pill). Cada fila suma arriba+abajo; el hueco
+  /// real entre una fila y la siguiente es el doble de este valor.
+  static const prayScreenGlassControlsRowPaddingV = 4.0;
+
+  /// Aire bajo el pill inferior respecto al borde seguro (evita recortes).
+  static const prayScreenGlassControlsBottomInset = 12.0;
   static const sectionPadding = 20.0;
   static const buttonHorizontalPadding = 20.0;
   static const buttonVerticalPadding = 20.0;
@@ -147,7 +166,6 @@ abstract class AppRosaryMapKeys {
   static const order = 'order';
 }
 
-
 //String de home_screen.dart
 abstract class AppHomeLayout {
   static const appBarToolbarHeight = 50.0;
@@ -160,23 +178,28 @@ abstract class AppHomeLayout {
   static const todayCardMaxWidth = 240.0;
   static const todayCardRadius = 16.0;
   static const listItemRadius = 18.0;
+
   /// Reserva inferior del body (sombras tarjeta/botón, redondeos) para no solapar.
   static const bodyBottomVisualReserve = 28.0;
+
   /// Mínimo alto usable por cada fila misterio en modo Expanded (switch + texto).
   static const mysteryRowMinSlotHeight = 72.0;
+
   /// Estimación conservadora alto chip "Hoy es…" (icono + texto + padding).
   static const chipHeightEstimateCompact = 118.0;
   static const chipHeightEstimateRelaxed = 132.0;
+
   /// Espacio inferior mínimo bajo la lista cuando hay scroll para no quedar pegado /
   /// solapado visualmente al BottomAppBar (botón + padding + parte de las sombras).
   static const scrollClearOfBottomBarMin = 88.0;
+
   /// Hueco dentro del modo "relleno" entre la zona de tarjetas y borde inferior del body.
   static const fillModeFooterBreathingRoom = 12.0;
 }
 
 abstract class AppHomeColors {
-   // Fondo general
-  static const screenBackground = Color(0xFFCFE2F3); 
+  // Fondo general
+  static const screenBackground = Color(0xFFCFE2F3);
   // Tarjetas
   static const cardBackground = Color(0xFFDCE6F1);
   static const cardShadow = Color(0x1F5E7FA2);
@@ -200,7 +223,7 @@ abstract class AppHomeColors {
   static const startButtonBackground = Color(0xFFF6B565);
   static const startButtonTop = Color(0xFFF8C176);
   static const startButtonBottom = Color(0xFFEEA952);
-  static const startButtonForeground =  Color(0xFF1D1A17);
+  static const startButtonForeground = Color(0xFF1D1A17);
   static const buttonShadowDark = Color(0x6E3D2910);
   static const buttonShadowMid = Color(0x454A3018);
   static const buttonShadowLight = Color(0x59FFE1B3);

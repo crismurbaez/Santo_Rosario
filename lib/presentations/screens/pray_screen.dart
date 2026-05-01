@@ -11,45 +11,43 @@ import 'package:santo_rosario/services/audio_service.dart';
 import 'package:santo_rosario/services/error_log_service.dart';
 import 'package:santo_rosario/services/error_reporter.dart';
 import 'package:santo_rosario/services/preferences_service.dart';
-import '../../data/models/data.dart'; 
+import '../../data/models/data.dart';
 import '../widgets/rosary_painter.dart';
 import '../widgets/prayer_dialog.dart';
 import 'package:wakelock_plus/wakelock_plus.dart';
 
 class PrayScreen extends StatefulWidget {
-
-  const PrayScreen({
-    super.key,
-    required this.mystery,
-
-  });
+  const PrayScreen({super.key, required this.mystery});
   final String? mystery;
-      @override
-    State<PrayScreen> createState() => _PrayScreenState();
+  @override
+  State<PrayScreen> createState() => _PrayScreenState();
 }
-
 
 class _PrayScreenState extends State<PrayScreen>
     with SingleTickerProviderStateMixin, WidgetsBindingObserver {
   Map<String, ui.Image>? _loadedImages;
   int _counter = 0;
-  int rosaryBeadCount = Data.rosaryCircleBeadCount + Data.rosaryExtensionBeadCount;
+  int rosaryBeadCount =
+      Data.rosaryCircleBeadCount + Data.rosaryExtensionBeadCount;
   int rosaryCircleBeadCount = Data.rosaryCircleBeadCount;
   List<String> _currentPrayers = [''];
-  int _orderPrayer=0;
-  int _orderMystery=0;
+  int _orderPrayer = 0;
+  int _orderMystery = 0;
   bool _isDecrement = false; // Variable para controlar el decremento
-  int _oldOrderPrayer=0;
+  int _oldOrderPrayer = 0;
   int _oldCounter = 0;
-  
+
   Map<String, String> rosaryprayersSounds = Data.prayersSounds;
   late String prayerSound;
   final _audioService = AudioService();
   final _preferencesService = PreferencesService();
   bool _isplaying = false; //variable para controlar el audio
-  bool _isBackgroundMusicPlaying = true; // Nuevo: controla si la música de fondo está activa
-  bool _isPrayersAudioPlaying = true; // Nuevo: controla si el audio de las oraciones está activo
-  bool _isIncrementingInProgress = false; //evita que se incremente dos veces al completar el audio automáticamente
+  bool _isBackgroundMusicPlaying =
+      true; // Nuevo: controla si la música de fondo está activa
+  bool _isPrayersAudioPlaying =
+      true; // Nuevo: controla si el audio de las oraciones está activo
+  bool _isIncrementingInProgress =
+      false; //evita que se incremente dos veces al completar el audio automáticamente
   int _audioRequestId = 0; // Evita errores por carreras al tocar muy rapido.
 
   AppError? _currentError;
@@ -91,7 +89,8 @@ class _PrayScreenState extends State<PrayScreen>
 
   void _syncTutorialArrowAnimation() {
     if (!mounted) return;
-    final showArrows = _activeHelpMessage != null &&
+    final showArrows =
+        _activeHelpMessage != null &&
         _activeHelpMessage!.id != AppHelpMessageIds.prayAudioBehavior;
     if (showArrows) {
       if (!_tutorialArrowPulseController.isAnimating) {
@@ -117,651 +116,658 @@ class _PrayScreenState extends State<PrayScreen>
       curve: Curves.easeInOut,
     );
     WakelockPlus.enable(); // Activa el wakelock (pantalla siempre encendida)
-    _loadAllImages(); // Inicia la carga de todas las imágenes  
+    _loadAllImages(); // Inicia la carga de todas las imágenes
 
     // Configura un listener que detecta cuando termina la reproducción
     _audioService.prayerPlayerStateStream.listen((playerState) {
       if (playerState.processingState == ProcessingState.completed) {
         if (!_isIncrementingInProgress) {
-        // Se adelanta una oración cuando el audio termina
+          // Se adelanta una oración cuando el audio termina
           _isIncrementingInProgress = true;
           _incrementCounter();
         }
       }
-    });  
+    });
     _loadPrefs(); // Carga las preferencias guardadas
   }
 
-    // Limpia los recursos del reproductor cuando el widget se desecha y el bloqueo de pantalla se desactiva
-    @override
-    void dispose() {
-      WidgetsBinding.instance.removeObserver(this);
-      _persistProgressSnapshotFromState();
-      _infoMessageTimer?.cancel();
-      _tutorialArrowPulseController.dispose();
-      _audioService.dispose();
-      WakelockPlus.disable(); // Desactiva el wakelock (pantalla se apagará)
-      super.dispose();
-    }
+  // Limpia los recursos del reproductor cuando el widget se desecha y el bloqueo de pantalla se desactiva
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    _persistProgressSnapshotFromState();
+    _infoMessageTimer?.cancel();
+    _tutorialArrowPulseController.dispose();
+    _audioService.dispose();
+    WakelockPlus.disable(); // Desactiva el wakelock (pantalla se apagará)
+    super.dispose();
+  }
 
-    @override
-    void didChangeAppLifecycleState(AppLifecycleState state) {
-      switch (state) {
-        case AppLifecycleState.paused:
-        case AppLifecycleState.detached:
-          _persistProgressSnapshotFromState();
-          break;
-        case AppLifecycleState.resumed:
-        case AppLifecycleState.inactive:
-        case AppLifecycleState.hidden:
-          break;
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    switch (state) {
+      case AppLifecycleState.paused:
+      case AppLifecycleState.detached:
+        _persistProgressSnapshotFromState();
+        break;
+      case AppLifecycleState.resumed:
+      case AppLifecycleState.inactive:
+      case AppLifecycleState.hidden:
+        break;
+    }
+  }
+
+  bool _hasMeaningfulPrayers() {
+    if (_currentPrayers.isEmpty) return false;
+    if (_currentPrayers.length > 1) return true;
+    return _currentPrayers[0].trim().isNotEmpty;
+  }
+
+  /// [_orderPrayer] puede quedar fuera de rango al restaurar avance antes de que el
+  /// pintor asigne [_currentPrayers] de la cuenta actual (evita [RangeError] en UI/audio).
+  int get _safeOrderPrayerIndex {
+    if (_currentPrayers.isEmpty) return 0;
+    final max = _currentPrayers.length - 1;
+    return _orderPrayer.clamp(0, max);
+  }
+
+  String get _safeCurrentPrayerLabel =>
+      _currentPrayers.isEmpty ? '' : _currentPrayers[_safeOrderPrayerIndex];
+
+  bool _isRosaryComplete() {
+    return PrayerProgressSnapshot.computeComplete(
+      counter: _counter,
+      orderPrayer: _orderPrayer,
+      rosaryBeadCount: rosaryBeadCount,
+      currentPrayersLength: _currentPrayers.length,
+      prayersMeaningful: _hasMeaningfulPrayers(),
+    );
+  }
+
+  void _persistProgressSnapshotFromState() {
+    final mysteryStr = widget.mystery ?? '';
+    if (mysteryStr.isEmpty || _loadedImages == null) return;
+    final capturedCounter = _counter;
+    final capturedOrderPrayer = _orderPrayer;
+    final capturedOrderMystery = _orderMystery;
+    final plist = List<String>.from(_currentPrayers);
+    final beadTotal = rosaryBeadCount;
+    Future.microtask(() async {
+      try {
+        if (!(await _preferencesService.getSavePrayerProgressEnabled())) {
+          return;
+        }
+        final meaningful =
+            plist.isNotEmpty &&
+            (plist.length > 1 || plist.first.trim().isNotEmpty);
+        final complete = PrayerProgressSnapshot.computeComplete(
+          counter: capturedCounter,
+          orderPrayer: capturedOrderPrayer,
+          rosaryBeadCount: beadTotal,
+          currentPrayersLength: plist.length,
+          prayersMeaningful: meaningful,
+        );
+        if (complete) {
+          await _preferencesService.clearPrayerProgressSnapshot();
+          return;
+        }
+        await _preferencesService.savePrayerProgressSnapshot(
+          PrayerProgressSnapshot(
+            mystery: mysteryStr,
+            counter: capturedCounter.clamp(0, beadTotal - 1),
+            orderPrayer: capturedOrderPrayer,
+            orderMystery: capturedOrderMystery,
+          ),
+        );
+      } catch (_) {
+        /* no bloquear cierre ni navegación */
+      }
+    });
+  }
+
+  Future<void> _tryRestorePrayerProgress() async {
+    final mysteryStr = widget.mystery;
+    if (mysteryStr == null || mysteryStr.isEmpty) return;
+    if (!(await _preferencesService.getSavePrayerProgressEnabled())) return;
+    final snap = await _preferencesService.loadPrayerProgressSnapshot();
+    if (snap == null || snap.mystery != mysteryStr) return;
+    final maxBeadIndex = rosaryBeadCount - 1;
+    final c = snap.counter.clamp(0, maxBeadIndex);
+    if (!mounted) return;
+    setState(() {
+      _counter = c;
+      _orderPrayer = snap.orderPrayer;
+      _orderMystery = snap.orderMystery;
+      _pendingProgressRestore = true;
+      _oldCounter = c;
+      _oldOrderPrayer = snap.orderPrayer;
+    });
+  }
+
+  Future<void> _loadPrefs() async {
+    final prayersAudioPlaying = await _preferencesService
+        .getPrayerAudioPlaying();
+    final backgroundMusicPlaying = await _preferencesService
+        .getBackgroundMusicPlaying();
+    await _buildHelpMessageQueueOnce();
+    await _tryRestorePrayerProgress();
+    if (!mounted) return;
+    setState(() {
+      _isPrayersAudioPlaying = prayersAudioPlaying;
+      _isBackgroundMusicPlaying = backgroundMusicPlaying;
+    });
+  }
+
+  Future<void> _savePrefs() async {
+    await _preferencesService.setPrayerAudioPlaying(_isPrayersAudioPlaying);
+    await _preferencesService.setBackgroundMusicPlaying(
+      _isBackgroundMusicPlaying,
+    );
+  }
+
+  Future<void> _buildHelpMessageQueueOnce() async {
+    if (_didBuildHelpQueue) return;
+    _didBuildHelpQueue = true;
+    final helpCatalog = <_HelpMessageDefinition>[
+      const _HelpMessageDefinition(
+        id: AppHelpMessageIds.prayKeepScreenOn,
+        text:
+            'Tip: esta pantalla queda activa para acompañar la oración. Puedes cambiarlo con el ícono de bombilla (arriba a la derecha).',
+      ),
+      const _HelpMessageDefinition(
+        id: AppHelpMessageIds.prayNavigation,
+        text:
+            'Tip: usa las flechas para avanzar o volver cuenta por cuenta, y haz click en el botón inferior para leer la oración.',
+      ),
+      const _HelpMessageDefinition(
+        id: AppHelpMessageIds.prayAudioBehavior,
+        text:
+            'Cuando el audio esta activado junto con las oraciones guiadas por voz, el avance de oraciones es automático. Si lo desactivas, el avance es manual.',
+      ),
+      const _HelpMessageDefinition(
+        id: AppHelpMessageIds.prayAudioMenu,
+        text:
+            'Tip: en el menú (arriba a la derecha) puedes activar o desactivar por separado la música de fondo y las oraciones guiadas por voz.',
+      ),
+    ];
+
+    final pending = <_HelpMessageDefinition>[];
+    for (final helpMessage in helpCatalog) {
+      final dismissed = await _preferencesService.isHelpMessageDismissed(
+        helpMessage.id,
+      );
+      if (!dismissed) {
+        pending.add(helpMessage);
       }
     }
+    if (!mounted || pending.isEmpty) return;
+    setState(() {
+      _helpMessageQueue
+        ..clear()
+        ..addAll(pending);
+      _activeHelpMessage = _helpMessageQueue.first;
+    });
+    _syncTutorialArrowAnimation();
+    _refreshTutorialArrowsAfterLayout();
+  }
 
-    bool _hasMeaningfulPrayers() {
-      if (_currentPrayers.isEmpty) return false;
-      if (_currentPrayers.length > 1) return true;
-      return _currentPrayers[0].trim().isNotEmpty;
+  Future<void> _dismissActiveHelpMessage({
+    required bool disablePermanently,
+  }) async {
+    final activeMessage = _activeHelpMessage;
+    if (activeMessage == null) return;
+    if (disablePermanently) {
+      await _preferencesService.setHelpMessageDismissed(activeMessage.id, true);
+    }
+    if (!mounted) return;
+    setState(() {
+      if (_helpMessageQueue.isNotEmpty) {
+        _helpMessageQueue.removeAt(0);
+      }
+      _activeHelpMessage = _helpMessageQueue.isNotEmpty
+          ? _helpMessageQueue.first
+          : null;
+    });
+    _syncTutorialArrowAnimation();
+    _refreshTutorialArrowsAfterLayout();
+  }
+
+  void _refreshTutorialArrowsAfterLayout() {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted || _activeHelpMessage == null) return;
+      setState(() {
+        // Rebuild sin cambiar estado para recalcular los anchors por GlobalKey
+        // cuando los RenderBox ya tienen tamaño real.
+      });
+      _syncTutorialArrowAnimation();
+    });
+  }
+
+  void _showTopInfoMessage(String text) {
+    _infoMessageTimer?.cancel();
+    if (!mounted) return;
+    setState(() {
+      _currentInfoMessage = text;
+    });
+    _infoMessageTimer = Timer(const Duration(seconds: 4), () {
+      if (!mounted) return;
+      setState(() {
+        _currentInfoMessage = null;
+      });
+    });
+  }
+
+  Rect? _rectFromGlobalKey(GlobalKey key) {
+    final targetContext = key.currentContext;
+    if (targetContext == null) return null;
+    final render = targetContext.findRenderObject();
+    if (render is! RenderBox || !render.hasSize) return null;
+    final offset = render.localToGlobal(Offset.zero);
+    return Rect.fromLTWH(
+      offset.dx,
+      offset.dy,
+      render.size.width,
+      render.size.height,
+    );
+  }
+
+  /// Flechas del tutorial según el tip activo (posiciones en coordenadas de pantalla).
+  List<Widget> _buildTutorialArrowOverlays(double screenWidth) {
+    final id = _activeHelpMessage?.id;
+    if (id == null || id == AppHelpMessageIds.prayAudioBehavior) {
+      return const <Widget>[];
     }
 
-    /// [_orderPrayer] puede quedar fuera de rango al restaurar avance antes de que el
-    /// pintor asigne [_currentPrayers] de la cuenta actual (evita [RangeError] en UI/audio).
-    int get _safeOrderPrayerIndex {
-      if (_currentPrayers.isEmpty) return 0;
-      final max = _currentPrayers.length - 1;
-      return _orderPrayer.clamp(0, max);
-    }
+    const double arrowSize = 44;
+    const double arrowHalf = arrowSize / 2;
+    const double belowIconGap = 8;
+    const double aboveButtonOffset = 42;
 
-    String get _safeCurrentPrayerLabel =>
-        _currentPrayers.isEmpty ? '' : _currentPrayers[_safeOrderPrayerIndex];
-
-    bool _isRosaryComplete() {
-      return PrayerProgressSnapshot.computeComplete(
-        counter: _counter,
-        orderPrayer: _orderPrayer,
-        rosaryBeadCount: rosaryBeadCount,
-        currentPrayersLength: _currentPrayers.length,
-        prayersMeaningful: _hasMeaningfulPrayers(),
+    Widget arrowLayer({
+      required double left,
+      required double top,
+      required IconData icon,
+    }) {
+      final arrowIcon = DecoratedBox(
+        decoration: BoxDecoration(
+          shape: BoxShape.circle,
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 0.55),
+              blurRadius: 8,
+            ),
+          ],
+        ),
+        child: Icon(
+          icon,
+          size: arrowSize,
+          color: AppColors.colorCircularProgressIndicator,
+        ),
+      );
+      return Positioned(
+        left: left.clamp(8.0, screenWidth - arrowSize - 8.0),
+        top: top,
+        child: IgnorePointer(
+          child: AnimatedBuilder(
+            animation: _tutorialArrowPulse,
+            builder: (context, _) {
+              final w = sin(_tutorialArrowPulse.value * 2 * pi);
+              return Transform.translate(
+                offset: Offset(0, -8 * w),
+                child: Transform.scale(
+                  scale: 1.0 + 0.12 * w.abs(),
+                  child: arrowIcon,
+                ),
+              );
+            },
+          ),
+        ),
       );
     }
 
-    void _persistProgressSnapshotFromState() {
-      final mysteryStr = widget.mystery ?? '';
-      if (mysteryStr.isEmpty || _loadedImages == null) return;
-      final capturedCounter = _counter;
-      final capturedOrderPrayer = _orderPrayer;
-      final capturedOrderMystery = _orderMystery;
-      final plist = List<String>.from(_currentPrayers);
-      final beadTotal = rosaryBeadCount;
-      Future.microtask(() async {
-        try {
-          if (!(await _preferencesService.getSavePrayerProgressEnabled())) {
-            return;
-          }
-          final meaningful = plist.isNotEmpty &&
-              (plist.length > 1 || plist.first.trim().isNotEmpty);
-          final complete = PrayerProgressSnapshot.computeComplete(
-            counter: capturedCounter,
-            orderPrayer: capturedOrderPrayer,
-            rosaryBeadCount: beadTotal,
-            currentPrayersLength: plist.length,
-            prayersMeaningful: meaningful,
-          );
-          if (complete) {
-            await _preferencesService.clearPrayerProgressSnapshot();
-            return;
-          }
-          await _preferencesService.savePrayerProgressSnapshot(
-            PrayerProgressSnapshot(
-              mystery: mysteryStr,
-              counter: capturedCounter.clamp(0, beadTotal - 1),
-              orderPrayer: capturedOrderPrayer,
-              orderMystery: capturedOrderMystery,
+    switch (id) {
+      case AppHelpMessageIds.prayKeepScreenOn:
+        final r = _rectFromGlobalKey(_wakelockButtonKey);
+        if (r == null) return const <Widget>[];
+        return [
+          arrowLayer(
+            left: r.center.dx - arrowHalf,
+            top: r.bottom + belowIconGap,
+            icon: Icons.keyboard_arrow_up_rounded,
+          ),
+        ];
+      case AppHelpMessageIds.prayAudioMenu:
+        final r = _rectFromGlobalKey(_prayAudioMenuButtonKey);
+        if (r == null) return const <Widget>[];
+        return [
+          arrowLayer(
+            left: r.center.dx - arrowHalf,
+            top: r.bottom + belowIconGap,
+            icon: Icons.keyboard_arrow_up_rounded,
+          ),
+        ];
+      case AppHelpMessageIds.prayNavigation:
+        final back = _rectFromGlobalKey(_prevButtonKey);
+        final next = _rectFromGlobalKey(_nextButtonKey);
+        final pill = _rectFromGlobalKey(_pillButtonKey);
+        return <Widget>[
+          if (back != null)
+            arrowLayer(
+              left: back.center.dx - arrowHalf,
+              top: back.top - aboveButtonOffset,
+              icon: Icons.keyboard_arrow_down_rounded,
             ),
-          );
-        } catch (_) {
-          /* no bloquear cierre ni navegación */
-        }
-      });
-    }
-
-    Future<void> _tryRestorePrayerProgress() async {
-      final mysteryStr = widget.mystery;
-      if (mysteryStr == null || mysteryStr.isEmpty) return;
-      if (!(await _preferencesService.getSavePrayerProgressEnabled())) return;
-      final snap = await _preferencesService.loadPrayerProgressSnapshot();
-      if (snap == null || snap.mystery != mysteryStr) return;
-      final maxBeadIndex = rosaryBeadCount - 1;
-      final c = snap.counter.clamp(0, maxBeadIndex);
-      if (!mounted) return;
-      setState(() {
-        _counter = c;
-        _orderPrayer = snap.orderPrayer;
-        _orderMystery = snap.orderMystery;
-        _pendingProgressRestore = true;
-        _oldCounter = c;
-        _oldOrderPrayer = snap.orderPrayer;
-      });
-    }
-
-    Future<void> _loadPrefs() async {
-      final prayersAudioPlaying = await _preferencesService.getPrayerAudioPlaying();
-      final backgroundMusicPlaying =
-          await _preferencesService.getBackgroundMusicPlaying();
-      await _buildHelpMessageQueueOnce();
-      await _tryRestorePrayerProgress();
-      if (!mounted) return;
-      setState(() {
-        _isPrayersAudioPlaying = prayersAudioPlaying;
-        _isBackgroundMusicPlaying = backgroundMusicPlaying;
-      });
-    }
-
-    Future<void> _savePrefs() async {
-      await _preferencesService.setPrayerAudioPlaying(_isPrayersAudioPlaying);
-      await _preferencesService.setBackgroundMusicPlaying(_isBackgroundMusicPlaying);
-    }
-
-    Future<void> _buildHelpMessageQueueOnce() async {
-      if (_didBuildHelpQueue) return;
-      _didBuildHelpQueue = true;
-      final helpCatalog = <_HelpMessageDefinition>[
-        const _HelpMessageDefinition(
-          id: AppHelpMessageIds.prayKeepScreenOn,
-          text:
-              'Tip: esta pantalla queda activa para acompañar la oración. Puedes cambiarlo con el ícono de bombilla (arriba a la derecha).',
-        ),
-        const _HelpMessageDefinition(
-          id: AppHelpMessageIds.prayNavigation,
-          text:
-              'Tip: usa las flechas para avanzar o volver cuenta por cuenta, y haz click en el botón inferior para leer la oración.',
-        ),
-        const _HelpMessageDefinition(
-          id: AppHelpMessageIds.prayAudioBehavior,
-          text:
-              'Cuando el audio esta activado junto con las oraciones guiadas por voz, el avance de oraciones es automático. Si lo desactivas, el avance es manual.',
-        ),
-        const _HelpMessageDefinition(
-          id: AppHelpMessageIds.prayAudioMenu,
-          text:
-              'Tip: en el menú (arriba a la derecha) puedes activar o desactivar por separado la música de fondo y las oraciones guiadas por voz.',
-        ),
-      ];
-
-      final pending = <_HelpMessageDefinition>[];
-      for (final helpMessage in helpCatalog) {
-        final dismissed = await _preferencesService.isHelpMessageDismissed(helpMessage.id);
-        if (!dismissed) {
-          pending.add(helpMessage);
-        }
-      }
-      if (!mounted || pending.isEmpty) return;
-      setState(() {
-        _helpMessageQueue
-          ..clear()
-          ..addAll(pending);
-        _activeHelpMessage = _helpMessageQueue.first;
-      });
-      _syncTutorialArrowAnimation();
-      _refreshTutorialArrowsAfterLayout();
-    }
-
-    Future<void> _dismissActiveHelpMessage({required bool disablePermanently}) async {
-      final activeMessage = _activeHelpMessage;
-      if (activeMessage == null) return;
-      if (disablePermanently) {
-        await _preferencesService.setHelpMessageDismissed(activeMessage.id, true);
-      }
-      if (!mounted) return;
-      setState(() {
-        if (_helpMessageQueue.isNotEmpty) {
-          _helpMessageQueue.removeAt(0);
-        }
-        _activeHelpMessage = _helpMessageQueue.isNotEmpty ? _helpMessageQueue.first : null;
-      });
-      _syncTutorialArrowAnimation();
-      _refreshTutorialArrowsAfterLayout();
-    }
-
-    void _refreshTutorialArrowsAfterLayout() {
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        if (!mounted || _activeHelpMessage == null) return;
-        setState(() {
-          // Rebuild sin cambiar estado para recalcular los anchors por GlobalKey
-          // cuando los RenderBox ya tienen tamaño real.
-        });
-        _syncTutorialArrowAnimation();
-      });
-    }
-
-    void _showTopInfoMessage(String text) {
-      _infoMessageTimer?.cancel();
-      if (!mounted) return;
-      setState(() {
-        _currentInfoMessage = text;
-      });
-      _infoMessageTimer = Timer(const Duration(seconds: 4), () {
-        if (!mounted) return;
-        setState(() {
-          _currentInfoMessage = null;
-        });
-      });
-    }
-
-    Rect? _rectFromGlobalKey(GlobalKey key) {
-      final targetContext = key.currentContext;
-      if (targetContext == null) return null;
-      final render = targetContext.findRenderObject();
-      if (render is! RenderBox || !render.hasSize) return null;
-      final offset = render.localToGlobal(Offset.zero);
-      return Rect.fromLTWH(offset.dx, offset.dy, render.size.width, render.size.height);
-    }
-
-    /// Flechas del tutorial según el tip activo (posiciones en coordenadas de pantalla).
-    List<Widget> _buildTutorialArrowOverlays(double screenWidth) {
-      final id = _activeHelpMessage?.id;
-      if (id == null || id == AppHelpMessageIds.prayAudioBehavior) {
+          if (next != null)
+            arrowLayer(
+              left: next.center.dx - arrowHalf,
+              top: next.top - aboveButtonOffset,
+              icon: Icons.keyboard_arrow_down_rounded,
+            ),
+          if (pill != null)
+            arrowLayer(
+              left: pill.center.dx - arrowHalf,
+              top: pill.top - aboveButtonOffset,
+              icon: Icons.keyboard_arrow_down_rounded,
+            ),
+        ];
+      default:
         return const <Widget>[];
+    }
+  }
+
+  // Activa o desactiva el wakelock según la variable _isBatterySaverActive
+  void _toggleWakelock() {
+    setState(() {
+      _isBatterySaverActive = !_isBatterySaverActive;
+      if (_isBatterySaverActive) {
+        WakelockPlus.disable(); // Desactiva el wakelock (ahorro de batería)
+        _showTopInfoMessage(
+          'Modo ahorro de bateria activado (la pantalla puede apagarse).',
+        );
+      } else {
+        WakelockPlus.enable(); // Activa el wakelock (pantalla siempre encendida)
+        _showTopInfoMessage('Modo pantalla siempre encendida activado.');
       }
+    });
+  }
 
-      const double arrowSize = 44;
-      const double arrowHalf = arrowSize / 2;
-      const double belowIconGap = 8;
-      const double aboveButtonOffset = 42;
+  Future<void> _loadBackgroundMusic() async {
+    if (!_isBackgroundMusicPlaying)
+      return; // Si la música de fondo no está activa, salimos
 
-      Widget arrowLayer({
-        required double left,
-        required double top,
-        required IconData icon,
-      }) {
-        final arrowIcon = DecoratedBox(
-          decoration: BoxDecoration(
-            shape: BoxShape.circle,
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withValues(alpha: 0.55),
-                blurRadius: 8,
-              ),
-            ],
-          ),
-          child: Icon(
-            icon,
-            size: arrowSize,
-            color: AppColors.colorCircularProgressIndicator,
-          ),
-        );
-        return Positioned(
-          left: left.clamp(8.0, screenWidth - arrowSize - 8.0),
-          top: top,
-          child: IgnorePointer(
-            child: AnimatedBuilder(
-              animation: _tutorialArrowPulse,
-              builder: (context, _) {
-                final w = sin(_tutorialArrowPulse.value * 2 * pi);
-                return Transform.translate(
-                  offset: Offset(0, -8 * w),
-                  child: Transform.scale(
-                    scale: 1.0 + 0.12 * w.abs(),
-                    child: arrowIcon,
-                  ),
-                );
-              },
-            ),
-          ),
-        );
-      }
-
-      switch (id) {
-        case AppHelpMessageIds.prayKeepScreenOn:
-          final r = _rectFromGlobalKey(_wakelockButtonKey);
-          if (r == null) return const <Widget>[];
-          return [
-            arrowLayer(
-              left: r.center.dx - arrowHalf,
-              top: r.bottom + belowIconGap,
-              icon: Icons.keyboard_arrow_up_rounded,
-            ),
-          ];
-        case AppHelpMessageIds.prayAudioMenu:
-          final r = _rectFromGlobalKey(_prayAudioMenuButtonKey);
-          if (r == null) return const <Widget>[];
-          return [
-            arrowLayer(
-              left: r.center.dx - arrowHalf,
-              top: r.bottom + belowIconGap,
-              icon: Icons.keyboard_arrow_up_rounded,
-            ),
-          ];
-        case AppHelpMessageIds.prayNavigation:
-          final back = _rectFromGlobalKey(_prevButtonKey);
-          final next = _rectFromGlobalKey(_nextButtonKey);
-          final pill = _rectFromGlobalKey(_pillButtonKey);
-          return <Widget>[
-            if (back != null)
-              arrowLayer(
-                left: back.center.dx - arrowHalf,
-                top: back.top - aboveButtonOffset,
-                icon: Icons.keyboard_arrow_down_rounded,
-              ),
-            if (next != null)
-              arrowLayer(
-                left: next.center.dx - arrowHalf,
-                top: next.top - aboveButtonOffset,
-                icon: Icons.keyboard_arrow_down_rounded,
-              ),
-            if (pill != null)
-              arrowLayer(
-                left: pill.center.dx - arrowHalf,
-                top: pill.top - aboveButtonOffset,
-                icon: Icons.keyboard_arrow_down_rounded,
-              ),
-          ];
-        default:
-          return const <Widget>[];
-      }
-    }
-
-    // Activa o desactiva el wakelock según la variable _isBatterySaverActive
-    void _toggleWakelock() {
-      setState(() {
-        _isBatterySaverActive = !_isBatterySaverActive;
-        if (_isBatterySaverActive) {
-          WakelockPlus.disable(); // Desactiva el wakelock (ahorro de batería)
-          _showTopInfoMessage('Modo ahorro de bateria activado (la pantalla puede apagarse).');
-        } else {
-          WakelockPlus.enable(); // Activa el wakelock (pantalla siempre encendida)
-          _showTopInfoMessage('Modo pantalla siempre encendida activado.');
-      }
-      });
-    }
-
-    Future<void> _loadBackgroundMusic() async {
-      if (!_isBackgroundMusicPlaying) return; // Si la música de fondo no está activa, salimos
-
-      try {
-        await _audioService.playBackgroundMusic();
-      } catch (e) {
-        if (_isExpectedAudioInterruption(e)) {
-          return;
-        }
-        _reportError(
-          AppError(
-            kind: ErrorKind.audio,
-            severity: ErrorSeverity.warning,
-            userMessage: 'No se pudo iniciar la música de fondo.',
-            technicalMessage: e.toString(),
-          ),
-        );
-      }
-    }
-
-    void initAudio() async {
-      if (!_isPrayersAudioPlaying) return; // Si el audio de las oraciones no está activo, salimos
-      final requestId = ++_audioRequestId;
-      // Introduce un pequeño retraso
-      // Esto le da tiempo al reproductor para finalizar cualquier proceso interno
-      await Future.delayed(AppDelays.delayAudio);
-      try {
-        if (requestId != _audioRequestId || !_isplaying) {
-          return;
-        }
-        final prayerLabel = _safeCurrentPrayerLabel;
-        if (rosaryprayersSounds[prayerLabel] != null) {
-          prayerSound = rosaryprayersSounds[prayerLabel]!;
-        }
-
-        if (prayerLabel == 'Misterio') {
-          String soundMystery = '${widget.mystery}${_orderMystery.toString()}';
-          prayerSound = rosaryprayersSounds[soundMystery]!;
-        }
-
-        if (_isplaying) {
-          //retraso de 15 segundos si el sonido es 'Señal de la Cruz' y la música de fondo está activa
-          prayerSound == AppAssets.soundSignalOfTheCross && _isBackgroundMusicPlaying?
-          await Future.delayed(AppDelays.delayMusic)
-          : null;
-          await _audioService.playPrayer(prayerSound);
-          
-          _isIncrementingInProgress = false;
-        }
-      } catch (e) {
-        if (_isExpectedAudioInterruption(e)) {
-          return;
-        }
-        _reportError(
-          AppError(
-            kind: ErrorKind.audio,
-            severity: ErrorSeverity.warning,
-            userMessage: 'No se pudo reproducir el audio de la oración actual.',
-            technicalMessage: e.toString(),
-          ),
-        );
-      }
-    }
-
-    void stopAudioBackground() async {
-      await _audioService.stopBackgroundMusic();
-      await Future.delayed(AppDelays.delayAudio);
-    }
-
-    void stopAudio() async {
-      _audioRequestId++;
-      await _audioService.stopPrayer();
-      await Future.delayed(AppDelays.delayAudio);
-    }
-
-    bool _isExpectedAudioInterruption(Object error) {
-      final text = error.toString().toLowerCase();
-      return text.contains('loading interrupted') ||
-          text.contains('playerinterruptedexception');
-    }
-
-    void _dismissError() {
-      setState(() {
-        _currentError = null;
-      });
-    }
-
-    /// Envía el informe completo por HTTP (EmailJS o webhook configurado en app.env).
-    Future<void> _sendErrorReportToDeveloper() async {
-      final error = _currentError;
-      if (error == null || !mounted) return;
-      try {
-        final reportBody = await _errorLogService.buildReportBody(
-          error,
-          screen: 'PrayScreen',
-        );
-        if (!mounted) return;
-        await _errorReporter.submitReport(
-          error: error,
-          screen: 'PrayScreen',
-          reportBody: reportBody,
-          stackTrace: StackTrace.current,
-        );
-        if (!mounted) return;
-        _dismissError();
-        if (!mounted) return;
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text(
-              'Información técnica enviada al desarrollador.',
-            ),
-            behavior: SnackBarBehavior.floating,
-            duration: Duration(seconds: 5),
-          ),
-        );
-      } on ErrorReporterException catch (e) {
-        if (!mounted) return;
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(e.message),
-            behavior: SnackBarBehavior.floating,
-          ),
-        );
-      } catch (e, st) {
-        debugPrint('[sendErrorReportToDeveloper] $e\n$st');
-        if (!mounted) return;
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('No se pudo enviar el reporte. ${e.toString()}'),
-            behavior: SnackBarBehavior.floating,
-          ),
-        );
-      }
-    }
-
-    void _reportError(AppError error) {
-      if (!mounted) return;
-      _errorLogService.logError(error, screen: 'PrayScreen');
-      if (error.severity == ErrorSeverity.error) {
-        setState(() => _currentError = error);
+    try {
+      await _audioService.playBackgroundMusic();
+    } catch (e) {
+      if (_isExpectedAudioInterruption(e)) {
         return;
       }
-      _showTopInfoMessage(error.userMessage);
+      _reportError(
+        AppError(
+          kind: ErrorKind.audio,
+          severity: ErrorSeverity.warning,
+          userMessage: 'No se pudo iniciar la música de fondo.',
+          technicalMessage: e.toString(),
+        ),
+      );
     }
+  }
 
-    void playPause() {
-        setState(() {
-          _isplaying = !_isplaying;
-        });
-        WidgetsBinding.instance.addPostFrameCallback((_) {
-          // Carga la música de fondo al iniciar el audio o lo detiene si se desactiva
-          if (_isplaying) {
-            if (_isBackgroundMusicPlaying) {
-              _loadBackgroundMusic();
-            }
-            if (_isPrayersAudioPlaying) {
-              initAudio();
-            }
-          } else {
-            stopAudioBackground(); // Detiene la música de fondo
-            stopAudio(); // Detiene el audio de la oración
-          }
-        });
+  void initAudio() async {
+    if (!_isPrayersAudioPlaying)
+      return; // Si el audio de las oraciones no está activo, salimos
+    final requestId = ++_audioRequestId;
+    // Introduce un pequeño retraso
+    // Esto le da tiempo al reproductor para finalizar cualquier proceso interno
+    await Future.delayed(AppDelays.delayAudio);
+    try {
+      if (requestId != _audioRequestId || !_isplaying) {
+        return;
+      }
+      final prayerLabel = _safeCurrentPrayerLabel;
+      if (rosaryprayersSounds[prayerLabel] != null) {
+        prayerSound = rosaryprayersSounds[prayerLabel]!;
+      }
 
+      if (prayerLabel == 'Misterio') {
+        String soundMystery = '${widget.mystery}${_orderMystery.toString()}';
+        prayerSound = rosaryprayersSounds[soundMystery]!;
+      }
+
+      if (_isplaying) {
+        //retraso de 15 segundos si el sonido es 'Señal de la Cruz' y la música de fondo está activa
+        prayerSound == AppAssets.soundSignalOfTheCross &&
+                _isBackgroundMusicPlaying
+            ? await Future.delayed(AppDelays.delayMusic)
+            : null;
+        await _audioService.playPrayer(prayerSound);
+
+        _isIncrementingInProgress = false;
+      }
+    } catch (e) {
+      if (_isExpectedAudioInterruption(e)) {
+        return;
+      }
+      _reportError(
+        AppError(
+          kind: ErrorKind.audio,
+          severity: ErrorSeverity.warning,
+          userMessage: 'No se pudo reproducir el audio de la oración actual.',
+          technicalMessage: e.toString(),
+        ),
+      );
     }
-    
-    // Función para alternar la reproducción de la música de fondo
-    void _toggleBackgroundMusic() {
-      setState(() {
-        _isBackgroundMusicPlaying = !_isBackgroundMusicPlaying;
-        _savePrefs(); // Guarda las preferencias
-        if (_isBackgroundMusicPlaying && _isplaying) {
-          _loadBackgroundMusic(); // Si se activa, la carga y reproduce
-        } else {
-          _audioService.stopBackgroundMusic(); // Si se desactiva, la detiene
+  }
+
+  void stopAudioBackground() async {
+    await _audioService.stopBackgroundMusic();
+    await Future.delayed(AppDelays.delayAudio);
+  }
+
+  void stopAudio() async {
+    _audioRequestId++;
+    await _audioService.stopPrayer();
+    await Future.delayed(AppDelays.delayAudio);
+  }
+
+  bool _isExpectedAudioInterruption(Object error) {
+    final text = error.toString().toLowerCase();
+    return text.contains('loading interrupted') ||
+        text.contains('playerinterruptedexception');
+  }
+
+  void _dismissError() {
+    setState(() {
+      _currentError = null;
+    });
+  }
+
+  /// Envía el informe completo por HTTP (EmailJS o webhook configurado en app.env).
+  Future<void> _sendErrorReportToDeveloper() async {
+    final error = _currentError;
+    if (error == null || !mounted) return;
+    try {
+      final reportBody = await _errorLogService.buildReportBody(
+        error,
+        screen: 'PrayScreen',
+      );
+      if (!mounted) return;
+      await _errorReporter.submitReport(
+        error: error,
+        screen: 'PrayScreen',
+        reportBody: reportBody,
+        stackTrace: StackTrace.current,
+      );
+      if (!mounted) return;
+      _dismissError();
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Información técnica enviada al desarrollador.'),
+          behavior: SnackBarBehavior.floating,
+          duration: Duration(seconds: 5),
+        ),
+      );
+    } on ErrorReporterException catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(e.message), behavior: SnackBarBehavior.floating),
+      );
+    } catch (e, st) {
+      debugPrint('[sendErrorReportToDeveloper] $e\n$st');
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('No se pudo enviar el reporte. ${e.toString()}'),
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+    }
+  }
+
+  void _reportError(AppError error) {
+    if (!mounted) return;
+    _errorLogService.logError(error, screen: 'PrayScreen');
+    if (error.severity == ErrorSeverity.error) {
+      setState(() => _currentError = error);
+      return;
+    }
+    _showTopInfoMessage(error.userMessage);
+  }
+
+  void playPause() {
+    setState(() {
+      _isplaying = !_isplaying;
+    });
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      // Carga la música de fondo al iniciar el audio o lo detiene si se desactiva
+      if (_isplaying) {
+        if (_isBackgroundMusicPlaying) {
+          _loadBackgroundMusic();
         }
-      });
-    }
-
-    // Función para alternar la reproducción del audio de las oraciones
-    void _togglePrayersAudio() {
-      setState(() {
-        _isPrayersAudioPlaying = !_isPrayersAudioPlaying;
-        _savePrefs(); // Guarda las preferencias
-        if (_isPrayersAudioPlaying && _isplaying) { // Si se activa y el audio principal está encendido
-          initAudio(); // Reproduce la oración actual
-        } else {
-          _audioService.stopPrayer(); // Si se desactiva, detiene el audio de la oración
+        if (_isPrayersAudioPlaying) {
+          initAudio();
         }
-      });
-    }
+      } else {
+        stopAudioBackground(); // Detiene la música de fondo
+        stopAudio(); // Detiene el audio de la oración
+      }
+    });
+  }
 
+  // Función para alternar la reproducción de la música de fondo
+  void _toggleBackgroundMusic() {
+    setState(() {
+      _isBackgroundMusicPlaying = !_isBackgroundMusicPlaying;
+      _savePrefs(); // Guarda las preferencias
+      if (_isBackgroundMusicPlaying && _isplaying) {
+        _loadBackgroundMusic(); // Si se activa, la carga y reproduce
+      } else {
+        _audioService.stopBackgroundMusic(); // Si se desactiva, la detiene
+      }
+    });
+  }
 
+  // Función para alternar la reproducción del audio de las oraciones
+  void _togglePrayersAudio() {
+    setState(() {
+      _isPrayersAudioPlaying = !_isPrayersAudioPlaying;
+      _savePrefs(); // Guarda las preferencias
+      if (_isPrayersAudioPlaying && _isplaying) {
+        // Si se activa y el audio principal está encendido
+        initAudio(); // Reproduce la oración actual
+      } else {
+        _audioService
+            .stopPrayer(); // Si se desactiva, detiene el audio de la oración
+      }
+    });
+  }
 
-    void _incrementCounter() {
-      setState(() {
-          if (_orderPrayer < _currentPrayers.length-1) {
-            _orderPrayer++;
-            _isDecrement = false;
-          } else {
-            if (_counter < rosaryBeadCount-1) {
-            _counter++; // Incrementa el contador
-            _orderPrayer = 0;
-            _isDecrement = false;
-            }
-          }
-      });
-
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        if (!mounted || !_hasMeaningfulPrayers()) return;
-        if (_isRosaryComplete()) {
-          Future.microtask(() async {
-            await _preferencesService.clearPrayerProgressSnapshot();
-          });
-        }
-      });
-
-    }
-    void _decrementCounter() {
-      setState(() {
-        if (_orderPrayer > 0) {
-          _orderPrayer--; // Decrementa el orden de oración
-          _isDecrement = true;
-        } else if (_counter > 0 && _orderPrayer == 0) {
-          // Si estamos en la primera oración y el contador es mayor que 0, decrementamos el contador
-          // y reiniciamos el orden de oración a 0.
-          // Esto permite retroceder a la cuenta anterior.
-          _counter--;  // Disminuye el contador
+  void _incrementCounter() {
+    setState(() {
+      if (_orderPrayer < _currentPrayers.length - 1) {
+        _orderPrayer++;
+        _isDecrement = false;
+      } else {
+        if (_counter < rosaryBeadCount - 1) {
+          _counter++; // Incrementa el contador
           _orderPrayer = 0;
-          _isDecrement = true;
+          _isDecrement = false;
         }
-      });
+      }
+    });
 
-    }
-    // Esta función se llama cuando una cuenta es resaltada
-    // y actualiza las oraciones actuales y el orden del misterio.
-    void _handleCuentaHighlighted(List<String> prayers, int orderMystery) {
-      // Solo actualizamos si las oraciones son diferentes para evitar redibujados innecesarios
-        if (_currentPrayers.toString() != prayers.toString() || 
-          (_orderMystery != orderMystery) 
-          )
-        {
-          // Usamos addPostFrameCallback para posponer la llamada a setState
-          // hasta después de que el frame actual haya terminado de construirse.
-          WidgetsBinding.instance.addPostFrameCallback((_) {
-            setState(() {
-              _currentPrayers = prayers; // Actualiza las oraciones actuales
-              _orderMystery = orderMystery; // Actualiza el orden del misterio
-              if (_explicitOrderPrayerAfterHighlight) {
-                final maxPrayer =
-                    prayers.isEmpty ? 0 : prayers.length - 1;
-                _orderPrayer = _explicitOrderPrayerTargetIndex.clamp(
-                  0,
-                  maxPrayer,
-                );
-                _explicitOrderPrayerAfterHighlight = false;
-                _isDecrement = false;
-              } else if (_pendingProgressRestore &&
-                  prayers.isNotEmpty &&
-                  (prayers.length > 1 ||
-                      prayers.first.trim().isNotEmpty)) {
-                final maxPrayer = prayers.length - 1;
-                _orderPrayer = _orderPrayer.clamp(0, maxPrayer);
-                _pendingProgressRestore = false;
-                _isDecrement = false;
-              } else if (_isDecrement) {
-                _orderPrayer = prayers.length - 1;
-              } else {
-                _orderPrayer = 0;
-              }
-              _maybeUpdateMysteryGlassLabelFromPill();
-            });
-          });
-        } 
-        WidgetsBinding.instance.addPostFrameCallback((_) {
-          //si cambia el orden de la oración en el array _currentPrayers
-          // o si cambia el contador de avance de perla _counter
-          if (_oldOrderPrayer!=_orderPrayer || _oldCounter != _counter) {
-            initAudio();
-            setState(() {
-              _oldOrderPrayer = _orderPrayer;
-              _oldCounter = _counter;
-              _maybeUpdateMysteryGlassLabelFromPill();
-            });
-          }
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted || !_hasMeaningfulPrayers()) return;
+      if (_isRosaryComplete()) {
+        Future.microtask(() async {
+          await _preferencesService.clearPrayerProgressSnapshot();
         });
+      }
+    });
+  }
+
+  void _decrementCounter() {
+    setState(() {
+      if (_orderPrayer > 0) {
+        _orderPrayer--; // Decrementa el orden de oración
+        _isDecrement = true;
+      } else if (_counter > 0 && _orderPrayer == 0) {
+        // Si estamos en la primera oración y el contador es mayor que 0, decrementamos el contador
+        // y reiniciamos el orden de oración a 0.
+        // Esto permite retroceder a la cuenta anterior.
+        _counter--; // Disminuye el contador
+        _orderPrayer = 0;
+        _isDecrement = true;
+      }
+    });
+  }
+
+  // Esta función se llama cuando una cuenta es resaltada
+  // y actualiza las oraciones actuales y el orden del misterio.
+  void _handleCuentaHighlighted(List<String> prayers, int orderMystery) {
+    // Solo actualizamos si las oraciones son diferentes para evitar redibujados innecesarios
+    if (_currentPrayers.toString() != prayers.toString() ||
+        (_orderMystery != orderMystery)) {
+      // Usamos addPostFrameCallback para posponer la llamada a setState
+      // hasta después de que el frame actual haya terminado de construirse.
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        setState(() {
+          _currentPrayers = prayers; // Actualiza las oraciones actuales
+          _orderMystery = orderMystery; // Actualiza el orden del misterio
+          if (_explicitOrderPrayerAfterHighlight) {
+            final maxPrayer = prayers.isEmpty ? 0 : prayers.length - 1;
+            _orderPrayer = _explicitOrderPrayerTargetIndex.clamp(0, maxPrayer);
+            _explicitOrderPrayerAfterHighlight = false;
+            _isDecrement = false;
+          } else if (_pendingProgressRestore &&
+              prayers.isNotEmpty &&
+              (prayers.length > 1 || prayers.first.trim().isNotEmpty)) {
+            final maxPrayer = prayers.length - 1;
+            _orderPrayer = _orderPrayer.clamp(0, maxPrayer);
+            _pendingProgressRestore = false;
+            _isDecrement = false;
+          } else if (_isDecrement) {
+            _orderPrayer = prayers.length - 1;
+          } else {
+            _orderPrayer = 0;
+          }
+          _maybeUpdateMysteryGlassLabelFromPill();
+        });
+      });
     }
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      //si cambia el orden de la oración en el array _currentPrayers
+      // o si cambia el contador de avance de perla _counter
+      if (_oldOrderPrayer != _orderPrayer || _oldCounter != _counter) {
+        initAudio();
+        setState(() {
+          _oldOrderPrayer = _orderPrayer;
+          _oldCounter = _counter;
+          _maybeUpdateMysteryGlassLabelFromPill();
+        });
+      }
+    });
+  }
 
   /// Orden que debe mostrar el botón de misterio según la oración actual.
   ///
@@ -793,10 +799,9 @@ class _PrayScreenState extends State<PrayScreen>
   }
 
   /// Mismo orden que muestra la etiqueta bajo el botón libro (y el diálogo asociado).
-  int _effectiveMeditationOrderForMysteryGlass() =>
-      _mysteryGlassLabelReady
-          ? _mysteryGlassLabelOrder
-          : _decadeMeditationOrder();
+  int _effectiveMeditationOrderForMysteryGlass() => _mysteryGlassLabelReady
+      ? _mysteryGlassLabelOrder
+      : _decadeMeditationOrder();
 
   /// Orden de meditación (1–5) según la década resaltada; extensión usa `order` 6 → 5.
   int _decadeMeditationOrder() {
@@ -849,10 +854,8 @@ class _PrayScreenState extends State<PrayScreen>
     final sameBead = anchor.beadIndex == _counter;
     if (sameBead) {
       setState(() {
-        final maxIx =
-            _currentPrayers.isEmpty ? 0 : _currentPrayers.length - 1;
-        _orderPrayer =
-            anchor.misterioPrayerIndex.clamp(0, maxIx);
+        final maxIx = _currentPrayers.isEmpty ? 0 : _currentPrayers.length - 1;
+        _orderPrayer = anchor.misterioPrayerIndex.clamp(0, maxIx);
         _isDecrement = false;
         _pendingProgressRestore = false;
       });
@@ -879,7 +882,7 @@ class _PrayScreenState extends State<PrayScreen>
     _applyMisterioAnchorJump(target);
   }
 
-   // Función asíncrona para cargar todas las imágenes
+  // Función asíncrona para cargar todas las imágenes
   Future<void> _loadAllImages() async {
     final Map<String, ui.Image> images = {};
     for (var entry in Data.images.entries) {
@@ -889,7 +892,9 @@ class _PrayScreenState extends State<PrayScreen>
         // Carga el asset como ByteData
         final ByteData data = await rootBundle.load(assetPath);
         // Decodifica la imagen
-        final ui.Codec codec = await ui.instantiateImageCodec(data.buffer.asUint8List());
+        final ui.Codec codec = await ui.instantiateImageCodec(
+          data.buffer.asUint8List(),
+        );
         final ui.FrameInfo frameInfo = await codec.getNextFrame();
         images[key] = frameInfo.image;
       } catch (e) {
@@ -911,14 +916,14 @@ class _PrayScreenState extends State<PrayScreen>
   }
 
   void _handleDrawingError(String message) {
-  _reportError(
-    AppError(
-      kind: ErrorKind.ui,
-      severity: ErrorSeverity.warning,
-      userMessage: 'Hubo un problema visual al dibujar el rosario.',
-      technicalMessage: message,
-    ),
-  );
+    _reportError(
+      AppError(
+        kind: ErrorKind.ui,
+        severity: ErrorSeverity.warning,
+        userMessage: 'Hubo un problema visual al dibujar el rosario.',
+        technicalMessage: message,
+      ),
+    );
   }
 
   /// Menú de audio (música de fondo / audios de oraciones) con estilo glass.
@@ -931,11 +936,9 @@ class _PrayScreenState extends State<PrayScreen>
     final BuildContext? buttonContext = _prayAudioMenuButtonKey.currentContext;
     if (buttonContext == null || !buttonContext.mounted) return;
 
-    final RenderBox button =
-        buttonContext.findRenderObject()! as RenderBox;
-    final RenderBox overlay = Overlay.of(buttonContext)
-        .context
-        .findRenderObject()! as RenderBox;
+    final RenderBox button = buttonContext.findRenderObject()! as RenderBox;
+    final RenderBox overlay =
+        Overlay.of(buttonContext).context.findRenderObject()! as RenderBox;
 
     // Rectángulo del botón en coordenadas del overlay: Flutter coloca el menú
     // justo debajo de este ancla (comportamiento estándar de [showMenu]).
@@ -993,7 +996,7 @@ class _PrayScreenState extends State<PrayScreen>
       _togglePrayersAudio();
     }
   }
-  
+
   @override
   Widget build(BuildContext context) {
     final double tutorialTop =
@@ -1015,7 +1018,8 @@ class _PrayScreenState extends State<PrayScreen>
       }
     }
 
-    final bool mysteryNavAnchorsAllowed = widget.mystery != null &&
+    final bool mysteryNavAnchorsAllowed =
+        widget.mystery != null &&
         _loadedImages != null &&
         !_explicitOrderPrayerAfterHighlight;
     RosaryMysteryAnchorInfo? prevMysteryAnchorNav;
@@ -1112,14 +1116,13 @@ class _PrayScreenState extends State<PrayScreen>
               color: AppPrayGlass.onGlassText,
             ),
             onPressed: _toggleWakelock, // Cambia el estado del wakelock
-            tooltip: _isBatterySaverActive ? 'Activar Ahorro Batería' : 'Pantalla Siempre Encendida',
+            tooltip: _isBatterySaverActive
+                ? 'Activar Ahorro Batería'
+                : 'Pantalla Siempre Encendida',
           ),
           IconButton(
             key: _prayAudioMenuButtonKey,
-            icon: const Icon(
-              Icons.menu,
-              color: AppPrayGlass.onGlassText,
-            ),
+            icon: const Icon(Icons.menu, color: AppPrayGlass.onGlassText),
             tooltip: 'Opciones de audio',
             onPressed: _showPrayGlassAudioMenu,
           ),
@@ -1129,21 +1132,21 @@ class _PrayScreenState extends State<PrayScreen>
       body: Stack(
         clipBehavior: Clip.none,
         children: <Widget>[
+          Container(color: AppColors.colorBackgroundBody),
           Container(
-            color: AppColors.colorBackgroundBody,
-          ),
-           Container(
-                      decoration: const BoxDecoration(
-                        image: DecorationImage(
-                          image: AssetImage(AppAssets.imageVirgenLourdes),
-                          fit: BoxFit.fitHeight,
-                        ),
-                      ),
+            decoration: const BoxDecoration(
+              image: DecorationImage(
+                image: AssetImage(AppAssets.imageVirgenLourdes),
+                fit: BoxFit.fitHeight,
+              ),
+            ),
           ),
           // Reserva espacio bajo el AppBar transparente para que el rosario no quede tapado.
           Padding(
             padding: EdgeInsets.only(
-              top: MediaQuery.paddingOf(context).top + AppLayout.appBarToolbarHeight,
+              top:
+                  MediaQuery.paddingOf(context).top +
+                  AppLayout.appBarToolbarHeight,
             ),
             child: Center(
               child: LayoutBuilder(
@@ -1181,16 +1184,21 @@ class _PrayScreenState extends State<PrayScreen>
               ),
             ),
           ),
-            // Controles inferiores: mismo lenguaje visual glass que la AppBar.
-            Align(
-              alignment: Alignment.bottomCenter,
-              child: SafeArea(
-                child: Column(
-                // La columna solo ocupa el espacio que necesitan sus hijos
+          // Controles inferiores: mismo lenguaje visual glass que la AppBar.
+          Align(
+            alignment: Alignment.bottomCenter,
+            child: SafeArea(
+              child: Column(
+                // Solo ocupa el espacio que necesitan sus hijos.
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   Padding(
-                    padding: const EdgeInsets.all(AppLayout.sectionPadding),
+                    padding: EdgeInsets.only(
+                      left: AppLayout.sectionPadding,
+                      right: AppLayout.sectionPadding,
+                      top: AppLayout.prayScreenGlassControlsRowPaddingV,
+                      bottom: AppLayout.prayScreenGlassControlsRowPaddingV,
+                    ),
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       crossAxisAlignment: CrossAxisAlignment.end,
@@ -1199,47 +1207,22 @@ class _PrayScreenState extends State<PrayScreen>
                           opacity: widget.mystery != null ? 1 : 0.45,
                           child: IgnorePointer(
                             ignoring: widget.mystery == null,
-                            child: Column(
-                              mainAxisSize: MainAxisSize.min,
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                if (_mysteryGlassLabelReady)
-                                  Padding(
-                                    padding: const EdgeInsets.only(bottom: 3),
-                                    child: SizedBox(
-                                      width: _prayGlassMysteryTripleTotalWidth,
-                                      child: Text(
-                                        '$_mysteryGlassLabelOrderº misterio',
-                                        textAlign: TextAlign.center,
-                                        maxLines: 2,
-                                        overflow: TextOverflow.ellipsis,
-                                        style: const TextStyle(
-                                          fontFamily: 'PlayfairDisplay',
-                                          fontSize: 17,
-                                          fontWeight: FontWeight.w700,
-                                          height: 1.12,
-                                          color: AppColors
-                                              .colorCircularProgressIndicator,
-                                        ),
-                                      ),
-                                    ),
-                                  ),
-                                _prayGlassMysteryTripleBar(
-                                  clusterEnabled:
-                                      widget.mystery != null &&
-                                          _loadedImages != null,
-                                  canGoPrevious: canJumpPreviousMisterio,
-                                  canGoNext: canJumpNextMisterio,
-                                  onPrevious: canJumpPreviousMisterio
-                                      ? () => _onJumpToAdjacentMisterio(-1)
-                                      : null,
-                                  onBook: () =>
-                                      _showDecadeMysteryDialog(context),
-                                  onNext: canJumpNextMisterio
-                                      ? () => _onJumpToAdjacentMisterio(1)
-                                      : null,
-                                ),
-                              ],
+                            child: _prayGlassMysteryTripleBar(
+                              clusterEnabled:
+                                  widget.mystery != null &&
+                                  _loadedImages != null,
+                              bottomCaption: _mysteryGlassLabelReady
+                                  ? '$_mysteryGlassLabelOrderº misterio'
+                                  : null,
+                              canGoPrevious: canJumpPreviousMisterio,
+                              canGoNext: canJumpNextMisterio,
+                              onPrevious: canJumpPreviousMisterio
+                                  ? () => _onJumpToAdjacentMisterio(-1)
+                                  : null,
+                              onBook: () => _showDecadeMysteryDialog(context),
+                              onNext: canJumpNextMisterio
+                                  ? () => _onJumpToAdjacentMisterio(1)
+                                  : null,
                             ),
                           ),
                         ),
@@ -1247,16 +1230,19 @@ class _PrayScreenState extends State<PrayScreen>
                           widgetKey: _playPauseButtonKey,
                           onPressed: playPause,
                           child: Icon(
-                            _isplaying
-                                ? Icons.volume_up
-                                : Icons.volume_off,
+                            _isplaying ? Icons.volume_up : Icons.volume_off,
                           ),
                         ),
                       ],
                     ),
                   ),
                   Padding(
-                    padding: const EdgeInsets.all(AppLayout.sectionPadding),
+                    padding: EdgeInsets.only(
+                      left: AppLayout.sectionPadding,
+                      right: AppLayout.sectionPadding,
+                      top: AppLayout.prayScreenGlassControlsRowPaddingV,
+                      bottom: AppLayout.prayScreenGlassControlsRowPaddingV,
+                    ),
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
@@ -1274,7 +1260,12 @@ class _PrayScreenState extends State<PrayScreen>
                     ),
                   ),
                   Padding(
-                    padding: const EdgeInsets.all(AppLayout.sectionPadding),
+                    padding: EdgeInsets.only(
+                      left: AppLayout.sectionPadding,
+                      right: AppLayout.sectionPadding,
+                      top: AppLayout.prayScreenGlassControlsRowPaddingV,
+                      bottom: AppLayout.prayScreenGlassControlsBottomInset,
+                    ),
                     // Mismo ancho interior que la fila de flechas: de borde a borde
                     // de los dos círculos (LayoutBuilder = ancho tras el padding).
                     child: LayoutBuilder(
@@ -1295,8 +1286,8 @@ class _PrayScreenState extends State<PrayScreen>
                                 return PrayerDialog(
                                   prayer: label.isEmpty ? '…' : label,
                                   mystery: widget.mystery,
-                                  currentMysteryOrder: isMisterio &&
-                                          widget.mystery != null
+                                  currentMysteryOrder:
+                                      isMisterio && widget.mystery != null
                                       ? _effectiveMeditationOrderForMysteryGlass()
                                       : null,
                                   errorMessage:
@@ -1318,7 +1309,7 @@ class _PrayScreenState extends State<PrayScreen>
                 ],
               ),
             ),
-            ),
+          ),
           Positioned(
             top: helpPanelTop,
             left: AppLayout.errorBannerInset,
@@ -1333,13 +1324,18 @@ class _PrayScreenState extends State<PrayScreen>
                     : Material(
                         color: Colors.transparent,
                         child: Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 12,
+                            vertical: 10,
+                          ),
                           decoration: BoxDecoration(
                             // Mismo fondo que el dialogo de oraciones.
                             color: const Color.fromRGBO(29, 64, 76, 0.7),
                             borderRadius: BorderRadius.circular(14),
                             border: Border.all(
-                              color: AppPrayGlass.borderLight.withValues(alpha: 0.55),
+                              color: AppPrayGlass.borderLight.withValues(
+                                alpha: 0.55,
+                              ),
                             ),
                           ),
                           child: Column(
@@ -1360,20 +1356,22 @@ class _PrayScreenState extends State<PrayScreen>
                                 children: [
                                   TextButton(
                                     style: TextButton.styleFrom(
-                                      foregroundColor:
-                                          AppColors.colorCircularProgressIndicator,
+                                      foregroundColor: AppColors
+                                          .colorCircularProgressIndicator,
                                     ),
-                                    onPressed: () =>
-                                        _dismissActiveHelpMessage(disablePermanently: false),
+                                    onPressed: () => _dismissActiveHelpMessage(
+                                      disablePermanently: false,
+                                    ),
                                     child: const Text('Cerrar'),
                                   ),
                                   TextButton(
                                     style: TextButton.styleFrom(
-                                      foregroundColor:
-                                          AppColors.colorCircularProgressIndicator,
+                                      foregroundColor: AppColors
+                                          .colorCircularProgressIndicator,
                                     ),
-                                    onPressed: () =>
-                                        _dismissActiveHelpMessage(disablePermanently: true),
+                                    onPressed: () => _dismissActiveHelpMessage(
+                                      disablePermanently: true,
+                                    ),
                                     child: const Text('No mostrar de nuevo'),
                                   ),
                                 ],
@@ -1391,16 +1389,25 @@ class _PrayScreenState extends State<PrayScreen>
             left: AppLayout.errorBannerInset,
             right: AppLayout.errorBannerInset,
             child: IgnorePointer(
-              ignoring: _currentInfoMessage == null || _activeHelpMessage != null,
+              ignoring:
+                  _currentInfoMessage == null || _activeHelpMessage != null,
               child: AnimatedOpacity(
-                opacity: (_currentInfoMessage == null || _activeHelpMessage != null) ? 0 : 1,
+                opacity:
+                    (_currentInfoMessage == null || _activeHelpMessage != null)
+                    ? 0
+                    : 1,
                 duration: const Duration(milliseconds: 180),
                 child: Material(
                   color: Colors.transparent,
                   child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 12,
+                      vertical: 10,
+                    ),
                     decoration: BoxDecoration(
-                      color: AppPrayGlass.navBarGradientBottom.withValues(alpha: 0.95),
+                      color: AppPrayGlass.navBarGradientBottom.withValues(
+                        alpha: 0.95,
+                      ),
                       borderRadius: BorderRadius.circular(14),
                       border: Border.all(
                         color: AppPrayGlass.borderLight.withValues(alpha: 0.45),
@@ -1479,15 +1486,11 @@ class _PrayScreenState extends State<PrayScreen>
                           minimumSize: const Size(48, 48),
                           padding: const EdgeInsets.all(8),
                         ),
-                        icon: const Icon(
-                          Icons.send_outlined,
-                          size: 22,
-                        ),
+                        icon: const Icon(Icons.send_outlined, size: 22),
                         onPressed: () {
                           _sendErrorReportToDeveloper();
                         },
-                        tooltip:
-                            'Enviar información técnica al desarrollador',
+                        tooltip: 'Enviar información técnica al desarrollador',
                       ),
                       IconButton(
                         style: IconButton.styleFrom(
@@ -1496,10 +1499,7 @@ class _PrayScreenState extends State<PrayScreen>
                           minimumSize: const Size(48, 48),
                           padding: const EdgeInsets.all(8),
                         ),
-                        icon: const Icon(
-                          Icons.close,
-                          size: 22,
-                        ),
+                        icon: const Icon(Icons.close, size: 22),
                         onPressed: _dismissError,
                         tooltip: 'Cerrar',
                       ),
@@ -1508,17 +1508,14 @@ class _PrayScreenState extends State<PrayScreen>
                 ),
               ),
             ),
-        ]
-      )
+        ],
+      ),
     );
   }
 }
 
 class _HelpMessageDefinition {
-  const _HelpMessageDefinition({
-    required this.id,
-    required this.text,
-  });
+  const _HelpMessageDefinition({required this.id, required this.text});
 
   final String id;
   final String text;
@@ -1565,13 +1562,13 @@ Widget _prayGlassAudioMenuPanel({
           mainAxisSize: MainAxisSize.min,
           children: [
             InkWell(
-              onTap: () => Navigator.pop<String>(
-                menuContext,
-                'toggleBackgroundMusic',
-              ),
+              onTap: () =>
+                  Navigator.pop<String>(menuContext, 'toggleBackgroundMusic'),
               child: Padding(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 14,
+                ),
                 child: Row(
                   children: [
                     Icon(
@@ -1599,13 +1596,13 @@ Widget _prayGlassAudioMenuPanel({
               color: AppPrayGlass.borderLight.withValues(alpha: 0.35),
             ),
             InkWell(
-              onTap: () => Navigator.pop<String>(
-                menuContext,
-                'togglePrayersAudio',
-              ),
+              onTap: () =>
+                  Navigator.pop<String>(menuContext, 'togglePrayersAudio'),
               child: Padding(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 14,
+                ),
                 child: Row(
                   children: [
                     Icon(
@@ -1636,26 +1633,26 @@ Widget _prayGlassAudioMenuPanel({
 
 // --- Tamaño del control triple de misterios (prev · libro · sig.) ------------
 //
-// Diseñado en `_prayGlassMysteryTripleBar` (misma sección) y el ancho del texto
-// arriba reusa `_prayGlassMysteryTripleTotalWidth`.
+// Texto inferir “Nº misterio”: va dentro del botón (`bottomCaption`).
+// `_prayGlassMysteryTripleTotalWidth`: ancho de la banda de iconos.
 //
 // • [_prayGlassMysteryTripleBarSize] — alto de la píldora y diámetro del círculo del libro.
 // • [_prayGlassMysteryTripleChevronSlot] — ancho de cada zona táctil de la flecha.
 // • [_prayGlassMysteryTripleBookGap] — separación flecha ↔ libro (sin líneas divisorias).
 // [_prayGlassMysteryTripleTotalWidth] se deriva para alinear el texto de arriba.
 //
-const double _prayGlassMysteryTripleBarSize =
-    AppPrayGlass.roundButtonSize;
+const double _prayGlassMysteryTripleBarSize = AppPrayGlass.roundButtonSize;
 const double _prayGlassMysteryTripleChevronSlot = 28;
 const double _prayGlassMysteryTripleBookGap = 0;
 const double _prayGlassMysteryTripleTotalWidth =
     _prayGlassMysteryTripleChevronSlot * 2 +
-        _prayGlassMysteryTripleBookGap * 2 +
-        _prayGlassMysteryTripleBarSize;
+    _prayGlassMysteryTripleBookGap * 2 +
+    _prayGlassMysteryTripleBarSize;
 
-/// Prev · ver misterio (libro) · sig., una sola píldora glass (sin tramitas verticales).
+/// Prev · ver misterio (libro) · sig.; texto dorado opcional arriba de la línea inferior.
 Widget _prayGlassMysteryTripleBar({
   required bool clusterEnabled,
+  required String? bottomCaption,
   required bool canGoPrevious,
   required bool canGoNext,
   required VoidCallback? onPrevious,
@@ -1667,6 +1664,11 @@ Widget _prayGlassMysteryTripleBar({
   final double r = h / 2;
   final double slot = _prayGlassMysteryTripleChevronSlot;
   final double gap = _prayGlassMysteryTripleBookGap;
+  final bool showCaption =
+      bottomCaption != null && bottomCaption.trim().isNotEmpty;
+  final BorderRadius outerClip = showCaption
+      ? BorderRadius.circular(AppPrayGlass.pillRadius)
+      : BorderRadius.circular(r);
 
   Widget sideTap({
     required String tooltip,
@@ -1708,69 +1710,112 @@ Widget _prayGlassMysteryTripleBar({
   return Material(
     color: Colors.transparent,
     child: ClipRRect(
-      borderRadius: BorderRadius.circular(r),
+      borderRadius: outerClip,
       child: BackdropFilter(
         filter: ui.ImageFilter.blur(
           sigmaX: AppPrayGlass.blurSigma,
           sigmaY: AppPrayGlass.blurSigma,
         ),
         child: Container(
-          height: h,
           width: w,
           decoration: BoxDecoration(
             color: AppPrayGlass.frostedTint,
-            borderRadius: BorderRadius.circular(r),
+            borderRadius: outerClip,
             border: Border.all(color: AppPrayGlass.borderLight),
           ),
-          child: Row(
+          child: Column(
             mainAxisSize: MainAxisSize.min,
-            mainAxisAlignment: MainAxisAlignment.center,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              sideTap(
-                tooltip: 'Misterio anterior',
-                icon: Icons.chevron_left,
-                active: canGoPrevious,
-                onTap: onPrevious,
-                splashRadius:
-                    BorderRadius.horizontal(left: Radius.circular(r)),
-                iconAlignment: Alignment.centerRight,
-              ),
-              SizedBox(width: gap),
               SizedBox(
-                width: h-20,
                 height: h,
-                child: Tooltip(
-                  message: 'Ver meditación del misterio',
-                  child: Material(
-                    color: Colors.transparent,
-                    child: InkWell(
-                      customBorder: const CircleBorder(),
-                      onTap: clusterEnabled ? onBook : null,
-                      child: Center(
-                        child: IconTheme(
-                          data: IconThemeData(
-                            color: AppPrayGlass.onGlassText.withValues(
-                              alpha: clusterEnabled ? 1 : 0.42,
+                width: w,
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    sideTap(
+                      tooltip: 'Misterio anterior',
+                      icon: Icons.chevron_left,
+                      active: canGoPrevious,
+                      onTap: onPrevious,
+                      splashRadius: BorderRadius.only(
+                        topLeft: showCaption ? Radius.zero : Radius.circular(r),
+                        bottomLeft: showCaption
+                            ? Radius.zero
+                            : Radius.circular(r),
+                        topRight: Radius.zero,
+                        bottomRight: Radius.zero,
+                      ),
+                      iconAlignment: Alignment.centerRight,
+                    ),
+                    SizedBox(width: gap),
+                    SizedBox(
+                      width: h - 30,
+                      height: h,
+                      child: Tooltip(
+                        message: 'Ver meditación del misterio',
+                        child: Material(
+                          color: Colors.transparent,
+                          child: InkWell(
+                            customBorder: const CircleBorder(),
+                            onTap: clusterEnabled ? onBook : null,
+                            child: Center(
+                              child: IconTheme(
+                                data: IconThemeData(
+                                  color: AppPrayGlass.onGlassText.withValues(
+                                    alpha: clusterEnabled ? 1 : 0.42,
+                                  ),
+                                  size: 22,
+                                ),
+                                child: const Icon(Icons.menu_book_rounded),
+                              ),
                             ),
-                            size: 22,
                           ),
-                          child: const Icon(Icons.menu_book_rounded),
                         ),
+                      ),
+                    ),
+                    SizedBox(width: gap),
+                    sideTap(
+                      tooltip: 'Siguiente misterio',
+                      icon: Icons.chevron_right,
+                      active: canGoNext,
+                      onTap: onNext,
+                      splashRadius: BorderRadius.only(
+                        topRight: showCaption
+                            ? Radius.zero
+                            : Radius.circular(r),
+                        bottomRight: showCaption
+                            ? Radius.zero
+                            : Radius.circular(r),
+                        topLeft: Radius.zero,
+                        bottomLeft: Radius.zero,
+                      ),
+                      iconAlignment: Alignment.centerLeft,
+                    ),
+                  ],
+                ),
+              ),
+              if (showCaption)
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(6, 0, 6, 6),
+                  child: SizedBox(
+                    width: w,
+                    child: Text(
+                      bottomCaption,
+                      textAlign: TextAlign.center,
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(
+                        fontFamily: 'PlayfairDisplay',
+                        fontSize: 13,
+                        fontWeight: FontWeight.w700,
+                        height: 1.08,
+                        color: AppColors.colorCircularProgressIndicator,
                       ),
                     ),
                   ),
                 ),
-              ),
-              SizedBox(width: gap),
-              sideTap(
-                tooltip: 'Siguiente misterio',
-                icon: Icons.chevron_right,
-                active: canGoNext,
-                onTap: onNext,
-                splashRadius:
-                    BorderRadius.horizontal(right: Radius.circular(r)),
-                iconAlignment: Alignment.centerLeft,
-              ),
             ],
           ),
         ),
@@ -1930,4 +1975,3 @@ Widget _prayGlassPillButton({
   }
   return core;
 }
-
