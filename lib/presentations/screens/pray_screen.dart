@@ -558,7 +558,7 @@ class _PrayScreenState extends State<PrayScreen>
       _reportError(
         AppError(
           kind: ErrorKind.audio,
-          severity: ErrorSeverity.warning,
+          severity: ErrorSeverity.error,
           userMessage: 'No se pudo iniciar la música de fondo.',
           technicalMessage: e.toString(),
         ),
@@ -604,7 +604,7 @@ class _PrayScreenState extends State<PrayScreen>
       _reportError(
         AppError(
           kind: ErrorKind.audio,
-          severity: ErrorSeverity.warning,
+          severity: ErrorSeverity.error,
           userMessage: 'No se pudo reproducir el audio de la oración actual.',
           technicalMessage: e.toString(),
         ),
@@ -682,7 +682,11 @@ class _PrayScreenState extends State<PrayScreen>
     if (!mounted) return;
     _errorLogService.logError(error, screen: 'PrayScreen');
     if (error.severity == ErrorSeverity.error) {
-      setState(() => _currentError = error);
+      _infoMessageTimer?.cancel();
+      setState(() {
+        _currentError = error;
+        _currentInfoMessage = null;
+      });
       return;
     }
     _showTopInfoMessage(error.userMessage);
