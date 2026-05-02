@@ -24,7 +24,7 @@
     static const Map<String, String> prayersSounds = {
       'Señal de la Cruz': 'assets/sounds/Senal_de_la_cruz.mp3',
       'Credo': 'assets/sounds/Credo.mp3',
-      'Pesame': 'assets/sounds/Pesame.mp3',
+      'Pésame': 'assets/sounds/Pesame.mp3',
       'Padre Nuestro': 'assets/sounds/Padre_Nuestro.mp3',
       'Ave María': 'assets/sounds/Ave_Maria.mp3',
       'Gloria': 'assets/sounds/Gloria.mp3',
@@ -148,7 +148,7 @@ static const List<MysteriesMeditations> meditations = [
      static const List<RosaryDetailCircle> rosaryDetailsCircle = [
       RosaryDetailCircle(cuenta: 'medalla', count: 1, order: 1,
           width: 'large', height: 'large'
-          , prayers:['Señal de la Cruz','Credo','Pesame','Misterio','Padre Nuestro']),
+          , prayers:['Señal de la Cruz','Credo','Pésame','Misterio','Padre Nuestro']),
       RosaryDetailCircle(cuenta: 'perla', count: 10, order: 1,
           width: 'basic', height: 'basic', prayers:['Ave María']),
       RosaryDetailCircle(cuenta: 'rosa', count: 1, order: 2,
