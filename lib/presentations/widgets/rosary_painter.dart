@@ -324,6 +324,7 @@ class CuentasPainter extends CustomPainter {
       return  oldDelegate.cuentas != cuentas
            || oldDelegate.counter != counter ||
               oldDelegate.rosaryBeadCount != rosaryBeadCount ||
-              oldDelegate.rosaryCircleBeadCount != rosaryCircleBeadCount;
+              oldDelegate.rosaryCircleBeadCount != rosaryCircleBeadCount ||
+              oldDelegate.orderPrayer != orderPrayer;
     }
 }

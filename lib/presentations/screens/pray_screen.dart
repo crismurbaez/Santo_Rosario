@@ -48,6 +48,8 @@ class _PrayScreenState extends State<PrayScreen>
       true; // Nuevo: controla si el audio de las oraciones está activo
   bool _isIncrementingInProgress =
       false; //evita que se incremente dos veces al completar el audio automáticamente
+  /// Sólo después de cargar una pista nueva; así se ignora `completed` por `stop()` en el cambio de asset.
+  bool _trustPrayerPlaybackCompleted = false;
   int _audioRequestId = 0; // Evita errores por carreras al tocar muy rapido.
 
   AppError? _currentError;
@@ -125,10 +127,21 @@ class _PrayScreenState extends State<PrayScreen>
     // Configura un listener que detecta cuando termina la reproducción
     _audioService.prayerPlayerStateStream.listen((playerState) {
       if (playerState.processingState == ProcessingState.completed) {
-        if (!_isIncrementingInProgress) {
-          // Se adelanta una oración cuando el audio termina
+        if (_trustPrayerPlaybackCompleted &&
+            !_isIncrementingInProgress &&
+            mounted) {
+          // Se adelanta una oración cuando el audio termina (no por stop/cambio de pista).
           _isIncrementingInProgress = true;
+          _trustPrayerPlaybackCompleted = false;
           _incrementCounter();
+          // No depender sólo del painter: así el siguiente clip se programa siempre.
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            if (!mounted || !_isplaying || !_isPrayersAudioPlaying) {
+              _isIncrementingInProgress = false;
+              return;
+            }
+            initAudio();
+          });
         }
       }
     });
@@ -142,6 +155,7 @@ class _PrayScreenState extends State<PrayScreen>
     _persistProgressSnapshotFromState();
     _infoMessageTimer?.cancel();
     _tutorialArrowPulseController.dispose();
+    _trustPrayerPlaybackCompleted = false;
     _audioService.dispose();
     WakelockPlus.disable(); // Desactiva el wakelock (pantalla se apagará)
     super.dispose();
@@ -569,12 +583,16 @@ class _PrayScreenState extends State<PrayScreen>
   void initAudio() async {
     if (!_isPrayersAudioPlaying)
       return; // Si el audio de las oraciones no está activo, salimos
+    _trustPrayerPlaybackCompleted = false;
     final requestId = ++_audioRequestId;
     // Introduce un pequeño retraso
     // Esto le da tiempo al reproductor para finalizar cualquier proceso interno
     await Future.delayed(AppDelays.delayAudio);
     try {
       if (requestId != _audioRequestId || !_isplaying) {
+        if (requestId == _audioRequestId && !_isplaying) {
+          _isIncrementingInProgress = false;
+        }
         return;
       }
       final prayerLabel = _safeCurrentPrayerLabel;
@@ -595,9 +613,14 @@ class _PrayScreenState extends State<PrayScreen>
             : null;
         await _audioService.playPrayer(prayerSound);
 
-        _isIncrementingInProgress = false;
+        if (mounted && requestId == _audioRequestId && _isplaying) {
+          _trustPrayerPlaybackCompleted = true;
+          _isIncrementingInProgress = false;
+        }
       }
     } catch (e) {
+      _trustPrayerPlaybackCompleted = false;
+      _isIncrementingInProgress = false;
       if (_isExpectedAudioInterruption(e)) {
         return;
       }
@@ -618,6 +641,7 @@ class _PrayScreenState extends State<PrayScreen>
   }
 
   void stopAudio() async {
+    _trustPrayerPlaybackCompleted = false;
     _audioRequestId++;
     await _audioService.stopPrayer();
     await Future.delayed(AppDelays.delayAudio);
@@ -734,6 +758,7 @@ class _PrayScreenState extends State<PrayScreen>
         // Si se activa y el audio principal está encendido
         initAudio(); // Reproduce la oración actual
       } else {
+        _trustPrayerPlaybackCompleted = false;
         _audioService
             .stopPrayer(); // Si se desactiva, detiene el audio de la oración
       }
