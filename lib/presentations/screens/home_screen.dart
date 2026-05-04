@@ -131,8 +131,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                 ),
                 child: ColoredBox(
                   color: AppHomeColors.screenBackground,
-                  child: Padding(
+                  child: SingleChildScrollView(
                     padding: const EdgeInsets.fromLTRB(16, 10, 16, 20),
+                    physics: const ClampingScrollPhysics(),
                     child: Column(
                       mainAxisSize: MainAxisSize.min,
                       crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -141,7 +142,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                           child: Container(
                             width: 40,
                             height: 4,
-                            margin: const EdgeInsets.only(bottom: 14),
+                            margin: const EdgeInsets.only(bottom: 10),
                             decoration: BoxDecoration(
                               color: AppHomeColors.todayChipIcon
                                   .withValues(alpha: 0.28),
@@ -149,32 +150,59 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                             ),
                           ),
                         ),
-                        Text(
-                          'Configuración',
-                          textAlign: TextAlign.center,
-                          style: Theme.of(context)
-                              .textTheme
-                              .titleLarge
-                              ?.copyWith(
+                        Row(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.center,
+                                children: [
+                                  Text(
+                                    'Configuración',
+                                    textAlign: TextAlign.center,
+                                    style: Theme.of(context)
+                                        .textTheme
+                                        .titleLarge
+                                        ?.copyWith(
+                                          color: AppHomeColors.titleText,
+                                          fontWeight: FontWeight.w700,
+                                          fontFamily: 'Poppins',
+                                          fontSize: 22,
+                                          letterSpacing: 0.2,
+                                        ),
+                                  ),
+                                  const SizedBox(height: 6),
+                                  Text(
+                                    'Personalizá tu experiencia durante la oración',
+                                    textAlign: TextAlign.center,
+                                    style: Theme.of(context)
+                                        .textTheme
+                                        .bodyMedium
+                                        ?.copyWith(
+                                          color: AppHomeColors.subtitleText,
+                                          fontFamily: 'Poppins',
+                                          fontSize: 13,
+                                        ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                            IconButton(
+                              padding: EdgeInsets.zero,
+                              constraints: const BoxConstraints(
+                                minWidth: 40,
+                                minHeight: 40,
+                              ),
+                              tooltip: 'Cerrar',
+                              onPressed: () =>
+                                  Navigator.of(sheetContext).pop(),
+                              icon: Icon(
+                                Icons.close_rounded,
+                                size: 26,
                                 color: AppHomeColors.titleText,
-                                fontWeight: FontWeight.w700,
-                                fontFamily: 'Poppins',
-                                fontSize: 22,
-                                letterSpacing: 0.2,
                               ),
-                        ),
-                        const SizedBox(height: 6),
-                        Text(
-                          'Personalizá tu experiencia durante la oración',
-                          textAlign: TextAlign.center,
-                          style: Theme.of(context)
-                              .textTheme
-                              .bodyMedium
-                              ?.copyWith(
-                                color: AppHomeColors.subtitleText,
-                                fontFamily: 'Poppins',
-                                fontSize: 13,
-                              ),
+                            ),
+                          ],
                         ),
                         const SizedBox(height: 22),
                         Text(

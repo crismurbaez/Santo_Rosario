@@ -310,11 +310,6 @@ class _PrayScreenState extends State<PrayScreen>
     _didBuildHelpQueue = true;
     final helpCatalog = <_HelpMessageDefinition>[
       const _HelpMessageDefinition(
-        id: AppHelpMessageIds.prayKeepScreenOn,
-        text:
-            'Tip: esta pantalla queda activa para acompañar la oración. Puedes cambiarlo con el ícono de bombilla (arriba a la derecha).',
-      ),
-      const _HelpMessageDefinition(
         id: AppHelpMessageIds.prayNavigation,
         text:
             'Tip: usa las flechas para avanzar o volver cuenta por cuenta, y haz click en el botón inferior para leer la oración.',
@@ -333,6 +328,11 @@ class _PrayScreenState extends State<PrayScreen>
         id: AppHelpMessageIds.prayMysteryNavigation,
         text:
             'Tip: usa los botones «Misterio anterior» y «Siguiente misterio» para saltar entre misterios. Y haz click en el botón central en forma de libro para leer el misterio.',
+      ),
+            const _HelpMessageDefinition(
+        id: AppHelpMessageIds.prayKeepScreenOn,
+        text:
+            'Tip: esta pantalla queda activa para acompañar la oración. Puedes cambiarlo con el ícono de bombilla (arriba a la derecha).',
       ),
     ];
 
