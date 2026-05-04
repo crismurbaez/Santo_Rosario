@@ -82,6 +82,7 @@ class _PrayScreenState extends State<PrayScreen>
   final GlobalKey _prevButtonKey = GlobalKey();
   final GlobalKey _nextButtonKey = GlobalKey();
   final GlobalKey _pillButtonKey = GlobalKey();
+  final GlobalKey _mysteryNavTripleButtonKey = GlobalKey();
 
   /// Clave fijada al botón del menú (☰) para calcular dónde abrir [showMenu]:
   /// se usa el [RenderBox] del botón y el del [Overlay] y así el panel queda
@@ -322,6 +323,11 @@ class _PrayScreenState extends State<PrayScreen>
         text:
             'Tip: en el menú (arriba a la derecha) puedes activar o desactivar por separado la música de fondo y las oraciones guiadas por voz.',
       ),
+      const _HelpMessageDefinition(
+        id: AppHelpMessageIds.prayMysteryNavigation,
+        text:
+            'Tip: usa los botones «Misterio anterior» y «Siguiente misterio» para saltar entre misterios. Y haz click en el botón central en forma de libro para leer el misterio.',
+      ),
     ];
 
     final pending = <_HelpMessageDefinition>[];
@@ -543,6 +549,21 @@ class _PrayScreenState extends State<PrayScreen>
               top: pill.top - aboveButtonOffset,
               icon: Icons.keyboard_arrow_down_rounded,
             ),
+        ];
+      case AppHelpMessageIds.prayMysteryNavigation:
+        final r = _rectInPrayBodyStack(_mysteryNavTripleButtonKey);
+        if (r == null) return const <Widget>[];
+        return <Widget>[
+          arrowLayer(
+            left: r.left + r.width * 0.2 - arrowHalf,
+            top: r.top - aboveButtonOffset,
+            icon: Icons.keyboard_arrow_down_rounded,
+          ),
+          arrowLayer(
+            left: r.left + r.width * 0.8 - arrowHalf,
+            top: r.top - aboveButtonOffset,
+            icon: Icons.keyboard_arrow_down_rounded,
+          ),
         ];
       default:
         return const <Widget>[];
@@ -1303,6 +1324,7 @@ class _PrayScreenState extends State<PrayScreen>
                           child: IgnorePointer(
                             ignoring: widget.mystery == null,
                             child: _prayGlassMysteryTripleBar(
+                              widgetKey: _mysteryNavTripleButtonKey,
                               clusterEnabled:
                                   widget.mystery != null &&
                                   _loadedImages != null,
@@ -1746,6 +1768,7 @@ const double _prayGlassMysteryTripleTotalWidth =
 
 /// Prev · ver misterio (libro) · sig.; texto dorado opcional arriba de la línea inferior.
 Widget _prayGlassMysteryTripleBar({
+  Key? widgetKey,
   required bool clusterEnabled,
   required String? bottomCaption,
   required bool canGoPrevious,
@@ -1803,6 +1826,7 @@ Widget _prayGlassMysteryTripleBar({
   }
 
   return Material(
+    key: widgetKey,
     color: Colors.transparent,
     child: ClipRRect(
       borderRadius: outerClip,

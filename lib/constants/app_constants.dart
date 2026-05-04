@@ -20,7 +20,7 @@ abstract class AppColors {
 
 abstract class AppDelays {
   static const delayAudio = Duration(milliseconds: 100);
-  static const delayMusic = Duration(milliseconds: 15000);
+  static const delayMusic = Duration(milliseconds: 1000);
 }
 
 abstract class AppAssets {
@@ -126,6 +126,7 @@ abstract class AppHelpMessageIds {
   static const prayNavigation = 'pray_navigation';
   static const prayAudioBehavior = 'pray_audio_behavior';
   static const prayAudioMenu = 'pray_audio_menu';
+  static const prayMysteryNavigation = 'pray_mystery_navigation';
 
   /// Todos los consejos persistidos al marcar «No mostrar de nuevo».
   static const List<String> prayScreenTips = [
@@ -133,6 +134,7 @@ abstract class AppHelpMessageIds {
     prayNavigation,
     prayAudioBehavior,
     prayAudioMenu,
+    prayMysteryNavigation,
   ];
 }
 
