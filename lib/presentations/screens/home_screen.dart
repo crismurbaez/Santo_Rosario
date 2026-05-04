@@ -88,6 +88,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
       builder: (sheetContext) {
+        var tutorialResetPressed = false;
         return StatefulBuilder(
           builder: (context, setModalState) {
             final bottomInset = MediaQuery.paddingOf(sheetContext).bottom;
@@ -161,7 +162,17 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                           color: Colors.transparent,
                           child: InkWell(
                             borderRadius: BorderRadius.circular(26),
+                            splashColor: AppHomeColors.startButtonForeground
+                                .withValues(alpha: 0.18),
+                            highlightColor: AppHomeColors.startButtonForeground
+                                .withValues(alpha: 0.12),
                             onTap: () async {
+                              tutorialResetPressed = true;
+                              setModalState(() {});
+                              await Future<void>.delayed(
+                                const Duration(milliseconds: 220),
+                              );
+                              if (!sheetContext.mounted) return;
                               Navigator.of(sheetContext).pop();
                               await _preferencesService
                                   .resetPrayScreenHelpTips();
@@ -184,13 +195,26 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                             child: Ink(
                               decoration: BoxDecoration(
                                 borderRadius: BorderRadius.circular(26),
-                                gradient: const LinearGradient(
+                                gradient: LinearGradient(
                                   begin: Alignment.topCenter,
                                   end: Alignment.bottomCenter,
-                                  colors: [
-                                    AppHomeColors.startButtonTop,
-                                    AppHomeColors.startButtonBottom,
-                                  ],
+                                  colors: tutorialResetPressed
+                                      ? [
+                                          Color.lerp(
+                                            AppHomeColors.startButtonTop,
+                                            Colors.black,
+                                            0.16,
+                                          )!,
+                                          Color.lerp(
+                                            AppHomeColors.startButtonBottom,
+                                            Colors.black,
+                                            0.2,
+                                          )!,
+                                        ]
+                                      : const [
+                                          AppHomeColors.startButtonTop,
+                                          AppHomeColors.startButtonBottom,
+                                        ],
                                 ),
                                 border: Border(
                                   bottom: BorderSide(
