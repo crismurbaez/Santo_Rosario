@@ -50,37 +50,67 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     void _navigateToPray() {
       final mysteryType = ref.read(mysteryProvider.notifier).mysteryToPray;
 
-    if (mysteryType != null) {
-      Navigator.of(context).push(
-        PageRouteBuilder(
-          pageBuilder: (context, animation, secondaryAnimation) =>
-              PrayScreen(mystery: mysteryType),
-          transitionsBuilder: (context, animation, secondaryAnimation, child) {
-            // Here you can define your transition.
-            // For a fade transition:
-            return FadeTransition(
-              opacity: animation,
-              child: child,
-            );
-            // For a slide transition from right:
-            // return SlideTransition(
-            //   position: Tween<Offset>(
-            //     begin: const Offset(1.0, 0.0),
-            //     end: Offset.zero,
-            //   ).animate(animation),
-            //   child: child,
-            // );
-            // For a scale transition:
-            // return ScaleTransition(
-            //   scale: animation,
-            //   child: child,
-            // );
-          },
-          transitionDuration: AppHomeLayout.transitionDuration, // Adjust duration as needed
-        ),
-      );
+      if (mysteryType != null) {
+        Navigator.of(context).push(
+          PageRouteBuilder(
+            pageBuilder: (context, animation, secondaryAnimation) =>
+                PrayScreen(mystery: mysteryType),
+            transitionsBuilder:
+                (context, animation, secondaryAnimation, child) {
+              return FadeTransition(
+                opacity: animation,
+                child: child,
+              );
+            },
+            transitionDuration: AppHomeLayout.transitionDuration,
+          ),
+        );
+      } else {
+        showDialog<void>(
+          context: context,
+          builder: (ctx) => AlertDialog(
+            backgroundColor: AppHomeColors.todayChipBackground,
+            surfaceTintColor: Colors.transparent,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(18),
+            ),
+            title: Text(
+              'Seleccioná un misterio',
+              style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                    color: AppHomeColors.titleText,
+                    fontFamily: 'Poppins',
+                    fontWeight: FontWeight.w700,
+                    fontSize: 20,
+                  ),
+            ),
+            content: Text(
+              'Para comenzar la oración tenés que elegir un '
+              'misterio (Gozosos, Dolorosos, Gloriosos o Luminosos).',
+              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                    color: AppHomeColors.subtitleText,
+                    fontFamily: 'Poppins',
+                    fontSize: 14.5,
+                    height: 1.4,
+                  ),
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.of(ctx).pop(),
+                child: Text(
+                  'Entendido',
+                  style: TextStyle(
+                    fontFamily: 'Poppins',
+                    fontWeight: FontWeight.w600,
+                    color: AppHomeColors.titleText,
+                    fontSize: 15,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        );
+      }
     }
-  }
 
   void _showHomeSettings() {
     showModalBottomSheet<void>(
