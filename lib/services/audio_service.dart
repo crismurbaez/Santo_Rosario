@@ -1,3 +1,6 @@
+import 'dart:async';
+
+import 'package:flutter/foundation.dart';
 import 'package:just_audio/just_audio.dart';
 import 'package:santo_rosario/constants/app_constants.dart';
 
@@ -22,7 +25,11 @@ class AudioService {
   Future<void> playPrayer(String assetPath) async {
     await _prayerPlayer.stop();
     await _prayerPlayer.setAsset(assetPath);
-    await _prayerPlayer.play();
+    unawaited(
+      _prayerPlayer.play().catchError((Object e, StackTrace st) {
+        debugPrint('[AudioService.playPrayer] play() tras setAsset falló: $e\n$st');
+      }),
+    );
   }
 
   Future<void> stopPrayer() async {

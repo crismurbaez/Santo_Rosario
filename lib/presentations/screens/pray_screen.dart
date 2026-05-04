@@ -90,6 +90,8 @@ class _PrayScreenState extends State<PrayScreen>
   final _errorLogService = ErrorLogService();
   final _errorReporter = ErrorReporter();
 
+  StreamSubscription<PlayerState>? _prayerPlayerStateSubscription;
+
   late final AnimationController _tutorialArrowPulseController;
   late final Animation<double> _tutorialArrowPulse;
 
@@ -124,34 +126,38 @@ class _PrayScreenState extends State<PrayScreen>
     WakelockPlus.enable(); // Activa el wakelock (pantalla siempre encendida)
     _loadAllImages(); // Inicia la carga de todas las imágenes
 
-    // Configura un listener que detecta cuando termina la reproducción
-    _audioService.prayerPlayerStateStream.listen((playerState) {
-      if (playerState.processingState == ProcessingState.completed) {
-        if (_trustPrayerPlaybackCompleted &&
-            !_isIncrementingInProgress &&
-            mounted) {
-          // Se adelanta una oración cuando el audio termina (no por stop/cambio de pista).
-          _isIncrementingInProgress = true;
-          _trustPrayerPlaybackCompleted = false;
-          _incrementCounter();
-          // No depender sólo del painter: así el siguiente clip se programa siempre.
-          WidgetsBinding.instance.addPostFrameCallback((_) {
-            if (!mounted || !_isplaying || !_isPrayersAudioPlaying) {
-              _isIncrementingInProgress = false;
-              return;
-            }
-            initAudio();
-          });
-        }
-      }
-    });
+    _prayerPlayerStateSubscription = _audioService.prayerPlayerStateStream
+        .listen(_onPrayerPlayerState);
     _loadPrefs(); // Carga las preferencias guardadas
+  }
+
+  void _onPrayerPlayerState(PlayerState playerState) {
+    if (playerState.processingState == ProcessingState.completed) {
+      if (_trustPrayerPlaybackCompleted &&
+          !_isIncrementingInProgress &&
+          mounted) {
+        // Se adelanta una oración cuando el audio termina (no por stop/cambio de pista).
+        _isIncrementingInProgress = true;
+        _trustPrayerPlaybackCompleted = false;
+        _incrementCounter();
+        // No depender sólo del painter: así el siguiente clip se programa siempre.
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (!mounted || !_isplaying || !_isPrayersAudioPlaying) {
+            _isIncrementingInProgress = false;
+            return;
+          }
+          initAudio();
+        });
+      }
+    }
   }
 
   // Limpia los recursos del reproductor cuando el widget se desecha y el bloqueo de pantalla se desactiva
   @override
   void dispose() {
     WidgetsBinding.instance.removeObserver(this);
+    _prayerPlayerStateSubscription?.cancel();
+    _prayerPlayerStateSubscription = null;
     _persistProgressSnapshotFromState();
     _infoMessageTimer?.cancel();
     _tutorialArrowPulseController.dispose();
@@ -560,8 +566,9 @@ class _PrayScreenState extends State<PrayScreen>
   }
 
   Future<void> _loadBackgroundMusic() async {
-    if (!_isBackgroundMusicPlaying)
+    if (!_isBackgroundMusicPlaying) {
       return; // Si la música de fondo no está activa, salimos
+    }
 
     try {
       await _audioService.playBackgroundMusic();
@@ -581,8 +588,9 @@ class _PrayScreenState extends State<PrayScreen>
   }
 
   void initAudio() async {
-    if (!_isPrayersAudioPlaying)
+    if (!_isPrayersAudioPlaying) {
       return; // Si el audio de las oraciones no está activo, salimos
+    }
     _trustPrayerPlaybackCompleted = false;
     final requestId = ++_audioRequestId;
     // Introduce un pequeño retraso
@@ -635,12 +643,12 @@ class _PrayScreenState extends State<PrayScreen>
     }
   }
 
-  void stopAudioBackground() async {
+  Future<void> stopAudioBackground() async {
     await _audioService.stopBackgroundMusic();
     await Future.delayed(AppDelays.delayAudio);
   }
 
-  void stopAudio() async {
+  Future<void> stopAudio() async {
     _trustPrayerPlaybackCompleted = false;
     _audioRequestId++;
     await _audioService.stopPrayer();
@@ -723,15 +731,15 @@ class _PrayScreenState extends State<PrayScreen>
     WidgetsBinding.instance.addPostFrameCallback((_) {
       // Carga la música de fondo al iniciar el audio o lo detiene si se desactiva
       if (_isplaying) {
-        if (_isBackgroundMusicPlaying) {
-          _loadBackgroundMusic();
-        }
         if (_isPrayersAudioPlaying) {
           initAudio();
         }
+        if (_isBackgroundMusicPlaying) {
+          unawaited(_loadBackgroundMusic());
+        }
       } else {
-        stopAudioBackground(); // Detiene la música de fondo
-        stopAudio(); // Detiene el audio de la oración
+        unawaited(stopAudioBackground()); // Detiene la música de fondo
+        unawaited(stopAudio()); // Detiene el audio de la oración
       }
     });
   }
