@@ -78,6 +78,10 @@ abstract class AppPrayGlass {
   /// Diámetro en píxeles lógicos de los botones circulares (volumen, flechas).
   static const double roundButtonSize = 70;
 
+  /// Tras pulsar play/stop de la sesión de audio en [PrayScreen], el botón no
+  /// acepta otro toque hasta pasar este intervalo (evita taps repetidos).
+  static const Duration audioSessionButtonDebounce = Duration(milliseconds: 2000);
+
   /// Radio de las esquinas del botón ancho inferior (oración + info).
   static const double pillRadius = 26;
 

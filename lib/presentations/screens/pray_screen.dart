@@ -52,6 +52,10 @@ class _PrayScreenState extends State<PrayScreen>
   bool _trustPrayerPlaybackCompleted = false;
   int _audioRequestId = 0; // Evita errores por carreras al tocar muy rapido.
 
+  /// Tras [playPause]: bloquea el botón play/stop durante [AppPrayGlass.audioSessionButtonDebounce].
+  bool _audioSessionButtonLocked = false;
+  Timer? _audioSessionButtonDebounceTimer;
+
   AppError? _currentError;
 
   String? _currentInfoMessage;
@@ -161,6 +165,8 @@ class _PrayScreenState extends State<PrayScreen>
     _prayerPlayerStateSubscription = null;
     _persistProgressSnapshotFromState();
     _infoMessageTimer?.cancel();
+    _audioSessionButtonDebounceTimer?.cancel();
+    _audioSessionButtonDebounceTimer = null;
     _tutorialArrowPulseController.dispose();
     _trustPrayerPlaybackCompleted = false;
     _audioService.dispose();
@@ -746,6 +752,18 @@ class _PrayScreenState extends State<PrayScreen>
   }
 
   void playPause() {
+    if (_audioSessionButtonLocked) return;
+    _audioSessionButtonLocked = true;
+    _audioSessionButtonDebounceTimer?.cancel();
+    _audioSessionButtonDebounceTimer = Timer(
+      AppPrayGlass.audioSessionButtonDebounce,
+      () {
+        _audioSessionButtonDebounceTimer = null;
+        if (mounted) {
+          setState(() => _audioSessionButtonLocked = false);
+        }
+      },
+    );
     setState(() {
       _isplaying = !_isplaying;
     });
@@ -1343,11 +1361,19 @@ class _PrayScreenState extends State<PrayScreen>
                             ),
                           ),
                         ),
-                        _prayGlassRoundButton(
-                          widgetKey: _playPauseButtonKey,
-                          onPressed: playPause,
-                          child: Icon(
-                            _isplaying ? Icons.volume_up : Icons.volume_off,
+                        Opacity(
+                          opacity: _audioSessionButtonLocked ? 0.45 : 1,
+                          child: AbsorbPointer(
+                            absorbing: _audioSessionButtonLocked,
+                            child: _prayGlassRoundButton(
+                              widgetKey: _playPauseButtonKey,
+                              onPressed: playPause,
+                              child: Icon(
+                                _isplaying
+                                    ? Icons.stop_rounded
+                                    : Icons.play_arrow_rounded,
+                              ),
+                            ),
                           ),
                         ),
                       ],
@@ -1943,7 +1969,7 @@ Widget _prayGlassMysteryTripleBar({
   );
 }
 
-/// Botón circular glass (volumen, anterior, siguiente).
+/// Botón circular glass (play/stop de sesión audio, flechas, etc.).
 ///
 /// Estructura: [Material] transparente → [InkWell] con hitTest circular → [ClipOval]
 /// → [BackdropFilter] (desenfoque del contenido detrás) → [Container] con tinte y borde.
