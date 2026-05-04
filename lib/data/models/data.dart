@@ -190,7 +190,7 @@ static const List<MysteriesMeditations> meditations = [
           , prayers:['Ave María']),
       RosaryDetailExtension(cuenta: 'rosa', count: 1, order: 6,
           width: 'medium', height: 'medium'
-          , prayers:[ 'Gloria','Dios te Salve']),
+          , prayers:[ 'Gloria','Dios te salve']),
       RosaryDetailExtension(cuenta: 'cruz', count: 1, order: 6,
           width: 'largest', height: 'largest'
           , prayers:['Señal de la Cruz']),
