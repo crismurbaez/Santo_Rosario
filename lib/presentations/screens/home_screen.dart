@@ -89,6 +89,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
       backgroundColor: Colors.transparent,
       builder: (sheetContext) {
         var tutorialResetPressed = false;
+        var progressClearPressed = false;
         return StatefulBuilder(
           builder: (context, setModalState) {
             final bottomInset = MediaQuery.paddingOf(sheetContext).bottom;
@@ -450,6 +451,149 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                                 ),
                               ),
                             ],
+                          ),
+                        ),
+                        const SizedBox(height: 12),
+                        Material(
+                          color: Colors.transparent,
+                          child: InkWell(
+                            borderRadius: BorderRadius.circular(26),
+                            splashColor: AppHomeColors.titleText
+                                .withValues(alpha: 0.10),
+                            highlightColor: AppHomeColors.titleText
+                                .withValues(alpha: 0.06),
+                            onTap: () async {
+                              progressClearPressed = true;
+                              setModalState(() {});
+                              await Future<void>.delayed(
+                                const Duration(milliseconds: 220),
+                              );
+                              await _preferencesService
+                                  .clearPrayerProgressSnapshot();
+                              if (!sheetContext.mounted) return;
+                              progressClearPressed = false;
+                              setModalState(() {});
+                              if (!mounted || !context.mounted) return;
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(
+                                  behavior: SnackBarBehavior.floating,
+                                  backgroundColor: AppHomeColors.titleText,
+                                  content: const Text(
+                                    'Se borró el avance guardado. La próxima '
+                                    'vez que entres en la oración comenzarás '
+                                    'desde el inicio de la secuencia.',
+                                    style: TextStyle(
+                                      fontFamily: 'Poppins',
+                                      color: Colors.white,
+                                      fontSize: 14,
+                                    ),
+                                  ),
+                                ),
+                              );
+                            },
+                            child: Ink(
+                              decoration: BoxDecoration(
+                                borderRadius: BorderRadius.circular(26),
+                                gradient: LinearGradient(
+                                  begin: Alignment.topCenter,
+                                  end: Alignment.bottomCenter,
+                                  colors: progressClearPressed
+                                      ? [
+                                          Color.lerp(
+                                            AppHomeColors.todayChipBackground,
+                                            Colors.black,
+                                            0.10,
+                                          )!,
+                                          Color.lerp(
+                                            AppHomeColors.cardBackground,
+                                            Colors.black,
+                                            0.12,
+                                          )!,
+                                        ]
+                                      : const [
+                                          AppHomeColors.todayChipBackground,
+                                          AppHomeColors.cardBackground,
+                                        ],
+                                ),
+                                border: Border.all(
+                                  color: AppHomeColors.subtitleText
+                                      .withValues(alpha: 0.22),
+                                  width: 1,
+                                ),
+                                boxShadow: const [
+                                  BoxShadow(
+                                    color: Color(0x332A3441),
+                                    blurRadius: 10,
+                                    offset: Offset(0, 4),
+                                  ),
+                                  BoxShadow(
+                                    color: Color(0x28FFFFFF),
+                                    blurRadius: 2,
+                                    offset: Offset(0, -1),
+                                  ),
+                                ],
+                              ),
+                              child: Padding(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 18,
+                                  vertical: 16,
+                                ),
+                                child: Row(
+                                  children: [
+                                    Icon(
+                                      Icons.restart_alt_rounded,
+                                      color: AppHomeColors.titleText
+                                          .withValues(alpha: 0.9),
+                                      size: 26,
+                                    ),
+                                    const SizedBox(width: 14),
+                                    Expanded(
+                                      child: Column(
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.start,
+                                        children: [
+                                          Text(
+                                            'Borrar avance de la oración',
+                                            style: Theme.of(context)
+                                                .textTheme
+                                                .titleSmall
+                                                ?.copyWith(
+                                                  color: AppHomeColors.titleText,
+                                                  fontFamily: 'Poppins',
+                                                  fontWeight: FontWeight.w700,
+                                                  fontSize: 16,
+                                                ),
+                                          ),
+                                          const SizedBox(height: 4),
+                                          Text(
+                                            'Eliminá lo guardado: al volver a '
+                                            'orar con el mismo tipo de '
+                                            'misterios empezás desde el '
+                                            'principio.',
+                                            style: Theme.of(context)
+                                                .textTheme
+                                                .bodySmall
+                                                ?.copyWith(
+                                                  color: AppHomeColors
+                                                      .subtitleText,
+                                                  fontFamily: 'Poppins',
+                                                  fontSize: 12.5,
+                                                  height: 1.35,
+                                                ),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                    Icon(
+                                      Icons.arrow_forward_ios_rounded,
+                                      size: 18,
+                                      color: AppHomeColors.subtitleText
+                                          .withValues(alpha: 0.65),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ),
                           ),
                         ),
                         const SizedBox(height: 8),
