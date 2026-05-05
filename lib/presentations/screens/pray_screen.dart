@@ -102,9 +102,7 @@ class _PrayScreenState extends State<PrayScreen>
 
   void _syncTutorialArrowAnimation() {
     if (!mounted) return;
-    final showArrows =
-        _activeHelpMessage != null &&
-        _activeHelpMessage!.id != AppHelpMessageIds.prayAudioBehavior;
+    final showArrows = _activeHelpMessage != null;
     if (showArrows) {
       if (!_tutorialArrowPulseController.isAnimating) {
         _tutorialArrowPulseController.repeat(reverse: true);
@@ -317,12 +315,12 @@ class _PrayScreenState extends State<PrayScreen>
       const _HelpMessageDefinition(
         id: AppHelpMessageIds.prayAudioBehavior,
         text:
-            'Cuando el audio esta activado junto con las oraciones guiadas por voz, el avance de oraciones es automático. Si lo desactivas, el avance es manual.',
+            'Usa el botón de play para activar el audio. Y las oraciones guiadas por voz realizarán un avance automático. Si lo desactivas con el botón de stop, el avance es manual.',
       ),
       const _HelpMessageDefinition(
         id: AppHelpMessageIds.prayAudioMenu,
         text:
-            'Tip: en el menú (arriba a la derecha) puedes activar o desactivar por separado la música de fondo y las oraciones guiadas por voz.',
+            'Tip: en el menú puedes activar o desactivar por separado la música de fondo y las oraciones guiadas por voz. Si desactivas la voz, el avance es manual.',
       ),
       const _HelpMessageDefinition(
         id: AppHelpMessageIds.prayMysteryNavigation,
@@ -332,7 +330,7 @@ class _PrayScreenState extends State<PrayScreen>
             const _HelpMessageDefinition(
         id: AppHelpMessageIds.prayKeepScreenOn,
         text:
-            'Tip: esta pantalla queda activa para acompañar la oración. Puedes cambiarlo con el ícono de bombilla (arriba a la derecha).',
+            'Tip: esta pantalla queda siempre activa para acompañar la oración. Puedes cambiarlo con el ícono de bombilla, y se apagará la pantalla de acuerdo a tu configuración.',
       ),
     ];
 
@@ -454,7 +452,7 @@ class _PrayScreenState extends State<PrayScreen>
   /// Flechas del tutorial según el tip activo (coords. del [Stack] del body).
   List<Widget> _buildTutorialArrowOverlays(BuildContext context) {
     final id = _activeHelpMessage?.id;
-    if (id == null || id == AppHelpMessageIds.prayAudioBehavior) {
+    if (id == null) {
       return const <Widget>[];
     }
 
@@ -567,6 +565,16 @@ class _PrayScreenState extends State<PrayScreen>
           ),
           arrowLayer(
             left: r.left + r.width * 0.8 - arrowHalf,
+            top: r.top - aboveButtonOffset,
+            icon: Icons.keyboard_arrow_down_rounded,
+          ),
+        ];
+      case AppHelpMessageIds.prayAudioBehavior:
+        final r = _rectInPrayBodyStack(_playPauseButtonKey);
+        if (r == null) return const <Widget>[];
+        return [
+          arrowLayer(
+            left: r.center.dx - arrowHalf,
             top: r.top - aboveButtonOffset,
             icon: Icons.keyboard_arrow_down_rounded,
           ),

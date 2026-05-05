@@ -22,7 +22,7 @@
       'Oh Jesús Mío': 'Oh Jesús mío, perdona nuestros pecados, líbranos del fuego del infierno; lleva al cielo a todas las almas, especialmente a las más necesitadas de tu misericordia.',
       'María Madre de Gracia': 'María Madre de Gracia y Madre de Misericordia, en la vida y en la muerte, ampáranos Oh! Gran Señora. Cubre con tu Manto a mis hijos, a mi familia y a mis amigos. Amén.',
       'Intenciones del Papa': 'Pedimos por la intenciones del Papa, por las almas del purgatorio, por los pecadores en todas partes, por los pecadores en la iglesia universal, por los de mi propio hogar y dentro de mi familia.',
-      'Dios te salve': 'Dios te salve Reina y Madre de Misericordia, vida dulzura y esperanza nuestra. Dios te salve, a ti clamamos los desterrados hijos de Eva, a tí suspiramos gimiendo y llorando en este valle de lágrimas. Ea, pues, Señora abogada nuestra, vuelve a nosotros esos tus ojos misericordiosos; y después de este destierro muéstranos a Jesús, fruto bendito de tu vientre. Oh! Clementísima, Oh! Piadosa, Oh! Dulce Virgen María! Ruega por nosostros Santa Madre de Dios, para que seamos dignos de alcanzar las promesas y Gracias, de Nuestro Señor Jesucristo. Amén.',
+      'Dios te Salve': 'Dios te salve Reina y Madre de Misericordia, vida dulzura y esperanza nuestra. Dios te salve, a ti clamamos los desterrados hijos de Eva, a tí suspiramos gimiendo y llorando en este valle de lágrimas. Ea, pues, Señora abogada nuestra, vuelve a nosotros esos tus ojos misericordiosos; y después de este destierro muéstranos a Jesús, fruto bendito de tu vientre. Oh! Clementísima, Oh! Piadosa, Oh! Dulce Virgen María! Ruega por nosostros Santa Madre de Dios, para que seamos dignos de alcanzar las promesas y Gracias, de Nuestro Señor Jesucristo. Amén.',
       'Santo Dios': 'Santo Dios, Santo Fuerte, Santo Inmortal, ten piedad de nosotros y del mundo entero.',
     };
     static const Map<String, String> prayersSounds = {
@@ -190,7 +190,7 @@ static const List<MysteriesMeditations> meditations = [
           , prayers:['Ave María']),
       RosaryDetailExtension(cuenta: 'rosa', count: 1, order: 6,
           width: 'medium', height: 'medium'
-          , prayers:[ 'Gloria','Dios te salve']),
+          , prayers:[ 'Gloria','Dios te Salve']),
       RosaryDetailExtension(cuenta: 'cruz', count: 1, order: 6,
           width: 'largest', height: 'largest'
           , prayers:['Señal de la Cruz']),
