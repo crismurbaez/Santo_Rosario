@@ -26,6 +26,7 @@ class _CalendarScreenState extends State<CalendarScreen> {
   String? _editingId;
   bool _loading = true;
   bool _localeReady = false;
+  AndroidAutoStartDiagnostic? _autoStartDiagnostic;
 
   @override
   void initState() {
@@ -35,6 +36,8 @@ class _CalendarScreenState extends State<CalendarScreen> {
 
   Future<void> _bootstrap() async {
     await AlarmNotificationService.instance.requestRuntimePermissions();
+    final diagnostic =
+        await AlarmNotificationService.instance.getAndroidAutoStartDiagnostic();
     await initializeDateFormatting('es');
     final loaded = await _storage.loadAlarms();
     loaded.sort(_compareAlarms);
@@ -43,6 +46,7 @@ class _CalendarScreenState extends State<CalendarScreen> {
       _alarms = loaded;
       _loading = false;
       _localeReady = true;
+      _autoStartDiagnostic = diagnostic;
     });
   }
 
@@ -356,6 +360,33 @@ class _CalendarScreenState extends State<CalendarScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
+                  if (_openRosaryWithGuidedAudio &&
+                      _autoStartDiagnostic != null &&
+                      !_autoStartDiagnostic!.canLikelyAutoOpen)
+                    Container(
+                      margin: const EdgeInsets.only(bottom: 12),
+                      padding: const EdgeInsets.all(14),
+                      decoration: BoxDecoration(
+                        color: AppHomeColors.todayChipBackground,
+                        borderRadius: BorderRadius.circular(
+                          AppCalendarLayout.cardRadius,
+                        ),
+                        border: Border.all(
+                          color:
+                              AppHomeColors.subtitleText.withValues(alpha: 0.2),
+                        ),
+                      ),
+                      child: Text(
+                        'Para que se abra automáticamente el rosario, verificá '
+                        'estos permisos del sistema: notificaciones, alarmas '
+                        'exactas y pantalla completa. Sin ellos, la alarma puede '
+                        'mostrar solo la notificación.',
+                        style: Theme.of(context)
+                            .textTheme
+                            .displaySmall
+                            ?.copyWith(fontSize: 13, height: 1.38),
+                      ),
+                    ),
                   if (!AlarmNotificationService.supportsNativeSchedule)
                     Container(
                       margin: const EdgeInsets.only(bottom: 12),

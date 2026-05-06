@@ -21,6 +21,7 @@ class AlarmNotificationService {
   final FlutterLocalNotificationsPlugin _plugin = FlutterLocalNotificationsPlugin();
   GlobalKey<NavigatorState>? _navigatorKey;
   bool _initialized = false;
+  bool? _lastFullScreenIntentPermissionGranted;
 
   static const _channelId = 'rosario_alarm_v1';
   static const _channelName = 'Recordatorios del rosario';
@@ -160,6 +161,8 @@ class AlarmNotificationService {
       final android = _plugin.resolvePlatformSpecificImplementation<
           AndroidFlutterLocalNotificationsPlugin>();
       await android?.requestNotificationsPermission();
+      _lastFullScreenIntentPermissionGranted =
+          await android?.requestFullScreenIntentPermission();
       final canExact = await android?.canScheduleExactNotifications();
       if (canExact == false) {
         await android?.requestExactAlarmsPermission();
@@ -173,6 +176,28 @@ class AlarmNotificationService {
 
   Future<void> cancelNotification(int id) async {
     await _plugin.cancel(id: id);
+  }
+
+  /// Estado útil para explicar por qué una alarma puede no autoabrir el rosario.
+  Future<AndroidAutoStartDiagnostic> getAndroidAutoStartDiagnostic() async {
+    if (defaultTargetPlatform != TargetPlatform.android) {
+      return const AndroidAutoStartDiagnostic(
+        supportedPlatform: false,
+        notificationsEnabled: true,
+        exactAlarmAllowed: true,
+        fullScreenIntentGranted: true,
+      );
+    }
+    final android = _plugin.resolvePlatformSpecificImplementation<
+        AndroidFlutterLocalNotificationsPlugin>();
+    final notificationsEnabled = await android?.areNotificationsEnabled();
+    final exactAllowed = await android?.canScheduleExactNotifications();
+    return AndroidAutoStartDiagnostic(
+      supportedPlatform: true,
+      notificationsEnabled: notificationsEnabled ?? true,
+      exactAlarmAllowed: exactAllowed ?? true,
+      fullScreenIntentGranted: _lastFullScreenIntentPermissionGranted ?? false,
+    );
   }
 
   Future<void> cancelAlarms(Iterable<RosaryAlarm> alarms) async {
@@ -273,7 +298,9 @@ class AlarmNotificationService {
     if (when == null) return;
 
     // En Android 12+ sin permiso de alarmas exactas, setExact* lanza y no se programa nada.
-    AndroidScheduleMode androidMode = AndroidScheduleMode.exactAllowWhileIdle;
+    AndroidScheduleMode androidMode = alarm.openRosaryWithGuidedAudio
+        ? AndroidScheduleMode.alarmClock
+        : AndroidScheduleMode.exactAllowWhileIdle;
     if (defaultTargetPlatform == TargetPlatform.android) {
       final android = _plugin.resolvePlatformSpecificImplementation<
           AndroidFlutterLocalNotificationsPlugin>();
@@ -305,7 +332,8 @@ class AlarmNotificationService {
       debugPrint('[AlarmNotificationService] Fallo zonedSchedule: $e\n$st');
       // Último recurso: modo inexacto (puede llegar con retraso en Doze).
       if (defaultTargetPlatform == TargetPlatform.android &&
-          androidMode == AndroidScheduleMode.exactAllowWhileIdle) {
+          (androidMode == AndroidScheduleMode.exactAllowWhileIdle ||
+              androidMode == AndroidScheduleMode.alarmClock)) {
         try {
           await _plugin.zonedSchedule(
             id: alarm.notificationId,
@@ -334,4 +362,24 @@ class AlarmNotificationService {
       rethrow;
     }
   }
+}
+
+class AndroidAutoStartDiagnostic {
+  const AndroidAutoStartDiagnostic({
+    required this.supportedPlatform,
+    required this.notificationsEnabled,
+    required this.exactAlarmAllowed,
+    required this.fullScreenIntentGranted,
+  });
+
+  final bool supportedPlatform;
+  final bool notificationsEnabled;
+  final bool exactAlarmAllowed;
+  final bool fullScreenIntentGranted;
+
+  bool get canLikelyAutoOpen =>
+      supportedPlatform &&
+      notificationsEnabled &&
+      exactAlarmAllowed &&
+      fullScreenIntentGranted;
 }
