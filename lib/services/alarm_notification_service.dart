@@ -1,0 +1,337 @@
+import 'dart:async';
+
+import 'package:flutter/foundation.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter_local_notifications/flutter_local_notifications.dart';
+import 'package:flutter_timezone/flutter_timezone.dart';
+import 'package:santo_rosario/models/rosary_alarm.dart';
+import 'package:santo_rosario/presentations/screens/alarm_ringing_screen.dart';
+import 'package:santo_rosario/presentations/screens/pray_screen.dart';
+import 'package:santo_rosario/services/alarm_background_handler.dart';
+import 'package:santo_rosario/services/alarm_storage_service.dart';
+import 'package:santo_rosario/utils/mystery_utils.dart';
+import 'package:timezone/data/latest_all.dart' as tzdata;
+import 'package:timezone/timezone.dart' as tz;
+
+/// Programa y cancela notificaciones de alarma (Android / iOS).
+class AlarmNotificationService {
+  AlarmNotificationService._();
+  static final AlarmNotificationService instance = AlarmNotificationService._();
+
+  final FlutterLocalNotificationsPlugin _plugin = FlutterLocalNotificationsPlugin();
+  GlobalKey<NavigatorState>? _navigatorKey;
+  bool _initialized = false;
+
+  static const _channelId = 'rosario_alarm_v1';
+  static const _channelName = 'Recordatorios del rosario';
+  static const _channelDescription =
+      'Alarmas para recordar el rezo del Santo Rosario.';
+
+  static bool get supportsNativeSchedule =>
+      !kIsWeb &&
+      (defaultTargetPlatform == TargetPlatform.android ||
+          defaultTargetPlatform == TargetPlatform.iOS);
+
+  static String payloadFor(RosaryAlarm alarm) => 'alarm:${alarm.notificationId}';
+
+  static int? parseNotificationIdFromPayload(String? payload) {
+    if (payload == null || !payload.startsWith('alarm:')) return null;
+    return int.tryParse(payload.substring('alarm:'.length));
+  }
+
+  Future<void> initialize({required GlobalKey<NavigatorState> navigatorKey}) async {
+    if (_initialized) {
+      _navigatorKey = navigatorKey;
+      return;
+    }
+    _navigatorKey = navigatorKey;
+
+    tzdata.initializeTimeZones();
+    try {
+      final info = await FlutterTimezone.getLocalTimezone();
+      final name = info.identifier;
+      tz.setLocalLocation(tz.getLocation(name));
+    } catch (e, st) {
+      debugPrint('[AlarmNotificationService] Zona horaria local no disponible: $e\n$st');
+      tz.setLocalLocation(tz.UTC);
+    }
+
+    const androidInit = AndroidInitializationSettings('@mipmap/ic_launcher');
+    const darwinInit = DarwinInitializationSettings(
+      requestAlertPermission: false,
+      requestBadgePermission: false,
+      requestSoundPermission: false,
+    );
+    const initSettings = InitializationSettings(
+      android: androidInit,
+      iOS: darwinInit,
+      macOS: darwinInit,
+    );
+
+    await _plugin.initialize(
+      settings: initSettings,
+      onDidReceiveNotificationResponse: _onNotificationResponse,
+      onDidReceiveBackgroundNotificationResponse: alarmNotificationTapBackground,
+    );
+
+    final androidImpl = _plugin.resolvePlatformSpecificImplementation<
+        AndroidFlutterLocalNotificationsPlugin>();
+    if (androidImpl != null) {
+      await androidImpl.createNotificationChannel(
+        const AndroidNotificationChannel(
+          _channelId,
+          _channelName,
+          description: _channelDescription,
+          importance: Importance.max,
+          playSound: true,
+          enableVibration: true,
+          audioAttributesUsage: AudioAttributesUsage.alarm,
+        ),
+      );
+    }
+
+    _initialized = true;
+
+    final launch = await _plugin.getNotificationAppLaunchDetails();
+    if (launch?.didNotificationLaunchApp ?? false) {
+      final id = parseNotificationIdFromPayload(
+        launch!.notificationResponse?.payload,
+      );
+      if (id != null) {
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          unawaited(_openAlarmFlow(id));
+        });
+      }
+    }
+  }
+
+  void _onNotificationResponse(NotificationResponse response) {
+    final id = parseNotificationIdFromPayload(response.payload);
+    if (id == null) return;
+    unawaited(_openAlarmFlow(id));
+  }
+
+  /// Decide entre pantalla de alarma simple o rosario con audio guiado (según la alarma guardada).
+  Future<void> _openAlarmFlow(int notificationId) async {
+    final nav = _navigatorKey?.currentState;
+    if (nav == null) return;
+
+    RosaryAlarm? alarm;
+    try {
+      final list = await AlarmStorageService().loadAlarms();
+      for (final a in list) {
+        if (a.notificationId == notificationId) {
+          alarm = a;
+          break;
+        }
+      }
+    } catch (e, st) {
+      debugPrint('[AlarmNotificationService] No se pudieron cargar alarmas: $e\n$st');
+    }
+
+    if (alarm != null && alarm.openRosaryWithGuidedAudio) {
+      await AlarmNotificationService.instance.cancelNotification(notificationId);
+      final mystery =
+          MysteryUtils.mysteryForWeekday(DateTime.now().weekday);
+      if (!nav.mounted) return;
+      await nav.push<void>(
+        MaterialPageRoute<void>(
+          builder: (_) => PrayScreen(
+            mystery: mystery,
+            launchFromAlarmAutoStartGuidedAudio: true,
+          ),
+        ),
+      );
+      return;
+    }
+
+    if (!nav.mounted) return;
+    await nav.push<void>(
+      MaterialPageRoute<void>(
+        fullscreenDialog: true,
+        builder: (_) => AlarmRingingScreen(notificationId: notificationId),
+      ),
+    );
+  }
+
+  /// Permisos de aviso (y en Android, alarmas exactas si aplica).
+  Future<void> requestRuntimePermissions() async {
+    if (defaultTargetPlatform == TargetPlatform.android) {
+      final android = _plugin.resolvePlatformSpecificImplementation<
+          AndroidFlutterLocalNotificationsPlugin>();
+      await android?.requestNotificationsPermission();
+      final canExact = await android?.canScheduleExactNotifications();
+      if (canExact == false) {
+        await android?.requestExactAlarmsPermission();
+      }
+    } else if (defaultTargetPlatform == TargetPlatform.iOS) {
+      final ios = _plugin.resolvePlatformSpecificImplementation<
+          IOSFlutterLocalNotificationsPlugin>();
+      await ios?.requestPermissions(alert: true, badge: true, sound: true);
+    }
+  }
+
+  Future<void> cancelNotification(int id) async {
+    await _plugin.cancel(id: id);
+  }
+
+  Future<void> cancelAlarms(Iterable<RosaryAlarm> alarms) async {
+    for (final a in alarms) {
+      await _plugin.cancel(id: a.notificationId);
+    }
+  }
+
+  Future<void> syncAll(List<RosaryAlarm> alarms) async {
+    if (!supportsNativeSchedule) return;
+    for (final a in alarms) {
+      await _plugin.cancel(id: a.notificationId);
+    }
+    for (final a in alarms) {
+      if (a.enabled) {
+        await _scheduleOne(a);
+      }
+    }
+  }
+
+  /// Para ordenar la lista por próxima activación (null al final si no programa).
+  DateTime? nextFireAsDateTime(RosaryAlarm alarm) {
+    final t = _nextFire(alarm);
+    return t;
+  }
+
+  tz.TZDateTime? _nextFire(RosaryAlarm a) {
+    final now = tz.TZDateTime.now(tz.local);
+    if (a.repeatWeekly) {
+      return _nextWeeklyOccurrence(
+        anchorWeekday: a.anchorDate.weekday,
+        hour: a.hour,
+        minute: a.minute,
+        now: now,
+      );
+    }
+    final once = tz.TZDateTime(
+      tz.local,
+      a.year,
+      a.month,
+      a.day,
+      a.hour,
+      a.minute,
+    );
+    if (!once.isAfter(now)) return null;
+    return once;
+  }
+
+  /// Próxima ocurrencia del [weekday] (DateTime.monday..sunday = 1..7) a [hour]:[minute].
+  tz.TZDateTime _nextWeeklyOccurrence({
+    required int anchorWeekday,
+    required int hour,
+    required int minute,
+    required tz.TZDateTime now,
+  }) {
+    var candidate = tz.TZDateTime(
+      tz.local,
+      now.year,
+      now.month,
+      now.day,
+      hour,
+      minute,
+    );
+    var deltaDays = anchorWeekday - candidate.weekday;
+    if (deltaDays < 0) deltaDays += 7;
+    candidate = candidate.add(Duration(days: deltaDays));
+    if (!candidate.isAfter(now)) {
+      candidate = candidate.add(const Duration(days: 7));
+    }
+    return candidate;
+  }
+
+  NotificationDetails _notificationDetails() {
+    const android = AndroidNotificationDetails(
+      _channelId,
+      _channelName,
+      channelDescription: _channelDescription,
+      importance: Importance.max,
+      priority: Priority.high,
+      category: AndroidNotificationCategory.alarm,
+      fullScreenIntent: true,
+      playSound: true,
+      enableVibration: true,
+      audioAttributesUsage: AudioAttributesUsage.alarm,
+      visibility: NotificationVisibility.public,
+    );
+    const darwin = DarwinNotificationDetails(
+      presentAlert: true,
+      presentBadge: true,
+      presentSound: true,
+      interruptionLevel: InterruptionLevel.timeSensitive,
+    );
+    return const NotificationDetails(android: android, iOS: darwin);
+  }
+
+  Future<void> _scheduleOne(RosaryAlarm alarm) async {
+    final when = _nextFire(alarm);
+    if (when == null) return;
+
+    // En Android 12+ sin permiso de alarmas exactas, setExact* lanza y no se programa nada.
+    AndroidScheduleMode androidMode = AndroidScheduleMode.exactAllowWhileIdle;
+    if (defaultTargetPlatform == TargetPlatform.android) {
+      final android = _plugin.resolvePlatformSpecificImplementation<
+          AndroidFlutterLocalNotificationsPlugin>();
+      final canExact = await android?.canScheduleExactNotifications();
+      if (canExact == false) {
+        androidMode = AndroidScheduleMode.inexactAllowWhileIdle;
+        debugPrint(
+          '[AlarmNotificationService] Sin permiso de alarmas exactas; usando modo inexacto.',
+        );
+      }
+    }
+
+    try {
+      await _plugin.zonedSchedule(
+        id: alarm.notificationId,
+        scheduledDate: when,
+        notificationDetails: _notificationDetails(),
+        androidScheduleMode: androidMode,
+        title: 'Santo Rosario',
+        body: alarm.repeatWeekly
+            ? 'Hora del rosario (cada semana)'
+            : 'Recordatorio del rosario',
+        payload: payloadFor(alarm),
+        matchDateTimeComponents: alarm.repeatWeekly
+            ? DateTimeComponents.dayOfWeekAndTime
+            : null,
+      );
+    } catch (e, st) {
+      debugPrint('[AlarmNotificationService] Fallo zonedSchedule: $e\n$st');
+      // Último recurso: modo inexacto (puede llegar con retraso en Doze).
+      if (defaultTargetPlatform == TargetPlatform.android &&
+          androidMode == AndroidScheduleMode.exactAllowWhileIdle) {
+        try {
+          await _plugin.zonedSchedule(
+            id: alarm.notificationId,
+            scheduledDate: when,
+            notificationDetails: _notificationDetails(),
+            androidScheduleMode: AndroidScheduleMode.inexactAllowWhileIdle,
+            title: 'Santo Rosario',
+            body: alarm.repeatWeekly
+                ? 'Hora del rosario (cada semana)'
+                : 'Recordatorio del rosario',
+            payload: payloadFor(alarm),
+            matchDateTimeComponents: alarm.repeatWeekly
+                ? DateTimeComponents.dayOfWeekAndTime
+                : null,
+          );
+          debugPrint(
+            '[AlarmNotificationService] Programada en modo inexacto tras fallo exacto.',
+          );
+          return;
+        } catch (e2, st2) {
+          debugPrint(
+            '[AlarmNotificationService] Fallo también modo inexacto: $e2\n$st2',
+          );
+        }
+      }
+      rethrow;
+    }
+  }
+}

@@ -121,6 +121,14 @@ abstract class AppPreferencesKeys {
   static const errorLogs = 'error_logs';
   static const savePrayerProgressEnabled = 'save_prayer_progress_enabled';
   static const prayerProgressSnapshot = 'prayer_progress_snapshot';
+  static const rosaryAlarmsJson = 'rosary_alarms_json_v1';
+}
+
+/// Layout y texto compartidos por la pantalla de alarmas / calendario.
+abstract class AppCalendarLayout {
+  static const horizontalPadding = 20.0;
+  static const cardRadius = AppHomeLayout.listItemRadius;
+  static const sectionGap = 16.0;
 }
 
 /// Identificadores de los tips “No volver a mostrar” en [PrayScreen].

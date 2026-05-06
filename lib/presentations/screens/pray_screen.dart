@@ -17,8 +17,17 @@ import '../widgets/prayer_dialog.dart';
 import 'package:wakelock_plus/wakelock_plus.dart';
 
 class PrayScreen extends StatefulWidget {
-  const PrayScreen({super.key, required this.mystery});
+  const PrayScreen({
+    super.key,
+    required this.mystery,
+    this.launchFromAlarmAutoStartGuidedAudio = false,
+  });
+
   final String? mystery;
+
+  /// Al abrir desde alarma programada: inicia sesión reproduciendo oraciones guiadas.
+  final bool launchFromAlarmAutoStartGuidedAudio;
+
   @override
   State<PrayScreen> createState() => _PrayScreenState();
 }
@@ -76,6 +85,9 @@ class _PrayScreenState extends State<PrayScreen>
   /// Texto «Nº misterio»: sólo se actualiza cuando [_currentPrayers]/[_orderPrayer] es «Misterio».
   bool _mysteryGlassLabelReady = false;
   int _mysteryGlassLabelOrder = 1;
+
+  /// Una sola vez: arranque automático tras alarma cuando imágenes y prefs están listos.
+  bool _alarmGuidedVoiceAutoStartApplied = false;
 
   final GlobalKey _wakelockButtonKey = GlobalKey();
 
@@ -293,6 +305,26 @@ class _PrayScreenState extends State<PrayScreen>
     setState(() {
       _isPrayersAudioPlaying = prayersAudioPlaying;
       _isBackgroundMusicPlaying = backgroundMusicPlaying;
+      if (widget.launchFromAlarmAutoStartGuidedAudio) {
+        _isPrayersAudioPlaying = true;
+        _isplaying = true;
+      }
+    });
+    _maybeAutoStartAlarmGuidedSession();
+  }
+
+  void _maybeAutoStartAlarmGuidedSession() {
+    if (!widget.launchFromAlarmAutoStartGuidedAudio) return;
+    if (_alarmGuidedVoiceAutoStartApplied) return;
+    if (_loadedImages == null) return;
+    if (!_isplaying || !_isPrayersAudioPlaying) return;
+    _alarmGuidedVoiceAutoStartApplied = true;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      initAudio();
+      if (_isBackgroundMusicPlaying) {
+        unawaited(_loadBackgroundMusic());
+      }
     });
   }
 
@@ -1051,6 +1083,7 @@ class _PrayScreenState extends State<PrayScreen>
     setState(() {
       _loadedImages = images; // Actualiza el estado con las imágenes cargadas
     });
+    _maybeAutoStartAlarmGuidedSession();
   }
 
   void _handleDrawingError(String message) {
