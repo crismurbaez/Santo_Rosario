@@ -226,6 +226,20 @@ class AlarmNotificationService {
 
   tz.TZDateTime? _nextFire(RosaryAlarm a) {
     final now = tz.TZDateTime.now(tz.local);
+    if (a.repeatDaily) {
+      var daily = tz.TZDateTime(
+        tz.local,
+        now.year,
+        now.month,
+        now.day,
+        a.hour,
+        a.minute,
+      );
+      if (!daily.isAfter(now)) {
+        daily = daily.add(const Duration(days: 1));
+      }
+      return daily;
+    }
     if (a.repeatWeekly) {
       return _nextWeeklyOccurrence(
         anchorWeekday: a.anchorDate.weekday,
@@ -320,11 +334,15 @@ class AlarmNotificationService {
         notificationDetails: _notificationDetails(),
         androidScheduleMode: androidMode,
         title: 'Santo Rosario',
-        body: alarm.repeatWeekly
+        body: alarm.repeatDaily
+            ? 'Hora del rosario (cada día)'
+            : alarm.repeatWeekly
             ? 'Hora del rosario (cada semana)'
             : 'Recordatorio del rosario',
         payload: payloadFor(alarm),
-        matchDateTimeComponents: alarm.repeatWeekly
+        matchDateTimeComponents: alarm.repeatDaily
+            ? DateTimeComponents.time
+            : alarm.repeatWeekly
             ? DateTimeComponents.dayOfWeekAndTime
             : null,
       );
@@ -341,11 +359,15 @@ class AlarmNotificationService {
             notificationDetails: _notificationDetails(),
             androidScheduleMode: AndroidScheduleMode.inexactAllowWhileIdle,
             title: 'Santo Rosario',
-            body: alarm.repeatWeekly
+            body: alarm.repeatDaily
+                ? 'Hora del rosario (cada día)'
+                : alarm.repeatWeekly
                 ? 'Hora del rosario (cada semana)'
                 : 'Recordatorio del rosario',
             payload: payloadFor(alarm),
-            matchDateTimeComponents: alarm.repeatWeekly
+            matchDateTimeComponents: alarm.repeatDaily
+                ? DateTimeComponents.time
+                : alarm.repeatWeekly
                 ? DateTimeComponents.dayOfWeekAndTime
                 : null,
           );

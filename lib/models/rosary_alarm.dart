@@ -1,6 +1,6 @@
 import 'dart:convert';
 
-/// Una alarma guardada: fecha y hora locales; puede repetirse cada semana.
+/// Una alarma guardada: fecha y hora locales; puede repetirse cada día o semana.
 class RosaryAlarm {
   const RosaryAlarm({
     required this.id,
@@ -10,6 +10,7 @@ class RosaryAlarm {
     required this.hour,
     required this.minute,
     required this.repeatWeekly,
+    this.repeatDaily = false,
     this.enabled = true,
     this.openRosaryWithGuidedAudio = false,
   });
@@ -21,6 +22,7 @@ class RosaryAlarm {
   final int hour;
   final int minute;
   final bool repeatWeekly;
+  final bool repeatDaily;
   final bool enabled;
 
   /// Si es true: al disparar la alarma la app va al rosario y arranca el audio guiado.
@@ -39,6 +41,7 @@ class RosaryAlarm {
     int? hour,
     int? minute,
     bool? repeatWeekly,
+    bool? repeatDaily,
     bool? enabled,
     bool? openRosaryWithGuidedAudio,
   }) {
@@ -50,6 +53,7 @@ class RosaryAlarm {
       hour: hour ?? this.hour,
       minute: minute ?? this.minute,
       repeatWeekly: repeatWeekly ?? this.repeatWeekly,
+      repeatDaily: repeatDaily ?? this.repeatDaily,
       enabled: enabled ?? this.enabled,
       openRosaryWithGuidedAudio:
           openRosaryWithGuidedAudio ?? this.openRosaryWithGuidedAudio,
@@ -64,6 +68,7 @@ class RosaryAlarm {
         'hour': hour,
         'minute': minute,
         'repeatWeekly': repeatWeekly,
+        'repeatDaily': repeatDaily,
         'enabled': enabled,
         'openRosaryWithGuidedAudio': openRosaryWithGuidedAudio,
       };
@@ -79,6 +84,7 @@ class RosaryAlarm {
         hour: raw['hour'] as int,
         minute: raw['minute'] as int,
         repeatWeekly: raw['repeatWeekly'] as bool? ?? false,
+        repeatDaily: raw['repeatDaily'] as bool? ?? false,
         enabled: raw['enabled'] as bool? ?? true,
         openRosaryWithGuidedAudio:
             raw['openRosaryWithGuidedAudio'] as bool? ?? false,

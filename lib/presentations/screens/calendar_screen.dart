@@ -22,6 +22,7 @@ class _CalendarScreenState extends State<CalendarScreen> {
   DateTime _dateSelected = DateTime.now();
   TimeOfDay _timeSelected = TimeOfDay.now();
   bool _repeatWeekly = false;
+  bool _repeatDaily = false;
   bool _openRosaryWithGuidedAudio = false;
   String? _editingId;
   bool _loading = true;
@@ -67,6 +68,9 @@ class _CalendarScreenState extends State<CalendarScreen> {
       return '${a.day}/${a.month}/${a.year} ${_timeHm(a)}';
     }
     final t = TimeOfDay(hour: a.hour, minute: a.minute);
+    if (a.repeatDaily) {
+      return 'Todos los días · ${t.format(context)}';
+    }
     if (a.repeatWeekly) {
       final dow = DateFormat('EEEE', 'es').format(a.anchorDate);
       return 'Cada $dow · ${t.format(context)}';
@@ -119,6 +123,7 @@ class _CalendarScreenState extends State<CalendarScreen> {
       _dateSelected = DateTime(a.year, a.month, a.day);
       _timeSelected = TimeOfDay(hour: a.hour, minute: a.minute);
       _repeatWeekly = a.repeatWeekly;
+      _repeatDaily = a.repeatDaily;
       _openRosaryWithGuidedAudio = a.openRosaryWithGuidedAudio;
     });
   }
@@ -210,6 +215,7 @@ class _CalendarScreenState extends State<CalendarScreen> {
       day: _dateSelected.day,
       hour: _timeSelected.hour,
       minute: _timeSelected.minute,
+      repeatDaily: _repeatDaily,
       repeatWeekly: _repeatWeekly,
       enabled: true,
       openRosaryWithGuidedAudio: _openRosaryWithGuidedAudio,
@@ -292,6 +298,7 @@ class _CalendarScreenState extends State<CalendarScreen> {
         _dateSelected = DateTime.now();
         _timeSelected = TimeOfDay.now();
         _repeatWeekly = false;
+        _repeatDaily = false;
         _openRosaryWithGuidedAudio = false;
       }
     });
@@ -520,8 +527,10 @@ class _CalendarScreenState extends State<CalendarScreen> {
                       ),
                       child: SwitchListTile.adaptive(
                       value: _repeatWeekly,
-                      onChanged: (v) =>
-                          setState(() => _repeatWeekly = v),
+                      onChanged: (v) => setState(() {
+                        _repeatWeekly = v;
+                        if (v) _repeatDaily = false;
+                      }),
                       title: Text(
                         'Repetir cada semana',
                         style: TextStyle(
@@ -542,6 +551,60 @@ class _CalendarScreenState extends State<CalendarScreen> {
                         ),
                       ),
                     ),
+                    ),
+                  ),
+                  const SizedBox(height: 10),
+                  _GlassCard(
+                    child: Theme(
+                      data: Theme.of(context).copyWith(
+                        switchTheme: SwitchThemeData(
+                          thumbColor: WidgetStateProperty.resolveWith((states) {
+                            if (states.contains(WidgetState.selected)) {
+                              return AppHomeColors.switchActiveThumb;
+                            }
+                            return AppHomeColors.switchInactiveThumb;
+                          }),
+                          trackColor: WidgetStateProperty.resolveWith((states) {
+                            if (states.contains(WidgetState.selected)) {
+                              return AppHomeColors.switchActiveTrack;
+                            }
+                            return AppHomeColors.switchInactiveTrack;
+                          }),
+                          trackOutlineColor:
+                              WidgetStateProperty.resolveWith((states) {
+                            if (states.contains(WidgetState.selected)) {
+                              return AppHomeColors.switchActiveTrackBorder;
+                            }
+                            return AppHomeColors.subtitleText
+                                .withValues(alpha: 0.25);
+                          }),
+                        ),
+                      ),
+                      child: SwitchListTile.adaptive(
+                        value: _repeatDaily,
+                        onChanged: (v) => setState(() {
+                          _repeatDaily = v;
+                          if (v) _repeatWeekly = false;
+                        }),
+                        title: Text(
+                          'Repetir cada día',
+                          style: TextStyle(
+                            fontFamily: 'Poppins',
+                            fontWeight: FontWeight.w600,
+                            color: AppHomeColors.titleText,
+                            fontSize: 14.5,
+                          ),
+                        ),
+                        subtitle: Text(
+                          'Suena todos los días a la misma hora.',
+                          style: TextStyle(
+                            fontFamily: 'Poppins',
+                            fontSize: 12.5,
+                            color: AppHomeColors.subtitleText,
+                            height: 1.35,
+                          ),
+                        ),
+                      ),
                     ),
                   ),
                   const SizedBox(height: 10),
@@ -685,6 +748,7 @@ class _CalendarScreenState extends State<CalendarScreen> {
                     final subtitle = !a.enabled
                         ? 'Desactivada'
                         : [
+                              if (a.repeatDaily) 'Se repite diariamente',
                               a.repeatWeekly
                                   ? 'Se repite semanalmente'
                                   : 'Una sola vez',
