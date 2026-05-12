@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:santo_rosario/constants/app_constants.dart';
 import 'presentations/screens/home_screen.dart';
 import 'presentations/screens/pray_screen.dart';
@@ -50,6 +51,15 @@ class SantoRosarioApp extends StatelessWidget {
         fontFamily: 'Poppins',
         textTheme: _appTextTheme(),
       ),
+      localizationsDelegates: const [
+        GlobalMaterialLocalizations.delegate,
+        GlobalWidgetsLocalizations.delegate,
+        GlobalCupertinoLocalizations.delegate,
+      ],
+      supportedLocales: const [
+        Locale('es', 'ES'),
+      ],
+      locale: const Locale('es', 'ES'),
       home: HomeScreen(
         title: 'Santo Rosario',
         dateNow: DateTime.now().weekday,

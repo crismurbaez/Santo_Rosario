@@ -132,6 +132,38 @@ class _CalendarScreenState extends State<CalendarScreen> {
     }
   }
 
+  Future<void> _selectDate() async {
+    final picked = await showDatePicker(
+      context: context,
+      initialDate: _dateSelected,
+      firstDate: DateTime.now().subtract(const Duration(days: 365)),
+      lastDate: DateTime.now().add(const Duration(days: 365 * 5)),
+      locale: const Locale('es', 'ES'),
+      builder: (context, child) {
+        return Theme(
+          data: Theme.of(context).copyWith(
+            colorScheme: ColorScheme.light(
+              primary: AppHomeColors.switchActiveGradientTop,
+              onPrimary: Colors.white,
+              surface: AppHomeColors.cardBackground,
+              onSurface: AppHomeColors.titleText,
+            ),
+          ),
+          child: child ?? const SizedBox.shrink(),
+        );
+      },
+    );
+    if (picked != null) {
+      setState(() {
+        _dateSelected = picked;
+        // Si estaba en modo repetición semanal y no diaria, actualizar el día de la semana
+        if (_repeatWeekly && !_repeatDaily) {
+           _selectedDays = [picked.weekday];
+        }
+      });
+    }
+  }
+
   String _getAlarmTypeDescription(AlarmType type) {
     switch (type) {
       case AlarmType.guidedAudio:
@@ -446,22 +478,56 @@ class _CalendarScreenState extends State<CalendarScreen> {
                       ),
                     ),
                   _GlassCard(
-                    child: Theme(
-                      data: Theme.of(context).copyWith(
-                        colorScheme: ColorScheme.light(
-                          primary: AppHomeColors.switchActiveGradientTop,
-                          onPrimary: Colors.white,
-                          onSurface: AppHomeColors.titleText,
-                        ),
-                        textTheme: Theme.of(context).textTheme,
+                    child: InkWell(
+                      borderRadius: BorderRadius.circular(
+                        AppCalendarLayout.cardRadius - 6,
                       ),
-                      child: CalendarDatePicker(
-                        initialDate: _dateSelected,
-                        firstDate: DateTime.now().subtract(
-                          const Duration(days: 365 * 10),
+                      onTap: _selectDate,
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(
+                          vertical: 16,
+                          horizontal: 14,
                         ),
-                        lastDate: DateTime(DateTime.now().year + 5, 12, 31),
-                        onDateChanged: (d) => setState(() => _dateSelected = d),
+                        child: Row(
+                          children: [
+                            Icon(
+                              Icons.calendar_today_rounded,
+                              color: AppHomeColors.todayChipIcon,
+                              size: 26,
+                            ),
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    'Fecha',
+                                    style: Theme.of(context)
+                                        .textTheme
+                                        .displaySmall
+                                        ?.copyWith(fontWeight: FontWeight.w600),
+                                  ),
+                                  const SizedBox(height: 4),
+                                  Text(
+                                    DateFormat("EEEE d 'de' MMMM", 'es').format(_dateSelected),
+                                    style: Theme.of(context)
+                                        .textTheme
+                                        .displayMedium
+                                        ?.copyWith(
+                                          fontFamily: 'Poppins',
+                                          fontWeight: FontWeight.w600,
+                                          fontSize: 17,
+                                        ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                            Icon(
+                              Icons.chevron_right_rounded,
+                              color: AppHomeColors.subtitleText,
+                            ),
+                          ],
+                        ),
                       ),
                     ),
                   ),
