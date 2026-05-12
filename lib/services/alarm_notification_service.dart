@@ -120,9 +120,16 @@ class AlarmNotificationService {
     RosaryAlarm? alarm;
     try {
       final list = await AlarmStorageService().loadAlarms();
-      for (final a in list) {
-        if (a.notificationId == notificationId) {
-          alarm = a;
+      for (int i = 0; i < list.length; i++) {
+        if (list[i].notificationId == notificationId) {
+          alarm = list[i];
+          // Si es una alarma de una sola vez (no diaria, no semanal, no días específicos), la desactivamos
+          if (!alarm.repeatDaily &&
+              !alarm.repeatWeekly &&
+              alarm.daysOfWeek.isEmpty) {
+            list[i] = alarm.copyWith(enabled: false);
+            await AlarmStorageService().saveAlarms(list);
+          }
           break;
         }
       }
