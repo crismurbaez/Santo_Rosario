@@ -195,9 +195,7 @@ class _CalendarScreenState extends State<CalendarScreen> {
       ),
     );
     if (confirmed != true || !mounted) return;
-    await AlarmNotificationService.instance.cancelNotification(
-      a.notificationId,
-    );
+    await AlarmNotificationService.instance.cancelAllNotificationsOfAlarm(a);
     _alarms.removeWhere((e) => e.id == a.id);
     await _storage.saveAlarms(_alarms);
     if (_editingId == a.id) _editingId = null;
@@ -773,8 +771,20 @@ class _CalendarScreenState extends State<CalendarScreen> {
                       ),
                       child: SwitchListTile.adaptive(
                         value: _openRosaryWithGuidedAudio,
-                        onChanged: (v) =>
-                            setState(() => _openRosaryWithGuidedAudio = v),
+                        onChanged: (v) async {
+                          if (v) {
+                            await AlarmNotificationService.instance
+                                .requestRuntimePermissions();
+                            final diag = await AlarmNotificationService.instance
+                                .getAndroidAutoStartDiagnostic();
+                            setState(() {
+                              _autoStartDiagnostic = diag;
+                              _openRosaryWithGuidedAudio = v;
+                            });
+                          } else {
+                            setState(() => _openRosaryWithGuidedAudio = v);
+                          }
+                        },
                         title: Text(
                           'Abrir y rezar con voz',
                           style: TextStyle(

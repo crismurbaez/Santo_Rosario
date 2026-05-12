@@ -178,6 +178,16 @@ class AlarmNotificationService {
     await _plugin.cancel(id: id);
   }
 
+  /// Cancela todas las posibles notificaciones asociadas a una alarma (Base + 7 días).
+  Future<void> cancelAllNotificationsOfAlarm(RosaryAlarm alarm) async {
+    // 1. Cancelar ID base (usado en diarias o de una vez)
+    await _plugin.cancel(id: alarm.notificationId);
+    // 2. Cancelar los 7 IDs potenciales de días específicos
+    for (int i = 1; i <= 7; i++) {
+      await _plugin.cancel(id: alarm.notificationIdForDay(i));
+    }
+  }
+
   /// Estado útil para explicar por qué una alarma puede no autoabrir el rosario.
   Future<AndroidAutoStartDiagnostic> getAndroidAutoStartDiagnostic() async {
     if (defaultTargetPlatform != TargetPlatform.android) {
@@ -202,18 +212,14 @@ class AlarmNotificationService {
 
   Future<void> cancelAlarms(Iterable<RosaryAlarm> alarms) async {
     for (final a in alarms) {
-      await _plugin.cancel(id: a.notificationId);
+      await cancelAllNotificationsOfAlarm(a);
     }
   }
 
   Future<void> syncAll(List<RosaryAlarm> alarms) async {
     if (!supportsNativeSchedule) return;
     for (final a in alarms) {
-      // Cancelar todas las posibles notificaciones asociadas a este ID (7 días + el original)
-      await _plugin.cancel(id: a.notificationId);
-      for (int i = 1; i <= 7; i++) {
-        await _plugin.cancel(id: a.notificationIdForDay(i));
-      }
+      await cancelAllNotificationsOfAlarm(a);
     }
     for (final a in alarms) {
       if (a.enabled) {
