@@ -16,6 +16,7 @@ class RosaryAlarm {
     this.daysOfWeek = const [],
     this.enabled = true,
     this.alarmType = AlarmType.fullScreenAlarm,
+    this.voiceDelay = 0,
   });
 
   final String id;
@@ -31,6 +32,9 @@ class RosaryAlarm {
 
   /// Tipo de comportamiento al activarse.
   final AlarmType alarmType;
+
+  /// Retardo en segundos antes de que empiece la voz (0 a 10).
+  final int voiceDelay;
 
   /// Para compatibilidad con código anterior.
   bool get openRosaryWithGuidedAudio => alarmType == AlarmType.guidedAudio;
@@ -57,6 +61,7 @@ class RosaryAlarm {
     List<int>? daysOfWeek,
     bool? enabled,
     AlarmType? alarmType,
+    int? voiceDelay,
   }) {
     return RosaryAlarm(
       id: id ?? this.id,
@@ -70,6 +75,7 @@ class RosaryAlarm {
       daysOfWeek: daysOfWeek ?? this.daysOfWeek,
       enabled: enabled ?? this.enabled,
       alarmType: alarmType ?? this.alarmType,
+      voiceDelay: voiceDelay ?? this.voiceDelay,
     );
   }
 
@@ -85,6 +91,7 @@ class RosaryAlarm {
         'daysOfWeek': daysOfWeek,
         'enabled': enabled,
         'alarmType': alarmType.name,
+        'voiceDelay': voiceDelay,
       };
 
   static RosaryAlarm? fromJson(Object? raw) {
@@ -122,6 +129,7 @@ class RosaryAlarm {
         daysOfWeek: daysOfWeek,
         enabled: raw['enabled'] as bool? ?? true,
         alarmType: type,
+        voiceDelay: raw['voiceDelay'] as int? ?? 0,
       );
     } catch (_) {
       return null;

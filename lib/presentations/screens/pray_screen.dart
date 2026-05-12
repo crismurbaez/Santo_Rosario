@@ -21,12 +21,16 @@ class PrayScreen extends StatefulWidget {
     super.key,
     required this.mystery,
     this.launchFromAlarmAutoStartGuidedAudio = false,
+    this.voiceDelay = 0,
   });
 
   final String? mystery;
 
   /// Al abrir desde alarma programada: inicia sesión reproduciendo oraciones guiadas.
   final bool launchFromAlarmAutoStartGuidedAudio;
+
+  /// Retardo en segundos antes de que empiece la voz.
+  final int voiceDelay;
 
   @override
   State<PrayScreen> createState() => _PrayScreenState();
@@ -335,8 +339,15 @@ class _PrayScreenState extends State<PrayScreen>
     if (_loadedImages == null) return;
     if (!_isplaying || !_isPrayersAudioPlaying) return;
     _alarmGuidedVoiceAutoStartApplied = true;
-    WidgetsBinding.instance.addPostFrameCallback((_) {
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
       if (!mounted) return;
+      
+      // Aplicar retardo si existe
+      if (widget.voiceDelay > 0) {
+        await Future.delayed(Duration(seconds: widget.voiceDelay));
+        if (!mounted || !_isplaying) return;
+      }
+
       initAudio();
       if (_isBackgroundMusicPlaying) {
         unawaited(_loadBackgroundMusic());

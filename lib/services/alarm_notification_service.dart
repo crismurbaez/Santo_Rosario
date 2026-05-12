@@ -188,7 +188,8 @@ class AlarmNotificationService {
       debugPrint('[AlarmNotificationService] No se pudieron cargar alarmas: $e\n$st');
     }
 
-    if (alarm != null && alarm.openRosaryWithGuidedAudio) {
+    final alarmToLaunch = alarm;
+    if (alarmToLaunch != null && alarmToLaunch.openRosaryWithGuidedAudio) {
       await AlarmNotificationService.instance.cancelNotification(notificationId);
       final mystery =
           MysteryUtils.mysteryForWeekday(DateTime.now().weekday);
@@ -198,6 +199,7 @@ class AlarmNotificationService {
           builder: (_) => PrayScreen(
             mystery: mystery,
             launchFromAlarmAutoStartGuidedAudio: true,
+            voiceDelay: alarmToLaunch.voiceDelay,
           ),
         ),
       );

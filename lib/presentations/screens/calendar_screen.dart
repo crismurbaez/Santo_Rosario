@@ -5,6 +5,7 @@ import 'package:santo_rosario/constants/app_constants.dart';
 import 'package:santo_rosario/models/rosary_alarm.dart';
 import 'package:santo_rosario/services/alarm_notification_service.dart';
 import 'package:santo_rosario/services/alarm_storage_service.dart';
+import 'package:santo_rosario/services/preferences_service.dart';
 import 'package:uuid/uuid.dart';
 
 class CalendarScreen extends StatefulWidget {
@@ -29,6 +30,9 @@ class _CalendarScreenState extends State<CalendarScreen> {
   bool _loading = true;
   bool _localeReady = false;
   AndroidAutoStartDiagnostic? _autoStartDiagnostic;
+  int _voiceDelay = 0;
+  bool _prayersAudioEnabled = true;
+  final _prefs = PreferencesService();
 
   @override
   void initState() {
@@ -42,6 +46,7 @@ class _CalendarScreenState extends State<CalendarScreen> {
         .getAndroidAutoStartDiagnostic();
     await initializeDateFormatting('es');
     final loaded = await _storage.loadAlarms();
+    final audioEnabled = await _prefs.getPrayerAudioPlaying();
     loaded.sort(_compareAlarms);
     if (!mounted) return;
     setState(() {
@@ -49,6 +54,7 @@ class _CalendarScreenState extends State<CalendarScreen> {
       _loading = false;
       _localeReady = true;
       _autoStartDiagnostic = diagnostic;
+      _prayersAudioEnabled = audioEnabled;
     });
   }
 
@@ -184,6 +190,7 @@ class _CalendarScreenState extends State<CalendarScreen> {
       _repeatDaily = a.repeatDaily;
       _selectedDays = List.from(a.daysOfWeek);
       _alarmType = a.alarmType;
+      _voiceDelay = a.voiceDelay;
     });
   }
 
@@ -279,6 +286,7 @@ class _CalendarScreenState extends State<CalendarScreen> {
       daysOfWeek: _selectedDays,
       enabled: true,
       alarmType: _alarmType,
+      voiceDelay: _voiceDelay,
     );
   }
 
@@ -306,6 +314,21 @@ class _CalendarScreenState extends State<CalendarScreen> {
   Future<void> _saveAlarm() async {
     final wasEditing = _editingId != null;
     final alarm = _alarmFromForm();
+
+    if (alarm.openRosaryWithGuidedAudio && !_prayersAudioEnabled) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          behavior: SnackBarBehavior.floating,
+          backgroundColor: Colors.red.shade400,
+          content: const Text(
+            'Para usar el modo Voz, debes activar el "Audio de oraciones" en las opciones de abajo.',
+            style: TextStyle(fontFamily: 'Poppins', color: Colors.white, fontSize: 13),
+          ),
+        ),
+      );
+      return;
+    }
     if (!AlarmNotificationService.supportsNativeSchedule) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
@@ -361,6 +384,7 @@ class _CalendarScreenState extends State<CalendarScreen> {
         _repeatDaily = false;
         _selectedDays = [];
         _alarmType = AlarmType.fullScreenAlarm;
+        _voiceDelay = 0;
       }
     });
     ScaffoldMessenger.of(context).showSnackBar(
@@ -682,8 +706,9 @@ class _CalendarScreenState extends State<CalendarScreen> {
                                       _selectedDays.remove(weekday);
                                       _repeatDaily =
                                           false; // Si desmarco uno, ya no es "cada día"
-                                      if (_selectedDays.isEmpty)
+                                      if (_selectedDays.isEmpty) {
                                         _repeatWeekly = false;
+                                      }
                                     } else {
                                       _selectedDays.add(weekday);
                                       _selectedDays.sort();
@@ -943,6 +968,102 @@ class _CalendarScreenState extends State<CalendarScreen> {
                       ),
                     ),
                   ),
+                  if (_alarmType == AlarmType.guidedAudio) ...[
+                    const SizedBox(height: 10),
+                    _GlassCard(
+                      child: Padding(
+                        padding: const EdgeInsets.all(16.0),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Row(
+                              children: [
+                                Icon(Icons.timer_outlined, color: AppHomeColors.todayChipIcon, size: 20),
+                                const SizedBox(width: 8),
+                                Text(
+                                  'Retardo de voz',
+                                  style: TextStyle(
+                                    fontFamily: 'Poppins',
+                                    fontWeight: FontWeight.w600,
+                                    color: AppHomeColors.titleText,
+                                    fontSize: 14.5,
+                                  ),
+                                ),
+                                const Spacer(),
+                                Text(
+                                  '${_voiceDelay}s',
+                                  style: TextStyle(
+                                    fontFamily: 'Poppins',
+                                    fontWeight: FontWeight.w700,
+                                    color: AppHomeColors.switchActiveGradientTop,
+                                    fontSize: 16,
+                                  ),
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: 4),
+                            Text(
+                              'Espera unos segundos antes de empezar a rezar.',
+                              style: TextStyle(
+                                fontFamily: 'Poppins',
+                                fontSize: 12,
+                                color: AppHomeColors.subtitleText,
+                              ),
+                            ),
+                            Slider(
+                              value: _voiceDelay.toDouble(),
+                              min: 0,
+                              max: 10,
+                              divisions: 10,
+                              activeColor: AppHomeColors.switchActiveGradientTop,
+                              inactiveColor: AppHomeColors.todayChipBackground,
+                              onChanged: (v) => setState(() => _voiceDelay = v.toInt()),
+                            ),
+                            const Divider(height: 24, thickness: 0.5),
+                            Theme(
+                              data: Theme.of(context).copyWith(
+                                switchTheme: SwitchThemeData(
+                                  thumbColor: WidgetStateProperty.resolveWith((states) {
+                                    if (states.contains(WidgetState.selected)) return AppHomeColors.switchActiveThumb;
+                                    return AppHomeColors.switchInactiveThumb;
+                                  }),
+                                  trackColor: WidgetStateProperty.resolveWith((states) {
+                                    if (states.contains(WidgetState.selected)) return AppHomeColors.switchActiveTrack;
+                                    return AppHomeColors.switchInactiveTrack;
+                                  }),
+                                ),
+                              ),
+                              child: SwitchListTile.adaptive(
+                                contentPadding: EdgeInsets.zero,
+                                value: _prayersAudioEnabled,
+                                onChanged: (v) async {
+                                  await _prefs.setPrayerAudioPlaying(v);
+                                  setState(() => _prayersAudioEnabled = v);
+                                },
+                                title: Text(
+                                  'Audio de oraciones',
+                                  style: TextStyle(
+                                    fontFamily: 'Poppins',
+                                    fontWeight: FontWeight.w600,
+                                    color: AppHomeColors.titleText,
+                                    fontSize: 14,
+                                  ),
+                                ),
+                                subtitle: Text(
+                                  'Debe estar activado para que la guía de voz funcione.',
+                                  style: TextStyle(
+                                    fontFamily: 'Poppins',
+                                    fontSize: 11.5,
+                                    color: _prayersAudioEnabled ? AppHomeColors.subtitleText : Colors.red.shade400,
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ],
                   if (_editingId != null) ...[
                     const SizedBox(height: 12),
                     TextButton.icon(
@@ -1040,7 +1161,7 @@ class _CalendarScreenState extends State<CalendarScreen> {
                             }).join(', ')}'
                           else
                             'Una sola vez',
-                          if (a.openRosaryWithGuidedAudio) 'Rosario con voz',
+                          if (a.openRosaryWithGuidedAudio) 'Voz (${a.voiceDelay}s)',
                         ].join(' · ');
 
                   final next = AlarmNotificationService.instance
