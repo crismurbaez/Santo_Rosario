@@ -814,6 +814,7 @@ class _CalendarScreenState extends State<CalendarScreen> {
                                     ),
                                   ],
                                   selected: {_alarmType},
+                                  showSelectedIcon: false,
                                   onSelectionChanged: (Set<AlarmType> newSelection) async {
                                     final selected = newSelection.first;
                                     if (selected != AlarmType.notificationOnly) {
