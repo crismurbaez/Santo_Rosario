@@ -833,7 +833,7 @@ class _CalendarScreenState extends State<CalendarScreen> {
                                   style: SegmentedButton.styleFrom(
                                     visualDensity: isSmall ? VisualDensity.comfortable : VisualDensity.compact,
                                     tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                                    padding: EdgeInsets.zero,
+                                    padding: const EdgeInsets.symmetric(vertical: 10),
                                     selectedBackgroundColor: AppHomeColors.switchActiveGradientTop.withValues(alpha: 0.2),
                                     selectedForegroundColor: AppHomeColors.switchActiveGradientTop,
                                     foregroundColor: AppHomeColors.subtitleText,
