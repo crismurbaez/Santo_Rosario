@@ -38,8 +38,8 @@ class _CalendarScreenState extends State<CalendarScreen> {
 
   Future<void> _bootstrap() async {
     await AlarmNotificationService.instance.requestRuntimePermissions();
-    final diagnostic =
-        await AlarmNotificationService.instance.getAndroidAutoStartDiagnostic();
+    final diagnostic = await AlarmNotificationService.instance
+        .getAndroidAutoStartDiagnostic();
     await initializeDateFormatting('es');
     final loaded = await _storage.loadAlarms();
     loaded.sort(_compareAlarms);
@@ -73,10 +73,15 @@ class _CalendarScreenState extends State<CalendarScreen> {
       return 'Todos los días · ${t.format(context)}';
     }
     if (a.daysOfWeek.isNotEmpty) {
-      final days = a.daysOfWeek.map((d) {
-        final date = DateTime(2024, 1, d); // 2024-01-01 was Monday
-        return DateFormat('EEE', 'es').format(date).replaceAll('.', '').toUpperCase();
-      }).join(', ');
+      final days = a.daysOfWeek
+          .map((d) {
+            final date = DateTime(2024, 1, d); // 2024-01-01 was Monday
+            return DateFormat(
+              'EEE',
+              'es',
+            ).format(date).replaceAll('.', '').toUpperCase();
+          })
+          .join(', ');
       return '$days · ${t.format(context)}';
     }
     if (a.repeatWeekly) {
@@ -108,10 +113,12 @@ class _CalendarScreenState extends State<CalendarScreen> {
             ),
             timePickerTheme: TimePickerThemeData(
               backgroundColor: AppHomeColors.cardBackground,
-              hourMinuteTextColor:
-                  WidgetStateColor.resolveWith((_) => AppHomeColors.titleText),
-              dayPeriodTextColor:
-                  WidgetStateColor.resolveWith((_) => AppHomeColors.titleText),
+              hourMinuteTextColor: WidgetStateColor.resolveWith(
+                (_) => AppHomeColors.titleText,
+              ),
+              dayPeriodTextColor: WidgetStateColor.resolveWith(
+                (_) => AppHomeColors.titleText,
+              ),
               dialHandColor: AppHomeColors.switchActiveGradientTop,
               dialBackgroundColor: AppHomeColors.todayChipBackground,
             ),
@@ -188,7 +195,9 @@ class _CalendarScreenState extends State<CalendarScreen> {
       ),
     );
     if (confirmed != true || !mounted) return;
-    await AlarmNotificationService.instance.cancelNotification(a.notificationId);
+    await AlarmNotificationService.instance.cancelNotification(
+      a.notificationId,
+    );
     _alarms.removeWhere((e) => e.id == a.id);
     await _storage.saveAlarms(_alarms);
     if (_editingId == a.id) _editingId = null;
@@ -357,9 +366,9 @@ class _CalendarScreenState extends State<CalendarScreen> {
           alignment: Alignment.center,
           child: Text(
             'Alarmas del rosario',
-            style: Theme.of(context).textTheme.displayLarge?.copyWith(
-                  fontSize: 20,
-                ),
+            style: Theme.of(
+              context,
+            ).textTheme.displayLarge?.copyWith(fontSize: 20),
             textAlign: TextAlign.center,
           ),
         ),
@@ -390,8 +399,9 @@ class _CalendarScreenState extends State<CalendarScreen> {
                           AppCalendarLayout.cardRadius,
                         ),
                         border: Border.all(
-                          color:
-                              AppHomeColors.subtitleText.withValues(alpha: 0.2),
+                          color: AppHomeColors.subtitleText.withValues(
+                            alpha: 0.2,
+                          ),
                         ),
                       ),
                       child: Text(
@@ -399,9 +409,7 @@ class _CalendarScreenState extends State<CalendarScreen> {
                         'estos permisos del sistema: notificaciones, alarmas '
                         'exactas y pantalla completa. Sin ellos, la alarma puede '
                         'mostrar solo la notificación.',
-                        style: Theme.of(context)
-                            .textTheme
-                            .displaySmall
+                        style: Theme.of(context).textTheme.displaySmall
                             ?.copyWith(fontSize: 13, height: 1.38),
                       ),
                     ),
@@ -415,17 +423,16 @@ class _CalendarScreenState extends State<CalendarScreen> {
                           AppCalendarLayout.cardRadius,
                         ),
                         border: Border.all(
-                          color: AppHomeColors.subtitleText
-                              .withValues(alpha: 0.2),
+                          color: AppHomeColors.subtitleText.withValues(
+                            alpha: 0.2,
+                          ),
                         ),
                       ),
                       child: Text(
                         'En esta versión las notificaciones programadas '
                         'funcionan en Android y iOS. Podés igualmente guardar '
                         'aquí tus horarios.',
-                        style: Theme.of(context)
-                            .textTheme
-                            .displaySmall
+                        style: Theme.of(context).textTheme.displaySmall
                             ?.copyWith(fontSize: 13, height: 1.38),
                       ),
                     ),
@@ -433,8 +440,7 @@ class _CalendarScreenState extends State<CalendarScreen> {
                     child: Theme(
                       data: Theme.of(context).copyWith(
                         colorScheme: ColorScheme.light(
-                          primary:
-                              AppHomeColors.switchActiveGradientTop,
+                          primary: AppHomeColors.switchActiveGradientTop,
                           onPrimary: Colors.white,
                           onSurface: AppHomeColors.titleText,
                         ),
@@ -446,8 +452,7 @@ class _CalendarScreenState extends State<CalendarScreen> {
                           const Duration(days: 365 * 10),
                         ),
                         lastDate: DateTime(DateTime.now().year + 5, 12, 31),
-                        onDateChanged: (d) =>
-                            setState(() => _dateSelected = d),
+                        onDateChanged: (d) => setState(() => _dateSelected = d),
                       ),
                     ),
                   ),
@@ -473,17 +478,14 @@ class _CalendarScreenState extends State<CalendarScreen> {
                             const SizedBox(width: 12),
                             Expanded(
                               child: Column(
-                                crossAxisAlignment:
-                                    CrossAxisAlignment.start,
+                                crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
                                   Text(
                                     'Hora',
                                     style: Theme.of(context)
                                         .textTheme
                                         .displaySmall
-                                        ?.copyWith(
-                                          fontWeight: FontWeight.w600,
-                                        ),
+                                        ?.copyWith(fontWeight: FontWeight.w600),
                                   ),
                                   const SizedBox(height: 4),
                                   Text(
@@ -517,13 +519,17 @@ class _CalendarScreenState extends State<CalendarScreen> {
                         Theme(
                           data: Theme.of(context).copyWith(
                             switchTheme: SwitchThemeData(
-                              thumbColor: WidgetStateProperty.resolveWith((states) {
+                              thumbColor: WidgetStateProperty.resolveWith((
+                                states,
+                              ) {
                                 if (states.contains(WidgetState.selected)) {
                                   return AppHomeColors.switchActiveThumb;
                                 }
                                 return AppHomeColors.switchInactiveThumb;
                               }),
-                              trackColor: WidgetStateProperty.resolveWith((states) {
+                              trackColor: WidgetStateProperty.resolveWith((
+                                states,
+                              ) {
                                 if (states.contains(WidgetState.selected)) {
                                   return AppHomeColors.switchActiveTrack;
                                 }
@@ -531,12 +537,13 @@ class _CalendarScreenState extends State<CalendarScreen> {
                               }),
                               trackOutlineColor:
                                   WidgetStateProperty.resolveWith((states) {
-                                if (states.contains(WidgetState.selected)) {
-                                  return AppHomeColors.switchActiveTrackBorder;
-                                }
-                                return AppHomeColors.subtitleText
-                                    .withValues(alpha: 0.25);
-                              }),
+                                    if (states.contains(WidgetState.selected)) {
+                                      return AppHomeColors
+                                          .switchActiveTrackBorder;
+                                    }
+                                    return AppHomeColors.subtitleText
+                                        .withValues(alpha: 0.25);
+                                  }),
                             ),
                           ),
                           child: SwitchListTile.adaptive(
@@ -544,12 +551,18 @@ class _CalendarScreenState extends State<CalendarScreen> {
                             onChanged: (v) => setState(() {
                               _repeatWeekly = v;
                               if (v) {
-                                _repeatDaily = false;
-                                if (_selectedDays.isEmpty) {
-                                  _selectedDays = [_dateSelected.weekday];
+                                // Si activo ciertos días, verifico si ya estaban los 7 marcados
+                                if (_selectedDays.length == 7) {
+                                  _repeatDaily = true;
+                                } else {
+                                  _repeatDaily = false;
+                                  if (_selectedDays.isEmpty) {
+                                    _selectedDays = [_dateSelected.weekday];
+                                  }
                                 }
                               } else {
                                 _selectedDays = [];
+                                _repeatDaily = false; // COHERENCIA: Si apago el panel, apago el modo diario
                               }
                             }),
                             title: Text(
@@ -580,20 +593,29 @@ class _CalendarScreenState extends State<CalendarScreen> {
                               children: List.generate(7, (index) {
                                 final weekday = index + 1;
                                 final date = DateTime(2024, 1, weekday);
-                                final label = DateFormat('E', 'es')
-                                    .format(date)
-                                    .substring(0, 1)
-                                    .toUpperCase();
-                                final isSelected = _selectedDays.contains(weekday);
+                                final label = DateFormat(
+                                  'E',
+                                  'es',
+                                ).format(date).substring(0, 1).toUpperCase();
+                                final isSelected = _selectedDays.contains(
+                                  weekday,
+                                );
 
                                 return GestureDetector(
                                   onTap: () => setState(() {
                                     if (isSelected) {
                                       _selectedDays.remove(weekday);
-                                      if (_selectedDays.isEmpty) _repeatWeekly = false;
+                                      _repeatDaily =
+                                          false; // Si desmarco uno, ya no es "cada día"
+                                      if (_selectedDays.isEmpty)
+                                        _repeatWeekly = false;
                                     } else {
                                       _selectedDays.add(weekday);
                                       _selectedDays.sort();
+                                      if (_selectedDays.length == 7) {
+                                        _repeatDaily =
+                                            true; // Si marco los 7, se vuelve "cada día" automáticamente
+                                      }
                                     }
                                   }),
                                   child: AnimatedContainer(
@@ -607,8 +629,10 @@ class _CalendarScreenState extends State<CalendarScreen> {
                                               begin: Alignment.topCenter,
                                               end: Alignment.bottomCenter,
                                               colors: [
-                                                AppHomeColors.switchActiveGradientTop,
-                                                AppHomeColors.switchActiveGradientBottom,
+                                                AppHomeColors
+                                                    .switchActiveGradientTop,
+                                                AppHomeColors
+                                                    .switchActiveGradientBottom,
                                               ],
                                             )
                                           : null,
@@ -617,9 +641,10 @@ class _CalendarScreenState extends State<CalendarScreen> {
                                           : AppHomeColors.todayChipBackground,
                                       border: Border.all(
                                         color: isSelected
-                                            ? AppHomeColors.switchActiveTrackBorder
+                                            ? AppHomeColors
+                                                  .switchActiveTrackBorder
                                             : AppHomeColors.subtitleText
-                                                .withValues(alpha: 0.2),
+                                                  .withValues(alpha: 0.2),
                                         width: 1.5,
                                       ),
                                       boxShadow: isSelected
@@ -630,7 +655,7 @@ class _CalendarScreenState extends State<CalendarScreen> {
                                                     .withValues(alpha: 0.3),
                                                 blurRadius: 4,
                                                 offset: const Offset(0, 2),
-                                              )
+                                              ),
                                             ]
                                           : null,
                                     ),
@@ -672,13 +697,15 @@ class _CalendarScreenState extends State<CalendarScreen> {
                             }
                             return AppHomeColors.switchInactiveTrack;
                           }),
-                          trackOutlineColor:
-                              WidgetStateProperty.resolveWith((states) {
+                          trackOutlineColor: WidgetStateProperty.resolveWith((
+                            states,
+                          ) {
                             if (states.contains(WidgetState.selected)) {
                               return AppHomeColors.switchActiveTrackBorder;
                             }
-                            return AppHomeColors.subtitleText
-                                .withValues(alpha: 0.25);
+                            return AppHomeColors.subtitleText.withValues(
+                              alpha: 0.25,
+                            );
                           }),
                         ),
                       ),
@@ -720,35 +747,34 @@ class _CalendarScreenState extends State<CalendarScreen> {
                     child: Theme(
                       data: Theme.of(context).copyWith(
                         switchTheme: SwitchThemeData(
-                          thumbColor:
-                              WidgetStateProperty.resolveWith((states) {
+                          thumbColor: WidgetStateProperty.resolveWith((states) {
                             if (states.contains(WidgetState.selected)) {
                               return AppHomeColors.switchActiveThumb;
                             }
                             return AppHomeColors.switchInactiveThumb;
                           }),
-                          trackColor:
-                              WidgetStateProperty.resolveWith((states) {
+                          trackColor: WidgetStateProperty.resolveWith((states) {
                             if (states.contains(WidgetState.selected)) {
                               return AppHomeColors.switchActiveTrack;
                             }
                             return AppHomeColors.switchInactiveTrack;
                           }),
-                          trackOutlineColor:
-                              WidgetStateProperty.resolveWith((states) {
+                          trackOutlineColor: WidgetStateProperty.resolveWith((
+                            states,
+                          ) {
                             if (states.contains(WidgetState.selected)) {
                               return AppHomeColors.switchActiveTrackBorder;
                             }
-                            return AppHomeColors.subtitleText
-                                .withValues(alpha: 0.25);
+                            return AppHomeColors.subtitleText.withValues(
+                              alpha: 0.25,
+                            );
                           }),
                         ),
                       ),
                       child: SwitchListTile.adaptive(
                         value: _openRosaryWithGuidedAudio,
-                        onChanged: (v) => setState(
-                          () => _openRosaryWithGuidedAudio = v,
-                        ),
+                        onChanged: (v) =>
+                            setState(() => _openRosaryWithGuidedAudio = v),
                         title: Text(
                           'Abrir y rezar con voz',
                           style: TextStyle(
@@ -778,8 +804,11 @@ class _CalendarScreenState extends State<CalendarScreen> {
                       onPressed: () {
                         setState(() => _editingId = null);
                       },
-                      icon: Icon(Icons.close_rounded,
-                          color: AppHomeColors.titleText, size: 20),
+                      icon: Icon(
+                        Icons.close_rounded,
+                        color: AppHomeColors.titleText,
+                        size: 20,
+                      ),
                       label: Text(
                         'Cancelar edición',
                         style: TextStyle(
@@ -792,7 +821,9 @@ class _CalendarScreenState extends State<CalendarScreen> {
                   ],
                   const SizedBox(height: AppCalendarLayout.sectionGap),
                   _GradientActionButton(
-                    label: _editingId != null ? 'Guardar cambios' : 'Agregar alarma',
+                    label: _editingId != null
+                        ? 'Guardar cambios'
+                        : 'Agregar alarma',
                     icon: Icons.add_alarm_rounded,
                     onTap: _saveAlarm,
                   ),
@@ -800,11 +831,11 @@ class _CalendarScreenState extends State<CalendarScreen> {
                   Text(
                     'Alarmas guardadas',
                     style: Theme.of(context).textTheme.displayMedium?.copyWith(
-                          fontFamily: 'Poppins',
-                          fontWeight: FontWeight.w700,
-                          fontSize: 16,
-                          letterSpacing: 0.1,
-                        ),
+                      fontFamily: 'Poppins',
+                      fontWeight: FontWeight.w700,
+                      fontSize: 16,
+                      letterSpacing: 0.1,
+                    ),
                   ),
                   const SizedBox(height: 10),
                 ],
@@ -821,8 +852,9 @@ class _CalendarScreenState extends State<CalendarScreen> {
                   padding: const EdgeInsets.all(22),
                   decoration: BoxDecoration(
                     color: AppHomeColors.cardBackground,
-                    borderRadius:
-                        BorderRadius.circular(AppCalendarLayout.cardRadius),
+                    borderRadius: BorderRadius.circular(
+                      AppCalendarLayout.cardRadius,
+                    ),
                     boxShadow: const [
                       BoxShadow(
                         color: AppHomeColors.cardShadow,
@@ -835,11 +867,10 @@ class _CalendarScreenState extends State<CalendarScreen> {
                     'Todavía no hay alarmas. Elegí fecha, hora y tocá '
                     '«Agregar alarma».',
                     textAlign: TextAlign.center,
-                    style:
-                        Theme.of(context).textTheme.displaySmall?.copyWith(
-                              fontSize: 14,
-                              height: 1.42,
-                            ),
+                    style: Theme.of(context).textTheme.displaySmall?.copyWith(
+                      fontSize: 14,
+                      height: 1.42,
+                    ),
                   ),
                 ),
               ),
@@ -850,195 +881,189 @@ class _CalendarScreenState extends State<CalendarScreen> {
                 horizontal: AppCalendarLayout.horizontalPadding,
               ),
               sliver: SliverList(
-                delegate: SliverChildBuilderDelegate(
-                  (context, index) {
-                    final a = _alarms[index];
-                    final subtitle = !a.enabled
-                        ? 'Desactivada'
-                        : [
-                              if (a.repeatDaily)
-                                'Se repite diariamente'
-                              else if (a.daysOfWeek.isNotEmpty)
-                                'Días: ${a.daysOfWeek.map((d) {
-                                  final date = DateTime(2024, 1, d);
-                                  return DateFormat('EEE', 'es').format(date).replaceAll('.', '');
-                                }).join(', ')}'
-                              else
-                                'Una sola vez',
-                              if (a.openRosaryWithGuidedAudio)
-                                'Rosario con voz',
-                            ].join(' · ');
+                delegate: SliverChildBuilderDelegate((context, index) {
+                  final a = _alarms[index];
+                  final subtitle = !a.enabled
+                      ? 'Desactivada'
+                      : [
+                          if (a.repeatDaily)
+                            'Se repite diariamente'
+                          else if (a.daysOfWeek.isNotEmpty)
+                            'Días: ${a.daysOfWeek.map((d) {
+                              final date = DateTime(2024, 1, d);
+                              return DateFormat('EEE', 'es').format(date).replaceAll('.', '');
+                            }).join(', ')}'
+                          else
+                            'Una sola vez',
+                          if (a.openRosaryWithGuidedAudio) 'Rosario con voz',
+                        ].join(' · ');
 
-                    final next = AlarmNotificationService.instance
-                        .nextFireAsDateTime(a);
-                    final nextLine = !a.enabled || next == null
-                        ? null
-                        : 'Próxima: ${DateFormat("EEE d MMM · HH:mm", 'es').format(next)}';
+                  final next = AlarmNotificationService.instance
+                      .nextFireAsDateTime(a);
+                  final nextLine = !a.enabled || next == null
+                      ? null
+                      : 'Próxima: ${DateFormat("EEE d MMM · HH:mm", 'es').format(next)}';
 
-                    return Padding(
-                      padding: const EdgeInsets.only(bottom: 10),
-                      child: Material(
-                        color: AppHomeColors.cardBackground,
-                        borderRadius: BorderRadius.circular(
-                          AppCalendarLayout.cardRadius,
-                        ),
-                        elevation: 0,
-                        shadowColor: AppHomeColors.cardShadow,
-                        child: Ink(
-                          decoration: BoxDecoration(
-                            borderRadius: BorderRadius.circular(
-                              AppCalendarLayout.cardRadius,
-                            ),
-                            border: Border.all(
-                              color: AppHomeColors.subtitleText
-                                  .withValues(alpha: 0.12),
-                            ),
-                            boxShadow: const [
-                              BoxShadow(
-                                color: AppHomeColors.cardShadow,
-                                blurRadius: 11,
-                                offset: Offset(0, 4),
-                              ),
-                            ],
+                  return Padding(
+                    padding: const EdgeInsets.only(bottom: 10),
+                    child: Material(
+                      color: AppHomeColors.cardBackground,
+                      borderRadius: BorderRadius.circular(
+                        AppCalendarLayout.cardRadius,
+                      ),
+                      elevation: 0,
+                      shadowColor: AppHomeColors.cardShadow,
+                      child: Ink(
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(
+                            AppCalendarLayout.cardRadius,
                           ),
-                          child: Padding(
-                            padding: const EdgeInsets.only(
-                              left: 14,
-                              right: 6,
-                              top: 12,
-                              bottom: 12,
+                          border: Border.all(
+                            color: AppHomeColors.subtitleText.withValues(
+                              alpha: 0.12,
                             ),
-                            child: Row(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Icon(
-                                  Icons.alarm_rounded,
-                                  color: AppHomeColors.todayChipIcon,
-                                  size: 28,
-                                ),
-                                const SizedBox(width: 10),
-                                Expanded(
-                                  child: Column(
-                                    crossAxisAlignment:
-                                        CrossAxisAlignment.start,
-                                    children: [
-                                      Text(
-                                        _alarmTitle(a),
-                                        style: TextStyle(
-                                          fontFamily: 'Poppins',
-                                          fontWeight: FontWeight.w600,
-                                          fontSize: 15,
-                                          height: 1.25,
-                                          color:
-                                              AppHomeColors.titleText,
-                                        ),
+                          ),
+                          boxShadow: const [
+                            BoxShadow(
+                              color: AppHomeColors.cardShadow,
+                              blurRadius: 11,
+                              offset: Offset(0, 4),
+                            ),
+                          ],
+                        ),
+                        child: Padding(
+                          padding: const EdgeInsets.only(
+                            left: 14,
+                            right: 6,
+                            top: 12,
+                            bottom: 12,
+                          ),
+                          child: Row(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Icon(
+                                Icons.alarm_rounded,
+                                color: AppHomeColors.todayChipIcon,
+                                size: 28,
+                              ),
+                              const SizedBox(width: 10),
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      _alarmTitle(a),
+                                      style: TextStyle(
+                                        fontFamily: 'Poppins',
+                                        fontWeight: FontWeight.w600,
+                                        fontSize: 15,
+                                        height: 1.25,
+                                        color: AppHomeColors.titleText,
                                       ),
+                                    ),
+                                    const SizedBox(height: 4),
+                                    Text(
+                                      subtitle,
+                                      style: TextStyle(
+                                        fontFamily: 'Poppins',
+                                        fontSize: 12.5,
+                                        color: AppHomeColors.subtitleText,
+                                      ),
+                                    ),
+                                    if (nextLine != null) ...[
                                       const SizedBox(height: 4),
                                       Text(
-                                        subtitle,
+                                        nextLine,
                                         style: TextStyle(
                                           fontFamily: 'Poppins',
-                                          fontSize: 12.5,
-                                          color:
-                                              AppHomeColors.subtitleText,
+                                          fontSize: 12,
+                                          color: AppHomeColors
+                                              .switchActiveGradientBottom,
+                                          fontWeight: FontWeight.w500,
                                         ),
                                       ),
-                                      if (nextLine != null) ...[
-                                        const SizedBox(height: 4),
-                                        Text(
-                                          nextLine,
-                                          style: TextStyle(
-                                            fontFamily: 'Poppins',
-                                            fontSize: 12,
-                                            color: AppHomeColors
-                                                .switchActiveGradientBottom,
-                                            fontWeight: FontWeight.w500,
-                                          ),
-                                        ),
-                                      ],
                                     ],
-                                  ),
+                                  ],
                                 ),
-                                Theme(
-                                  data: Theme.of(context).copyWith(
-                                    switchTheme: SwitchThemeData(
-                                      thumbColor:
-                                          WidgetStateProperty.resolveWith((s) {
+                              ),
+                              Theme(
+                                data: Theme.of(context).copyWith(
+                                  switchTheme: SwitchThemeData(
+                                    thumbColor: WidgetStateProperty.resolveWith(
+                                      (s) {
                                         if (s.contains(WidgetState.selected)) {
                                           return AppHomeColors
                                               .switchActiveThumb;
                                         }
                                         return AppHomeColors
                                             .switchInactiveThumb;
-                                      }),
-                                      trackColor:
-                                          WidgetStateProperty.resolveWith((s) {
+                                      },
+                                    ),
+                                    trackColor: WidgetStateProperty.resolveWith(
+                                      (s) {
                                         if (s.contains(WidgetState.selected)) {
                                           return AppHomeColors
                                               .switchActiveTrack;
                                         }
                                         return AppHomeColors
                                             .switchInactiveTrack;
-                                      }),
-                                      trackOutlineColor:
-                                          WidgetStateProperty.resolveWith((s) {
-                                        if (s.contains(WidgetState.selected)) {
-                                          return AppHomeColors
-                                              .switchActiveTrackBorder;
-                                        }
-                                        return AppHomeColors.subtitleText
-                                            .withValues(alpha: 0.25);
-                                      }),
+                                      },
                                     ),
-                                  ),
-                                  child: Column(
-                                    mainAxisSize: MainAxisSize.min,
-                                    children: [
-                                      Switch.adaptive(
-                                        value: a.enabled,
-                                        materialTapTargetSize:
-                                            MaterialTapTargetSize.shrinkWrap,
-                                        onChanged: (v) =>
-                                            _toggleEnabled(a, v),
-                                      ),
-                                      Row(
-                                        mainAxisSize: MainAxisSize.min,
-                                        children: [
-                                          IconButton(
-                                            tooltip: 'Editar',
-                                            icon: Icon(
-                                              Icons.edit_outlined,
-                                              color:
-                                                  AppHomeColors.titleText,
-                                              size: 22,
-                                            ),
-                                            onPressed: () =>
-                                                _editAlarm(a),
-                                          ),
-                                          IconButton(
-                                            tooltip: 'Eliminar',
-                                            icon: Icon(
-                                              Icons.delete_outline_rounded,
-                                              color: Colors.red.shade600,
-                                              size: 22,
-                                            ),
-                                            onPressed: () =>
-                                                _deleteAlarm(a),
-                                          ),
-                                        ],
-                                      ),
-                                    ],
+                                    trackOutlineColor:
+                                        WidgetStateProperty.resolveWith((s) {
+                                          if (s.contains(
+                                            WidgetState.selected,
+                                          )) {
+                                            return AppHomeColors
+                                                .switchActiveTrackBorder;
+                                          }
+                                          return AppHomeColors.subtitleText
+                                              .withValues(alpha: 0.25);
+                                        }),
                                   ),
                                 ),
-                              ],
-                            ),
+                                child: Column(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Switch.adaptive(
+                                      value: a.enabled,
+                                      materialTapTargetSize:
+                                          MaterialTapTargetSize.shrinkWrap,
+                                      onChanged: (v) => _toggleEnabled(a, v),
+                                    ),
+                                    Row(
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: [
+                                        IconButton(
+                                          tooltip: 'Editar',
+                                          icon: Icon(
+                                            Icons.edit_outlined,
+                                            color: AppHomeColors.titleText,
+                                            size: 22,
+                                          ),
+                                          onPressed: () => _editAlarm(a),
+                                        ),
+                                        IconButton(
+                                          tooltip: 'Eliminar',
+                                          icon: Icon(
+                                            Icons.delete_outline_rounded,
+                                            color: Colors.red.shade600,
+                                            size: 22,
+                                          ),
+                                          onPressed: () => _deleteAlarm(a),
+                                        ),
+                                      ],
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ],
                           ),
                         ),
                       ),
-                    );
-                  },
-                  childCount: _alarms.length,
-                ),
+                    ),
+                  );
+                }, childCount: _alarms.length),
               ),
             ),
           const SliverToBoxAdapter(child: SizedBox(height: 32)),
@@ -1134,7 +1159,11 @@ class _GradientActionButton extends StatelessWidget {
             child: Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Icon(icon, color: AppHomeColors.startButtonForeground, size: 24),
+                Icon(
+                  icon,
+                  color: AppHomeColors.startButtonForeground,
+                  size: 24,
+                ),
                 const SizedBox(width: 10),
                 Text(
                   label,
