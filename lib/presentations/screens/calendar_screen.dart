@@ -164,7 +164,7 @@ class _CalendarScreenState extends State<CalendarScreen> {
         _dateSelected = picked;
         // Si estaba en modo repetición semanal y no diaria, actualizar el día de la semana
         if (_repeatWeekly && !_repeatDaily) {
-           _selectedDays = [picked.weekday];
+          _selectedDays = [picked.weekday];
         }
       });
     }
@@ -173,7 +173,7 @@ class _CalendarScreenState extends State<CalendarScreen> {
   String _getAlarmTypeDescription(AlarmType type) {
     switch (type) {
       case AlarmType.guidedAudio:
-        return 'Al sonar se abre el rosario y empieza la voz guiada automáticamente.';
+        return 'Al sonar se abre el rosario y empieza la voz guiada automáticamente sólo con la pantalla en bloqueo. Si la pantalla está encendida, solo muestra una notificación. ';
       case AlarmType.fullScreenAlarm:
         return 'Al sonar muestra la pantalla de alarma con sonido.';
       case AlarmType.notificationOnly:
@@ -323,7 +323,11 @@ class _CalendarScreenState extends State<CalendarScreen> {
           backgroundColor: Colors.red.shade400,
           content: const Text(
             'Para usar el modo Voz, debes activar el "Audio de oraciones" en las opciones de abajo.',
-            style: TextStyle(fontFamily: 'Poppins', color: Colors.white, fontSize: 13),
+            style: TextStyle(
+              fontFamily: 'Poppins',
+              color: Colors.white,
+              fontSize: 13,
+            ),
           ),
         ),
       );
@@ -532,7 +536,10 @@ class _CalendarScreenState extends State<CalendarScreen> {
                                   ),
                                   const SizedBox(height: 4),
                                   Text(
-                                    DateFormat("EEEE d 'de' MMMM", 'es').format(_dateSelected),
+                                    DateFormat(
+                                      "EEEE d 'de' MMMM",
+                                      'es',
+                                    ).format(_dateSelected),
                                     style: Theme.of(context)
                                         .textTheme
                                         .displayMedium
@@ -660,7 +667,8 @@ class _CalendarScreenState extends State<CalendarScreen> {
                                 }
                               } else {
                                 _selectedDays = [];
-                                _repeatDaily = false; // COHERENCIA: Si apago el panel, apago el modo diario
+                                _repeatDaily =
+                                    false; // COHERENCIA: Si apago el panel, apago el modo diario
                               }
                             }),
                             title: Text(
@@ -864,15 +872,21 @@ class _CalendarScreenState extends State<CalendarScreen> {
                           LayoutBuilder(
                             builder: (context, constraints) {
                               final bool isSmall = constraints.maxWidth < 340;
-                              
-                              Widget buildSegmentContent(IconData icon, String label) {
+
+                              Widget buildSegmentContent(
+                                IconData icon,
+                                String label,
+                              ) {
                                 if (isSmall) {
                                   return Column(
                                     mainAxisSize: MainAxisSize.min,
                                     children: [
                                       Icon(icon, size: 16),
                                       const SizedBox(height: 2),
-                                      Text(label, style: const TextStyle(fontSize: 10)),
+                                      Text(
+                                        label,
+                                        style: const TextStyle(fontSize: 10),
+                                      ),
                                     ],
                                   );
                                 }
@@ -892,43 +906,66 @@ class _CalendarScreenState extends State<CalendarScreen> {
                                   segments: [
                                     ButtonSegment(
                                       value: AlarmType.guidedAudio,
-                                      label: buildSegmentContent(Icons.auto_stories_rounded, 'Voz'),
+                                      label: buildSegmentContent(
+                                        Icons.auto_stories_rounded,
+                                        'Voz',
+                                      ),
                                     ),
                                     ButtonSegment(
                                       value: AlarmType.fullScreenAlarm,
-                                      label: buildSegmentContent(Icons.alarm_rounded, 'Alarma'),
+                                      label: buildSegmentContent(
+                                        Icons.alarm_rounded,
+                                        'Alarma',
+                                      ),
                                     ),
                                     ButtonSegment(
                                       value: AlarmType.notificationOnly,
-                                      label: buildSegmentContent(Icons.notifications_active_rounded, 'Aviso'),
+                                      label: buildSegmentContent(
+                                        Icons.notifications_active_rounded,
+                                        'Aviso',
+                                      ),
                                     ),
                                   ],
                                   selected: {_alarmType},
                                   showSelectedIcon: false,
-                                  onSelectionChanged: (Set<AlarmType> newSelection) async {
-                                    final selected = newSelection.first;
-                                    if (selected != AlarmType.notificationOnly) {
-                                      await AlarmNotificationService.instance
-                                          .requestRuntimePermissions();
-                                      final diag = await AlarmNotificationService.instance
-                                          .getAndroidAutoStartDiagnostic();
-                                      setState(() {
-                                        _autoStartDiagnostic = diag;
-                                        _alarmType = selected;
-                                      });
-                                    } else {
-                                      setState(() => _alarmType = selected);
-                                    }
-                                  },
+                                  onSelectionChanged:
+                                      (Set<AlarmType> newSelection) async {
+                                        final selected = newSelection.first;
+                                        if (selected !=
+                                            AlarmType.notificationOnly) {
+                                          await AlarmNotificationService
+                                              .instance
+                                              .requestRuntimePermissions();
+                                          final diag =
+                                              await AlarmNotificationService
+                                                  .instance
+                                                  .getAndroidAutoStartDiagnostic();
+                                          setState(() {
+                                            _autoStartDiagnostic = diag;
+                                            _alarmType = selected;
+                                          });
+                                        } else {
+                                          setState(() => _alarmType = selected);
+                                        }
+                                      },
                                   style: SegmentedButton.styleFrom(
-                                    visualDensity: isSmall ? VisualDensity.comfortable : VisualDensity.compact,
-                                    tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                                    padding: const EdgeInsets.symmetric(vertical: 10),
-                                    selectedBackgroundColor: AppHomeColors.switchActiveGradientTop.withValues(alpha: 0.2),
-                                    selectedForegroundColor: AppHomeColors.switchActiveGradientTop,
+                                    visualDensity: isSmall
+                                        ? VisualDensity.comfortable
+                                        : VisualDensity.compact,
+                                    tapTargetSize:
+                                        MaterialTapTargetSize.shrinkWrap,
+                                    padding: const EdgeInsets.symmetric(
+                                      vertical: 10,
+                                    ),
+                                    selectedBackgroundColor: AppHomeColors
+                                        .switchActiveGradientTop
+                                        .withValues(alpha: 0.2),
+                                    selectedForegroundColor:
+                                        AppHomeColors.switchActiveGradientTop,
                                     foregroundColor: AppHomeColors.subtitleText,
                                     side: BorderSide(
-                                      color: AppHomeColors.subtitleText.withValues(alpha: 0.15),
+                                      color: AppHomeColors.subtitleText
+                                          .withValues(alpha: 0.15),
                                     ),
                                     textStyle: const TextStyle(
                                       fontFamily: 'Poppins',
@@ -977,7 +1014,11 @@ class _CalendarScreenState extends State<CalendarScreen> {
                           children: [
                             Row(
                               children: [
-                                Icon(Icons.timer_outlined, color: AppHomeColors.todayChipIcon, size: 20),
+                                Icon(
+                                  Icons.timer_outlined,
+                                  color: AppHomeColors.todayChipIcon,
+                                  size: 20,
+                                ),
                                 const SizedBox(width: 8),
                                 Text(
                                   'Retardo de voz',
@@ -994,7 +1035,8 @@ class _CalendarScreenState extends State<CalendarScreen> {
                                   style: TextStyle(
                                     fontFamily: 'Poppins',
                                     fontWeight: FontWeight.w700,
-                                    color: AppHomeColors.switchActiveGradientTop,
+                                    color:
+                                        AppHomeColors.switchActiveGradientTop,
                                     fontSize: 16,
                                   ),
                                 ),
@@ -1014,20 +1056,28 @@ class _CalendarScreenState extends State<CalendarScreen> {
                               min: 0,
                               max: 10,
                               divisions: 10,
-                              activeColor: AppHomeColors.switchActiveGradientTop,
+                              activeColor:
+                                  AppHomeColors.switchActiveGradientTop,
                               inactiveColor: AppHomeColors.todayChipBackground,
-                              onChanged: (v) => setState(() => _voiceDelay = v.toInt()),
+                              onChanged: (v) =>
+                                  setState(() => _voiceDelay = v.toInt()),
                             ),
                             const Divider(height: 24, thickness: 0.5),
                             Theme(
                               data: Theme.of(context).copyWith(
                                 switchTheme: SwitchThemeData(
-                                  thumbColor: WidgetStateProperty.resolveWith((states) {
-                                    if (states.contains(WidgetState.selected)) return AppHomeColors.switchActiveThumb;
+                                  thumbColor: WidgetStateProperty.resolveWith((
+                                    states,
+                                  ) {
+                                    if (states.contains(WidgetState.selected))
+                                      return AppHomeColors.switchActiveThumb;
                                     return AppHomeColors.switchInactiveThumb;
                                   }),
-                                  trackColor: WidgetStateProperty.resolveWith((states) {
-                                    if (states.contains(WidgetState.selected)) return AppHomeColors.switchActiveTrack;
+                                  trackColor: WidgetStateProperty.resolveWith((
+                                    states,
+                                  ) {
+                                    if (states.contains(WidgetState.selected))
+                                      return AppHomeColors.switchActiveTrack;
                                     return AppHomeColors.switchInactiveTrack;
                                   }),
                                 ),
@@ -1053,7 +1103,9 @@ class _CalendarScreenState extends State<CalendarScreen> {
                                   style: TextStyle(
                                     fontFamily: 'Poppins',
                                     fontSize: 11.5,
-                                    color: _prayersAudioEnabled ? AppHomeColors.subtitleText : Colors.red.shade400,
+                                    color: _prayersAudioEnabled
+                                        ? AppHomeColors.subtitleText
+                                        : Colors.red.shade400,
                                   ),
                                 ),
                               ),
@@ -1148,8 +1200,10 @@ class _CalendarScreenState extends State<CalendarScreen> {
               sliver: SliverList(
                 delegate: SliverChildBuilderDelegate((context, index) {
                   final a = _alarms[index];
-                  final next = AlarmNotificationService.instance.nextFireAsDateTime(a);
-                  final bool isOneTime = !a.repeatDaily && !a.repeatWeekly && a.daysOfWeek.isEmpty;
+                  final next = AlarmNotificationService.instance
+                      .nextFireAsDateTime(a);
+                  final bool isOneTime =
+                      !a.repeatDaily && !a.repeatWeekly && a.daysOfWeek.isEmpty;
                   final bool isExpired = isOneTime && next == null;
 
                   final subtitle = !a.enabled
@@ -1164,7 +1218,8 @@ class _CalendarScreenState extends State<CalendarScreen> {
                             }).join(', ')}'
                           else
                             'Una sola vez',
-                          if (a.openRosaryWithGuidedAudio) 'Voz (${a.voiceDelay}s)',
+                          if (a.openRosaryWithGuidedAudio)
+                            'Voz (${a.voiceDelay}s)',
                         ].join(' · ');
 
                   final nextLine = !a.enabled || next == null
@@ -1208,14 +1263,15 @@ class _CalendarScreenState extends State<CalendarScreen> {
                           child: Row(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                               Icon(
-                                 Icons.alarm_rounded,
-                                 color: isExpired
-                                     ? AppHomeColors.subtitleText
-                                         .withValues(alpha: 0.5)
-                                     : AppHomeColors.todayChipIcon,
-                                 size: 28,
-                               ),
+                              Icon(
+                                Icons.alarm_rounded,
+                                color: isExpired
+                                    ? AppHomeColors.subtitleText.withValues(
+                                        alpha: 0.5,
+                                      )
+                                    : AppHomeColors.todayChipIcon,
+                                size: 28,
+                              ),
                               const SizedBox(width: 10),
                               Expanded(
                                 child: Column(
@@ -1299,7 +1355,9 @@ class _CalendarScreenState extends State<CalendarScreen> {
                                       value: a.enabled,
                                       materialTapTargetSize:
                                           MaterialTapTargetSize.shrinkWrap,
-                                      onChanged: isExpired ? null : (v) => _toggleEnabled(a, v),
+                                      onChanged: isExpired
+                                          ? null
+                                          : (v) => _toggleEnabled(a, v),
                                     ),
                                     Row(
                                       mainAxisSize: MainAxisSize.min,
