@@ -209,7 +209,11 @@ class AlarmNotificationService {
   Future<void> syncAll(List<RosaryAlarm> alarms) async {
     if (!supportsNativeSchedule) return;
     for (final a in alarms) {
+      // Cancelar todas las posibles notificaciones asociadas a este ID (7 días + el original)
       await _plugin.cancel(id: a.notificationId);
+      for (int i = 1; i <= 7; i++) {
+        await _plugin.cancel(id: a.notificationIdForDay(i));
+      }
     }
     for (final a in alarms) {
       if (a.enabled) {
@@ -239,6 +243,21 @@ class AlarmNotificationService {
         daily = daily.add(const Duration(days: 1));
       }
       return daily;
+    }
+    if (a.daysOfWeek.isNotEmpty) {
+      tz.TZDateTime? earliest;
+      for (final day in a.daysOfWeek) {
+        final occurrence = _nextWeeklyOccurrence(
+          anchorWeekday: day,
+          hour: a.hour,
+          minute: a.minute,
+          now: now,
+        );
+        if (earliest == null || occurrence.isBefore(earliest)) {
+          earliest = occurrence;
+        }
+      }
+      return earliest;
     }
     if (a.repeatWeekly) {
       return _nextWeeklyOccurrence(
@@ -308,80 +327,110 @@ class AlarmNotificationService {
   }
 
   Future<void> _scheduleOne(RosaryAlarm alarm) async {
-    final when = _nextFire(alarm);
-    if (when == null) return;
+    final now = tz.TZDateTime.now(tz.local);
 
-    // En Android 12+ sin permiso de alarmas exactas, setExact* lanza y no se programa nada.
+    // Si es diaria o no tiene días específicos, usamos el ID original y el comportamiento previo.
+    if (alarm.repeatDaily || (alarm.daysOfWeek.isEmpty && !alarm.repeatWeekly)) {
+      final when = _nextFire(alarm);
+      if (when == null) return;
+      await _zonedScheduleInternal(
+        id: alarm.notificationId,
+        when: when,
+        alarm: alarm,
+        repeatDaily: alarm.repeatDaily,
+        repeatWeekly: false,
+      );
+      return;
+    }
+
+    // Si tiene días específicos o es el antiguo semanal, programamos uno por cada día.
+    final days = alarm.daysOfWeek.isNotEmpty
+        ? alarm.daysOfWeek
+        : [alarm.anchorDate.weekday];
+
+    for (final day in days) {
+      final when = _nextWeeklyOccurrence(
+        anchorWeekday: day,
+        hour: alarm.hour,
+        minute: alarm.minute,
+        now: now,
+      );
+      await _zonedScheduleInternal(
+        id: alarm.notificationIdForDay(day),
+        when: when,
+        alarm: alarm,
+        repeatDaily: false,
+        repeatWeekly: true,
+      );
+    }
+  }
+
+  Future<void> _zonedScheduleInternal({
+    required int id,
+    required tz.TZDateTime when,
+    required RosaryAlarm alarm,
+    required bool repeatDaily,
+    required bool repeatWeekly,
+  }) async {
     AndroidScheduleMode androidMode = alarm.openRosaryWithGuidedAudio
         ? AndroidScheduleMode.alarmClock
         : AndroidScheduleMode.exactAllowWhileIdle;
+
     if (defaultTargetPlatform == TargetPlatform.android) {
       final android = _plugin.resolvePlatformSpecificImplementation<
           AndroidFlutterLocalNotificationsPlugin>();
       final canExact = await android?.canScheduleExactNotifications();
       if (canExact == false) {
         androidMode = AndroidScheduleMode.inexactAllowWhileIdle;
-        debugPrint(
-          '[AlarmNotificationService] Sin permiso de alarmas exactas; usando modo inexacto.',
-        );
       }
     }
 
     try {
       await _plugin.zonedSchedule(
-        id: alarm.notificationId,
+        id: id,
         scheduledDate: when,
         notificationDetails: _notificationDetails(),
         androidScheduleMode: androidMode,
         title: 'Santo Rosario',
-        body: alarm.repeatDaily
+        body: repeatDaily
             ? 'Hora del rosario (cada día)'
-            : alarm.repeatWeekly
-            ? 'Hora del rosario (cada semana)'
-            : 'Recordatorio del rosario',
+            : repeatWeekly
+                ? 'Hora del rosario (cada semana)'
+                : 'Recordatorio del rosario',
         payload: payloadFor(alarm),
-        matchDateTimeComponents: alarm.repeatDaily
+        matchDateTimeComponents: repeatDaily
             ? DateTimeComponents.time
-            : alarm.repeatWeekly
-            ? DateTimeComponents.dayOfWeekAndTime
-            : null,
+            : repeatWeekly
+                ? DateTimeComponents.dayOfWeekAndTime
+                : null,
       );
     } catch (e, st) {
       debugPrint('[AlarmNotificationService] Fallo zonedSchedule: $e\n$st');
-      // Último recurso: modo inexacto (puede llegar con retraso en Doze).
+      // Fallback a inexacto...
       if (defaultTargetPlatform == TargetPlatform.android &&
           (androidMode == AndroidScheduleMode.exactAllowWhileIdle ||
               androidMode == AndroidScheduleMode.alarmClock)) {
         try {
           await _plugin.zonedSchedule(
-            id: alarm.notificationId,
+            id: id,
             scheduledDate: when,
             notificationDetails: _notificationDetails(),
             androidScheduleMode: AndroidScheduleMode.inexactAllowWhileIdle,
             title: 'Santo Rosario',
-            body: alarm.repeatDaily
+            body: repeatDaily
                 ? 'Hora del rosario (cada día)'
-                : alarm.repeatWeekly
-                ? 'Hora del rosario (cada semana)'
-                : 'Recordatorio del rosario',
+                : repeatWeekly
+                    ? 'Hora del rosario (cada semana)'
+                    : 'Recordatorio del rosario',
             payload: payloadFor(alarm),
-            matchDateTimeComponents: alarm.repeatDaily
+            matchDateTimeComponents: repeatDaily
                 ? DateTimeComponents.time
-                : alarm.repeatWeekly
-                ? DateTimeComponents.dayOfWeekAndTime
-                : null,
+                : repeatWeekly
+                    ? DateTimeComponents.dayOfWeekAndTime
+                    : null,
           );
-          debugPrint(
-            '[AlarmNotificationService] Programada en modo inexacto tras fallo exacto.',
-          );
-          return;
-        } catch (e2, st2) {
-          debugPrint(
-            '[AlarmNotificationService] Fallo también modo inexacto: $e2\n$st2',
-          );
-        }
+        } catch (_) {}
       }
-      rethrow;
     }
   }
 }

@@ -151,16 +151,32 @@ class _PrayScreenState extends State<PrayScreen>
       if (_trustPrayerPlaybackCompleted &&
           !_isIncrementingInProgress &&
           mounted) {
-        // Se adelanta una oración cuando el audio termina (no por stop/cambio de pista).
         _isIncrementingInProgress = true;
         _trustPrayerPlaybackCompleted = false;
+
+        // Guardamos el estado ANTES de intentar incrementar.
+        final int prevCounter = _counter;
+        final int prevOrder = _orderPrayer;
+
         _incrementCounter();
-        // No depender sólo del painter: así el siguiente clip se programa siempre.
+
+        // Comparamos si hubo un cambio real en la posición.
+        final bool didAdvance =
+            _counter != prevCounter || _orderPrayer != prevOrder;
+
         WidgetsBinding.instance.addPostFrameCallback((_) {
           if (!mounted || !_isplaying || !_isPrayersAudioPlaying) {
             _isIncrementingInProgress = false;
             return;
           }
+
+          // Si tras intentar incrementar la posición es la misma, llegamos al final.
+          if (!didAdvance) {
+            unawaited(stopAudio());
+            _isIncrementingInProgress = false;
+            return;
+          }
+
           initAudio();
         });
       }

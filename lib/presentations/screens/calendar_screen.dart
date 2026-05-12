@@ -23,6 +23,7 @@ class _CalendarScreenState extends State<CalendarScreen> {
   TimeOfDay _timeSelected = TimeOfDay.now();
   bool _repeatWeekly = false;
   bool _repeatDaily = false;
+  List<int> _selectedDays = [];
   bool _openRosaryWithGuidedAudio = false;
   String? _editingId;
   bool _loading = true;
@@ -70,6 +71,13 @@ class _CalendarScreenState extends State<CalendarScreen> {
     final t = TimeOfDay(hour: a.hour, minute: a.minute);
     if (a.repeatDaily) {
       return 'Todos los días · ${t.format(context)}';
+    }
+    if (a.daysOfWeek.isNotEmpty) {
+      final days = a.daysOfWeek.map((d) {
+        final date = DateTime(2024, 1, d); // 2024-01-01 was Monday
+        return DateFormat('EEE', 'es').format(date).replaceAll('.', '').toUpperCase();
+      }).join(', ');
+      return '$days · ${t.format(context)}';
     }
     if (a.repeatWeekly) {
       final dow = DateFormat('EEEE', 'es').format(a.anchorDate);
@@ -124,6 +132,7 @@ class _CalendarScreenState extends State<CalendarScreen> {
       _timeSelected = TimeOfDay(hour: a.hour, minute: a.minute);
       _repeatWeekly = a.repeatWeekly;
       _repeatDaily = a.repeatDaily;
+      _selectedDays = List.from(a.daysOfWeek);
       _openRosaryWithGuidedAudio = a.openRosaryWithGuidedAudio;
     });
   }
@@ -217,6 +226,7 @@ class _CalendarScreenState extends State<CalendarScreen> {
       minute: _timeSelected.minute,
       repeatDaily: _repeatDaily,
       repeatWeekly: _repeatWeekly,
+      daysOfWeek: _selectedDays,
       enabled: true,
       openRosaryWithGuidedAudio: _openRosaryWithGuidedAudio,
     );
@@ -299,6 +309,7 @@ class _CalendarScreenState extends State<CalendarScreen> {
         _timeSelected = TimeOfDay.now();
         _repeatWeekly = false;
         _repeatDaily = false;
+        _selectedDays = [];
         _openRosaryWithGuidedAudio = false;
       }
     });
@@ -500,57 +511,148 @@ class _CalendarScreenState extends State<CalendarScreen> {
                   ),
                   const SizedBox(height: 10),
                   _GlassCard(
-                    child: Theme(
-                      data: Theme.of(context).copyWith(
-                        switchTheme: SwitchThemeData(
-                          thumbColor: WidgetStateProperty.resolveWith((states) {
-                            if (states.contains(WidgetState.selected)) {
-                              return AppHomeColors.switchActiveThumb;
-                            }
-                            return AppHomeColors.switchInactiveThumb;
-                          }),
-                          trackColor: WidgetStateProperty.resolveWith((states) {
-                            if (states.contains(WidgetState.selected)) {
-                              return AppHomeColors.switchActiveTrack;
-                            }
-                            return AppHomeColors.switchInactiveTrack;
-                          }),
-                          trackOutlineColor:
-                              WidgetStateProperty.resolveWith((states) {
-                            if (states.contains(WidgetState.selected)) {
-                              return AppHomeColors.switchActiveTrackBorder;
-                            }
-                            return AppHomeColors.subtitleText
-                                .withValues(alpha: 0.25);
-                          }),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        Theme(
+                          data: Theme.of(context).copyWith(
+                            switchTheme: SwitchThemeData(
+                              thumbColor: WidgetStateProperty.resolveWith((states) {
+                                if (states.contains(WidgetState.selected)) {
+                                  return AppHomeColors.switchActiveThumb;
+                                }
+                                return AppHomeColors.switchInactiveThumb;
+                              }),
+                              trackColor: WidgetStateProperty.resolveWith((states) {
+                                if (states.contains(WidgetState.selected)) {
+                                  return AppHomeColors.switchActiveTrack;
+                                }
+                                return AppHomeColors.switchInactiveTrack;
+                              }),
+                              trackOutlineColor:
+                                  WidgetStateProperty.resolveWith((states) {
+                                if (states.contains(WidgetState.selected)) {
+                                  return AppHomeColors.switchActiveTrackBorder;
+                                }
+                                return AppHomeColors.subtitleText
+                                    .withValues(alpha: 0.25);
+                              }),
+                            ),
+                          ),
+                          child: SwitchListTile.adaptive(
+                            value: _repeatWeekly,
+                            onChanged: (v) => setState(() {
+                              _repeatWeekly = v;
+                              if (v) {
+                                _repeatDaily = false;
+                                if (_selectedDays.isEmpty) {
+                                  _selectedDays = [_dateSelected.weekday];
+                                }
+                              } else {
+                                _selectedDays = [];
+                              }
+                            }),
+                            title: Text(
+                              'Repetir ciertos días',
+                              style: TextStyle(
+                                fontFamily: 'Poppins',
+                                fontWeight: FontWeight.w600,
+                                color: AppHomeColors.titleText,
+                                fontSize: 14.5,
+                              ),
+                            ),
+                            subtitle: Text(
+                              'Elegí los días de la semana que querés que suene.',
+                              style: TextStyle(
+                                fontFamily: 'Poppins',
+                                fontSize: 12.5,
+                                color: AppHomeColors.subtitleText,
+                                height: 1.35,
+                              ),
+                            ),
+                          ),
                         ),
-                      ),
-                      child: SwitchListTile.adaptive(
-                      value: _repeatWeekly,
-                      onChanged: (v) => setState(() {
-                        _repeatWeekly = v;
-                        if (v) _repeatDaily = false;
-                      }),
-                      title: Text(
-                        'Repetir cada semana',
-                        style: TextStyle(
-                          fontFamily: 'Poppins',
-                          fontWeight: FontWeight.w600,
-                          color: AppHomeColors.titleText,
-                          fontSize: 14.5,
-                        ),
-                      ),
-                      subtitle: Text(
-                        'Suena cada ${DateFormat('EEEE', 'es').format(_dateSelected)} '
-                        'a la misma hora.',
-                        style: TextStyle(
-                          fontFamily: 'Poppins',
-                          fontSize: 12.5,
-                          color: AppHomeColors.subtitleText,
-                          height: 1.35,
-                        ),
-                      ),
-                    ),
+                        if (_repeatWeekly)
+                          Padding(
+                            padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: List.generate(7, (index) {
+                                final weekday = index + 1;
+                                final date = DateTime(2024, 1, weekday);
+                                final label = DateFormat('E', 'es')
+                                    .format(date)
+                                    .substring(0, 1)
+                                    .toUpperCase();
+                                final isSelected = _selectedDays.contains(weekday);
+
+                                return GestureDetector(
+                                  onTap: () => setState(() {
+                                    if (isSelected) {
+                                      _selectedDays.remove(weekday);
+                                      if (_selectedDays.isEmpty) _repeatWeekly = false;
+                                    } else {
+                                      _selectedDays.add(weekday);
+                                      _selectedDays.sort();
+                                    }
+                                  }),
+                                  child: AnimatedContainer(
+                                    duration: const Duration(milliseconds: 200),
+                                    width: 38,
+                                    height: 38,
+                                    decoration: BoxDecoration(
+                                      shape: BoxShape.circle,
+                                      gradient: isSelected
+                                          ? const LinearGradient(
+                                              begin: Alignment.topCenter,
+                                              end: Alignment.bottomCenter,
+                                              colors: [
+                                                AppHomeColors.switchActiveGradientTop,
+                                                AppHomeColors.switchActiveGradientBottom,
+                                              ],
+                                            )
+                                          : null,
+                                      color: isSelected
+                                          ? null
+                                          : AppHomeColors.todayChipBackground,
+                                      border: Border.all(
+                                        color: isSelected
+                                            ? AppHomeColors.switchActiveTrackBorder
+                                            : AppHomeColors.subtitleText
+                                                .withValues(alpha: 0.2),
+                                        width: 1.5,
+                                      ),
+                                      boxShadow: isSelected
+                                          ? [
+                                              BoxShadow(
+                                                color: AppHomeColors
+                                                    .switchActiveGradientBottom
+                                                    .withValues(alpha: 0.3),
+                                                blurRadius: 4,
+                                                offset: const Offset(0, 2),
+                                              )
+                                            ]
+                                          : null,
+                                    ),
+                                    child: Center(
+                                      child: Text(
+                                        label,
+                                        style: TextStyle(
+                                          fontFamily: 'Poppins',
+                                          fontWeight: FontWeight.w700,
+                                          fontSize: 13,
+                                          color: isSelected
+                                              ? Colors.white
+                                              : AppHomeColors.subtitleText,
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                );
+                              }),
+                            ),
+                          ),
+                      ],
                     ),
                   ),
                   const SizedBox(height: 10),
@@ -584,7 +686,13 @@ class _CalendarScreenState extends State<CalendarScreen> {
                         value: _repeatDaily,
                         onChanged: (v) => setState(() {
                           _repeatDaily = v;
-                          if (v) _repeatWeekly = false;
+                          if (v) {
+                            _repeatWeekly = true;
+                            _selectedDays = [1, 2, 3, 4, 5, 6, 7];
+                          } else {
+                            _repeatWeekly = false;
+                            _selectedDays = [];
+                          }
                         }),
                         title: Text(
                           'Repetir cada día',
@@ -748,10 +856,15 @@ class _CalendarScreenState extends State<CalendarScreen> {
                     final subtitle = !a.enabled
                         ? 'Desactivada'
                         : [
-                              if (a.repeatDaily) 'Se repite diariamente',
-                              a.repeatWeekly
-                                  ? 'Se repite semanalmente'
-                                  : 'Una sola vez',
+                              if (a.repeatDaily)
+                                'Se repite diariamente'
+                              else if (a.daysOfWeek.isNotEmpty)
+                                'Días: ${a.daysOfWeek.map((d) {
+                                  final date = DateTime(2024, 1, d);
+                                  return DateFormat('EEE', 'es').format(date).replaceAll('.', '');
+                                }).join(', ')}'
+                              else
+                                'Una sola vez',
                               if (a.openRosaryWithGuidedAudio)
                                 'Rosario con voz',
                             ].join(' · ');

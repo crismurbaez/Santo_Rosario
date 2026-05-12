@@ -9,8 +9,9 @@ class RosaryAlarm {
     required this.day,
     required this.hour,
     required this.minute,
-    required this.repeatWeekly,
+    this.repeatWeekly = false,
     this.repeatDaily = false,
+    this.daysOfWeek = const [],
     this.enabled = true,
     this.openRosaryWithGuidedAudio = false,
   });
@@ -23,13 +24,19 @@ class RosaryAlarm {
   final int minute;
   final bool repeatWeekly;
   final bool repeatDaily;
+  final List<int> daysOfWeek;
   final bool enabled;
 
   /// Si es true: al disparar la alarma la app va al rosario y arranca el audio guiado.
   final bool openRosaryWithGuidedAudio;
 
   /// Id estable para [FlutterLocalNotificationsPlugin.cancel] / `zonedSchedule`.
+  /// Si hay varios días, se usa un ID derivado para cada uno.
   int get notificationId => id.hashCode & 0x7fffffff;
+
+  int notificationIdForDay(int weekday) {
+    return (id.hashCode ^ weekday).hashCode & 0x7fffffff;
+  }
 
   DateTime get anchorDate => DateTime(year, month, day);
 
@@ -42,6 +49,7 @@ class RosaryAlarm {
     int? minute,
     bool? repeatWeekly,
     bool? repeatDaily,
+    List<int>? daysOfWeek,
     bool? enabled,
     bool? openRosaryWithGuidedAudio,
   }) {
@@ -54,6 +62,7 @@ class RosaryAlarm {
       minute: minute ?? this.minute,
       repeatWeekly: repeatWeekly ?? this.repeatWeekly,
       repeatDaily: repeatDaily ?? this.repeatDaily,
+      daysOfWeek: daysOfWeek ?? this.daysOfWeek,
       enabled: enabled ?? this.enabled,
       openRosaryWithGuidedAudio:
           openRosaryWithGuidedAudio ?? this.openRosaryWithGuidedAudio,
@@ -69,6 +78,7 @@ class RosaryAlarm {
         'minute': minute,
         'repeatWeekly': repeatWeekly,
         'repeatDaily': repeatDaily,
+        'daysOfWeek': daysOfWeek,
         'enabled': enabled,
         'openRosaryWithGuidedAudio': openRosaryWithGuidedAudio,
       };
@@ -76,6 +86,18 @@ class RosaryAlarm {
   static RosaryAlarm? fromJson(Object? raw) {
     if (raw is! Map<String, dynamic>) return null;
     try {
+      final repeatWeekly = raw['repeatWeekly'] as bool? ?? false;
+      final daysOfWeekRaw = raw['daysOfWeek'] as List<dynamic>?;
+      List<int> daysOfWeek = daysOfWeekRaw?.cast<int>() ?? [];
+
+      // Migración: si era semanal y no tiene días, añadir el día de la fecha de anclaje
+      if (repeatWeekly && daysOfWeek.isEmpty) {
+        final y = raw['year'] as int;
+        final m = raw['month'] as int;
+        final d = raw['day'] as int;
+        daysOfWeek = [DateTime(y, m, d).weekday];
+      }
+
       return RosaryAlarm(
         id: raw['id'] as String,
         year: raw['year'] as int,
@@ -83,8 +105,9 @@ class RosaryAlarm {
         day: raw['day'] as int,
         hour: raw['hour'] as int,
         minute: raw['minute'] as int,
-        repeatWeekly: raw['repeatWeekly'] as bool? ?? false,
+        repeatWeekly: repeatWeekly,
         repeatDaily: raw['repeatDaily'] as bool? ?? false,
+        daysOfWeek: daysOfWeek,
         enabled: raw['enabled'] as bool? ?? true,
         openRosaryWithGuidedAudio:
             raw['openRosaryWithGuidedAudio'] as bool? ?? false,
