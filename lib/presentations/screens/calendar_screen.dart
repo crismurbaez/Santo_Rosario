@@ -771,56 +771,83 @@ class _CalendarScreenState extends State<CalendarScreen> {
                             ),
                           ),
                           const SizedBox(height: 12),
-                          SizedBox(
-                            width: double.infinity,
-                            child: SegmentedButton<AlarmType>(
-                              segments: const [
-                                ButtonSegment(
-                                  value: AlarmType.guidedAudio,
-                                  icon: Icon(Icons.auto_stories_rounded, size: 20),
-                                  label: Text('Voz'),
-                                ),
-                                ButtonSegment(
-                                  value: AlarmType.fullScreenAlarm,
-                                  icon: Icon(Icons.alarm_rounded, size: 20),
-                                  label: Text('Alarma'),
-                                ),
-                                ButtonSegment(
-                                  value: AlarmType.notificationOnly,
-                                  icon: Icon(Icons.notifications_active_rounded, size: 20),
-                                  label: Text('Aviso'),
-                                ),
-                              ],
-                              selected: {_alarmType},
-                              onSelectionChanged: (Set<AlarmType> newSelection) async {
-                                final selected = newSelection.first;
-                                if (selected != AlarmType.notificationOnly) {
-                                  await AlarmNotificationService.instance
-                                      .requestRuntimePermissions();
-                                  final diag = await AlarmNotificationService.instance
-                                      .getAndroidAutoStartDiagnostic();
-                                  setState(() {
-                                    _autoStartDiagnostic = diag;
-                                    _alarmType = selected;
-                                  });
-                                } else {
-                                  setState(() => _alarmType = selected);
+                          LayoutBuilder(
+                            builder: (context, constraints) {
+                              final bool isSmall = constraints.maxWidth < 340;
+                              
+                              Widget buildSegmentContent(IconData icon, String label) {
+                                if (isSmall) {
+                                  return Column(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      Icon(icon, size: 16),
+                                      const SizedBox(height: 2),
+                                      Text(label, style: const TextStyle(fontSize: 10)),
+                                    ],
+                                  );
                                 }
-                              },
-                              style: SegmentedButton.styleFrom(
-                                selectedBackgroundColor: AppHomeColors.switchActiveGradientTop.withValues(alpha: 0.2),
-                                selectedForegroundColor: AppHomeColors.switchActiveGradientTop,
-                                foregroundColor: AppHomeColors.subtitleText,
-                                side: BorderSide(
-                                  color: AppHomeColors.subtitleText.withValues(alpha: 0.15),
+                                return Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Icon(icon, size: 18),
+                                    const SizedBox(width: 6),
+                                    Text(label),
+                                  ],
+                                );
+                              }
+
+                              return SizedBox(
+                                width: double.infinity,
+                                child: SegmentedButton<AlarmType>(
+                                  segments: [
+                                    ButtonSegment(
+                                      value: AlarmType.guidedAudio,
+                                      label: buildSegmentContent(Icons.auto_stories_rounded, 'Voz'),
+                                    ),
+                                    ButtonSegment(
+                                      value: AlarmType.fullScreenAlarm,
+                                      label: buildSegmentContent(Icons.alarm_rounded, 'Alarma'),
+                                    ),
+                                    ButtonSegment(
+                                      value: AlarmType.notificationOnly,
+                                      label: buildSegmentContent(Icons.notifications_active_rounded, 'Aviso'),
+                                    ),
+                                  ],
+                                  selected: {_alarmType},
+                                  onSelectionChanged: (Set<AlarmType> newSelection) async {
+                                    final selected = newSelection.first;
+                                    if (selected != AlarmType.notificationOnly) {
+                                      await AlarmNotificationService.instance
+                                          .requestRuntimePermissions();
+                                      final diag = await AlarmNotificationService.instance
+                                          .getAndroidAutoStartDiagnostic();
+                                      setState(() {
+                                        _autoStartDiagnostic = diag;
+                                        _alarmType = selected;
+                                      });
+                                    } else {
+                                      setState(() => _alarmType = selected);
+                                    }
+                                  },
+                                  style: SegmentedButton.styleFrom(
+                                    visualDensity: isSmall ? VisualDensity.comfortable : VisualDensity.compact,
+                                    tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                                    padding: EdgeInsets.zero,
+                                    selectedBackgroundColor: AppHomeColors.switchActiveGradientTop.withValues(alpha: 0.2),
+                                    selectedForegroundColor: AppHomeColors.switchActiveGradientTop,
+                                    foregroundColor: AppHomeColors.subtitleText,
+                                    side: BorderSide(
+                                      color: AppHomeColors.subtitleText.withValues(alpha: 0.15),
+                                    ),
+                                    textStyle: const TextStyle(
+                                      fontFamily: 'Poppins',
+                                      fontWeight: FontWeight.w600,
+                                      fontSize: 12.5,
+                                    ),
+                                  ),
                                 ),
-                                textStyle: const TextStyle(
-                                  fontFamily: 'Poppins',
-                                  fontWeight: FontWeight.w600,
-                                  fontSize: 13,
-                                ),
-                              ),
-                            ),
+                              );
+                            },
                           ),
                           const SizedBox(height: 12),
                           Row(
