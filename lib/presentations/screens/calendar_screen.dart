@@ -363,8 +363,7 @@ class _CalendarScreenState extends State<CalendarScreen> {
     if (wasEditing) {
       final ix = _alarms.indexWhere((e) => e.id == _editingId);
       if (ix >= 0) {
-        final prevEnabled = _alarms[ix].enabled;
-        _alarms[ix] = alarm.copyWith(enabled: prevEnabled);
+        _alarms[ix] = alarm;
       }
     } else {
       _alarms.add(alarm);
@@ -1149,8 +1148,12 @@ class _CalendarScreenState extends State<CalendarScreen> {
               sliver: SliverList(
                 delegate: SliverChildBuilderDelegate((context, index) {
                   final a = _alarms[index];
+                  final next = AlarmNotificationService.instance.nextFireAsDateTime(a);
+                  final bool isOneTime = !a.repeatDaily && !a.repeatWeekly && a.daysOfWeek.isEmpty;
+                  final bool isExpired = isOneTime && next == null;
+
                   final subtitle = !a.enabled
-                      ? 'Desactivada'
+                      ? (isExpired ? 'Expirada' : 'Desactivada')
                       : [
                           if (a.repeatDaily)
                             'Se repite diariamente'
@@ -1164,8 +1167,6 @@ class _CalendarScreenState extends State<CalendarScreen> {
                           if (a.openRosaryWithGuidedAudio) 'Voz (${a.voiceDelay}s)',
                         ].join(' · ');
 
-                  final next = AlarmNotificationService.instance
-                      .nextFireAsDateTime(a);
                   final nextLine = !a.enabled || next == null
                       ? null
                       : 'Próxima: ${DateFormat("EEE d MMM · HH:mm", 'es').format(next)}';
@@ -1207,11 +1208,14 @@ class _CalendarScreenState extends State<CalendarScreen> {
                           child: Row(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              Icon(
-                                Icons.alarm_rounded,
-                                color: AppHomeColors.todayChipIcon,
-                                size: 28,
-                              ),
+                               Icon(
+                                 Icons.alarm_rounded,
+                                 color: isExpired
+                                     ? AppHomeColors.subtitleText
+                                         .withValues(alpha: 0.5)
+                                     : AppHomeColors.todayChipIcon,
+                                 size: 28,
+                               ),
                               const SizedBox(width: 10),
                               Expanded(
                                 child: Column(
@@ -1295,7 +1299,7 @@ class _CalendarScreenState extends State<CalendarScreen> {
                                       value: a.enabled,
                                       materialTapTargetSize:
                                           MaterialTapTargetSize.shrinkWrap,
-                                      onChanged: (v) => _toggleEnabled(a, v),
+                                      onChanged: isExpired ? null : (v) => _toggleEnabled(a, v),
                                     ),
                                     Row(
                                       mainAxisSize: MainAxisSize.min,

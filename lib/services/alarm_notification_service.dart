@@ -375,7 +375,7 @@ class AlarmNotificationService {
       _channelName,
       channelDescription: _channelDescription,
       importance: Importance.max,
-      priority: Priority.high,
+      priority: Priority.max,
       category: AndroidNotificationCategory.alarm,
       fullScreenIntent: fullScreen,
       playSound: true,
