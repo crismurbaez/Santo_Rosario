@@ -27,6 +27,9 @@ class AlarmNotificationService {
   static const _channelName = 'Recordatorios del rosario';
   static const _channelDescription =
       'Alarmas para recordar el rezo del Santo Rosario.';
+  
+  static const String actionSnooze = 'ACTION_SNOOZE';
+  static const String actionDismiss = 'ACTION_DISMISS';
 
   static bool get supportsNativeSchedule =>
       !kIsWeb &&
@@ -107,9 +110,57 @@ class AlarmNotificationService {
   }
 
   void _onNotificationResponse(NotificationResponse response) {
+    if (response.actionId == actionSnooze) {
+      final id = parseNotificationIdFromPayload(response.payload);
+      if (id != null) _handleSnooze(id);
+      return;
+    }
+    if (response.actionId == actionDismiss) {
+      return; // El sistema ya quita la notificación
+    }
+
     final id = parseNotificationIdFromPayload(response.payload);
     if (id == null) return;
     unawaited(_openAlarmFlow(id));
+  }
+  
+  Future<void> _handleSnooze(int notificationId) async {
+    final list = await AlarmStorageService().loadAlarms();
+    RosaryAlarm? alarm;
+    for (final a in list) {
+      if (a.notificationId == notificationId) {
+        alarm = a;
+        break;
+      }
+    }
+    if (alarm == null) return;
+
+    // Reprogramar en 10 minutos
+    final now = tz.TZDateTime.now(tz.local);
+    final snoozeTime = now.add(const Duration(minutes: 10));
+    
+    await _zonedScheduleInternal(
+      id: notificationId,
+      when: snoozeTime,
+      alarm: alarm,
+      repeatDaily: false,
+      repeatWeekly: false,
+    );
+  }
+
+  /// Reprograma una alarma para sonar en el futuro (usado por el Snooze en background).
+  Future<void> scheduleSnooze({
+    required int id,
+    required tz.TZDateTime when,
+    required RosaryAlarm alarm,
+  }) async {
+    await _zonedScheduleInternal(
+      id: id,
+      when: when,
+      alarm: alarm,
+      repeatDaily: false,
+      repeatWeekly: false,
+    );
   }
 
   /// Decide entre pantalla de alarma simple o rosario con audio guiado (según la alarma guardada).
@@ -316,19 +367,32 @@ class AlarmNotificationService {
     return candidate;
   }
 
-  NotificationDetails _notificationDetails() {
-    const android = AndroidNotificationDetails(
+  NotificationDetails _notificationDetails({bool fullScreen = true}) {
+    final android = AndroidNotificationDetails(
       _channelId,
       _channelName,
       channelDescription: _channelDescription,
       importance: Importance.max,
       priority: Priority.high,
       category: AndroidNotificationCategory.alarm,
-      fullScreenIntent: true,
+      fullScreenIntent: fullScreen,
       playSound: true,
       enableVibration: true,
       audioAttributesUsage: AudioAttributesUsage.alarm,
       visibility: NotificationVisibility.public,
+      actions: [
+        const AndroidNotificationAction(
+          actionSnooze,
+          'Posponer 10 min',
+          showsUserInterface: false,
+        ),
+        const AndroidNotificationAction(
+          actionDismiss,
+          'Descartar',
+          cancelNotification: true,
+          showsUserInterface: false,
+        ),
+      ],
     );
     const darwin = DarwinNotificationDetails(
       presentAlert: true,
@@ -336,7 +400,7 @@ class AlarmNotificationService {
       presentSound: true,
       interruptionLevel: InterruptionLevel.timeSensitive,
     );
-    return const NotificationDetails(android: android, iOS: darwin);
+    return NotificationDetails(android: android, iOS: darwin);
   }
 
   Future<void> _scheduleOne(RosaryAlarm alarm) async {
@@ -402,7 +466,9 @@ class AlarmNotificationService {
       await _plugin.zonedSchedule(
         id: id,
         scheduledDate: when,
-        notificationDetails: _notificationDetails(),
+        notificationDetails: _notificationDetails(
+          fullScreen: alarm.alarmType != AlarmType.notificationOnly,
+        ),
         androidScheduleMode: androidMode,
         title: 'Santo Rosario',
         body: repeatDaily

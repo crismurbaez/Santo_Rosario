@@ -1,5 +1,7 @@
 import 'dart:convert';
 
+enum AlarmType { guidedAudio, fullScreenAlarm, notificationOnly }
+
 /// Una alarma guardada: fecha y hora locales; puede repetirse cada día o semana.
 class RosaryAlarm {
   const RosaryAlarm({
@@ -13,7 +15,7 @@ class RosaryAlarm {
     this.repeatDaily = false,
     this.daysOfWeek = const [],
     this.enabled = true,
-    this.openRosaryWithGuidedAudio = false,
+    this.alarmType = AlarmType.fullScreenAlarm,
   });
 
   final String id;
@@ -27,8 +29,11 @@ class RosaryAlarm {
   final List<int> daysOfWeek;
   final bool enabled;
 
-  /// Si es true: al disparar la alarma la app va al rosario y arranca el audio guiado.
-  final bool openRosaryWithGuidedAudio;
+  /// Tipo de comportamiento al activarse.
+  final AlarmType alarmType;
+
+  /// Para compatibilidad con código anterior.
+  bool get openRosaryWithGuidedAudio => alarmType == AlarmType.guidedAudio;
 
   /// Id estable para [FlutterLocalNotificationsPlugin.cancel] / `zonedSchedule`.
   /// Si hay varios días, se usa un ID derivado para cada uno.
@@ -51,7 +56,7 @@ class RosaryAlarm {
     bool? repeatDaily,
     List<int>? daysOfWeek,
     bool? enabled,
-    bool? openRosaryWithGuidedAudio,
+    AlarmType? alarmType,
   }) {
     return RosaryAlarm(
       id: id ?? this.id,
@@ -64,8 +69,7 @@ class RosaryAlarm {
       repeatDaily: repeatDaily ?? this.repeatDaily,
       daysOfWeek: daysOfWeek ?? this.daysOfWeek,
       enabled: enabled ?? this.enabled,
-      openRosaryWithGuidedAudio:
-          openRosaryWithGuidedAudio ?? this.openRosaryWithGuidedAudio,
+      alarmType: alarmType ?? this.alarmType,
     );
   }
 
@@ -80,7 +84,7 @@ class RosaryAlarm {
         'repeatDaily': repeatDaily,
         'daysOfWeek': daysOfWeek,
         'enabled': enabled,
-        'openRosaryWithGuidedAudio': openRosaryWithGuidedAudio,
+        'alarmType': alarmType.name,
       };
 
   static RosaryAlarm? fromJson(Object? raw) {
@@ -98,6 +102,14 @@ class RosaryAlarm {
         daysOfWeek = [DateTime(y, m, d).weekday];
       }
 
+      // Manejo de la migración del tipo de alarma
+      AlarmType type = AlarmType.fullScreenAlarm;
+      if (raw['alarmType'] != null) {
+        type = AlarmType.values.byName(raw['alarmType'] as String);
+      } else if (raw['openRosaryWithGuidedAudio'] == true) {
+        type = AlarmType.guidedAudio;
+      }
+
       return RosaryAlarm(
         id: raw['id'] as String,
         year: raw['year'] as int,
@@ -109,8 +121,7 @@ class RosaryAlarm {
         repeatDaily: raw['repeatDaily'] as bool? ?? false,
         daysOfWeek: daysOfWeek,
         enabled: raw['enabled'] as bool? ?? true,
-        openRosaryWithGuidedAudio:
-            raw['openRosaryWithGuidedAudio'] as bool? ?? false,
+        alarmType: type,
       );
     } catch (_) {
       return null;

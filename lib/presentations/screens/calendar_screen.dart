@@ -24,7 +24,7 @@ class _CalendarScreenState extends State<CalendarScreen> {
   bool _repeatWeekly = false;
   bool _repeatDaily = false;
   List<int> _selectedDays = [];
-  bool _openRosaryWithGuidedAudio = false;
+  AlarmType _alarmType = AlarmType.fullScreenAlarm;
   String? _editingId;
   bool _loading = true;
   bool _localeReady = false;
@@ -132,6 +132,17 @@ class _CalendarScreenState extends State<CalendarScreen> {
     }
   }
 
+  String _getAlarmTypeDescription(AlarmType type) {
+    switch (type) {
+      case AlarmType.guidedAudio:
+        return 'Al sonar se abre el rosario y empieza la voz guiada automáticamente.';
+      case AlarmType.fullScreenAlarm:
+        return 'Al sonar muestra la pantalla de alarma con sonido.';
+      case AlarmType.notificationOnly:
+        return 'Solo muestra una notificación. Puedes posponerla 10 min o descartarla.';
+    }
+  }
+
   void _editAlarm(RosaryAlarm a) {
     setState(() {
       _editingId = a.id;
@@ -140,7 +151,7 @@ class _CalendarScreenState extends State<CalendarScreen> {
       _repeatWeekly = a.repeatWeekly;
       _repeatDaily = a.repeatDaily;
       _selectedDays = List.from(a.daysOfWeek);
-      _openRosaryWithGuidedAudio = a.openRosaryWithGuidedAudio;
+      _alarmType = a.alarmType;
     });
   }
 
@@ -235,7 +246,7 @@ class _CalendarScreenState extends State<CalendarScreen> {
       repeatWeekly: _repeatWeekly,
       daysOfWeek: _selectedDays,
       enabled: true,
-      openRosaryWithGuidedAudio: _openRosaryWithGuidedAudio,
+      alarmType: _alarmType,
     );
   }
 
@@ -317,7 +328,7 @@ class _CalendarScreenState extends State<CalendarScreen> {
         _repeatWeekly = false;
         _repeatDaily = false;
         _selectedDays = [];
-        _openRosaryWithGuidedAudio = false;
+        _alarmType = AlarmType.fullScreenAlarm;
       }
     });
     ScaffoldMessenger.of(context).showSnackBar(
@@ -385,7 +396,7 @@ class _CalendarScreenState extends State<CalendarScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  if (_openRosaryWithGuidedAudio &&
+                  if (_alarmType == AlarmType.guidedAudio &&
                       _autoStartDiagnostic != null &&
                       !_autoStartDiagnostic!.canLikelyAutoOpen)
                     Container(
@@ -742,69 +753,99 @@ class _CalendarScreenState extends State<CalendarScreen> {
                   ),
                   const SizedBox(height: 10),
                   _GlassCard(
-                    child: Theme(
-                      data: Theme.of(context).copyWith(
-                        switchTheme: SwitchThemeData(
-                          thumbColor: WidgetStateProperty.resolveWith((states) {
-                            if (states.contains(WidgetState.selected)) {
-                              return AppHomeColors.switchActiveThumb;
-                            }
-                            return AppHomeColors.switchInactiveThumb;
-                          }),
-                          trackColor: WidgetStateProperty.resolveWith((states) {
-                            if (states.contains(WidgetState.selected)) {
-                              return AppHomeColors.switchActiveTrack;
-                            }
-                            return AppHomeColors.switchInactiveTrack;
-                          }),
-                          trackOutlineColor: WidgetStateProperty.resolveWith((
-                            states,
-                          ) {
-                            if (states.contains(WidgetState.selected)) {
-                              return AppHomeColors.switchActiveTrackBorder;
-                            }
-                            return AppHomeColors.subtitleText.withValues(
-                              alpha: 0.25,
-                            );
-                          }),
-                        ),
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 16.0,
+                        vertical: 16.0,
                       ),
-                      child: SwitchListTile.adaptive(
-                        value: _openRosaryWithGuidedAudio,
-                        onChanged: (v) async {
-                          if (v) {
-                            await AlarmNotificationService.instance
-                                .requestRuntimePermissions();
-                            final diag = await AlarmNotificationService.instance
-                                .getAndroidAutoStartDiagnostic();
-                            setState(() {
-                              _autoStartDiagnostic = diag;
-                              _openRosaryWithGuidedAudio = v;
-                            });
-                          } else {
-                            setState(() => _openRosaryWithGuidedAudio = v);
-                          }
-                        },
-                        title: Text(
-                          'Abrir y rezar con voz',
-                          style: TextStyle(
-                            fontFamily: 'Poppins',
-                            fontWeight: FontWeight.w600,
-                            color: AppHomeColors.titleText,
-                            fontSize: 14.5,
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'Modo de aviso',
+                            style: TextStyle(
+                              fontFamily: 'Poppins',
+                              fontWeight: FontWeight.w600,
+                              color: AppHomeColors.titleText,
+                              fontSize: 14.5,
+                            ),
                           ),
-                        ),
-                        subtitle: Text(
-                          'Al sonar la alarma se abre el rosario del día y '
-                          'empiezan solas las oraciones guiadas. Si lo desactivás, '
-                          'solo verás la pantalla de alarma.',
-                          style: TextStyle(
-                            fontFamily: 'Poppins',
-                            fontSize: 12.5,
-                            color: AppHomeColors.subtitleText,
-                            height: 1.35,
+                          const SizedBox(height: 12),
+                          SizedBox(
+                            width: double.infinity,
+                            child: SegmentedButton<AlarmType>(
+                              segments: const [
+                                ButtonSegment(
+                                  value: AlarmType.guidedAudio,
+                                  icon: Icon(Icons.auto_stories_rounded, size: 20),
+                                  label: Text('Voz'),
+                                ),
+                                ButtonSegment(
+                                  value: AlarmType.fullScreenAlarm,
+                                  icon: Icon(Icons.alarm_rounded, size: 20),
+                                  label: Text('Alarma'),
+                                ),
+                                ButtonSegment(
+                                  value: AlarmType.notificationOnly,
+                                  icon: Icon(Icons.notifications_active_rounded, size: 20),
+                                  label: Text('Aviso'),
+                                ),
+                              ],
+                              selected: {_alarmType},
+                              onSelectionChanged: (Set<AlarmType> newSelection) async {
+                                final selected = newSelection.first;
+                                if (selected != AlarmType.notificationOnly) {
+                                  await AlarmNotificationService.instance
+                                      .requestRuntimePermissions();
+                                  final diag = await AlarmNotificationService.instance
+                                      .getAndroidAutoStartDiagnostic();
+                                  setState(() {
+                                    _autoStartDiagnostic = diag;
+                                    _alarmType = selected;
+                                  });
+                                } else {
+                                  setState(() => _alarmType = selected);
+                                }
+                              },
+                              style: SegmentedButton.styleFrom(
+                                selectedBackgroundColor: AppHomeColors.switchActiveGradientTop.withValues(alpha: 0.2),
+                                selectedForegroundColor: AppHomeColors.switchActiveGradientTop,
+                                foregroundColor: AppHomeColors.subtitleText,
+                                side: BorderSide(
+                                  color: AppHomeColors.subtitleText.withValues(alpha: 0.15),
+                                ),
+                                textStyle: const TextStyle(
+                                  fontFamily: 'Poppins',
+                                  fontWeight: FontWeight.w600,
+                                  fontSize: 13,
+                                ),
+                              ),
+                            ),
                           ),
-                        ),
+                          const SizedBox(height: 12),
+                          Row(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Icon(
+                                Icons.info_outline_rounded,
+                                size: 14,
+                                color: AppHomeColors.switchActiveGradientTop,
+                              ),
+                              const SizedBox(width: 8),
+                              Expanded(
+                                child: Text(
+                                  _getAlarmTypeDescription(_alarmType),
+                                  style: TextStyle(
+                                    fontFamily: 'Poppins',
+                                    fontSize: 12,
+                                    color: AppHomeColors.subtitleText,
+                                    height: 1.3,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ],
                       ),
                     ),
                   ),
