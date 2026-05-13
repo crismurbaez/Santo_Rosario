@@ -173,9 +173,9 @@ class _CalendarScreenState extends State<CalendarScreen> {
   String _getAlarmTypeDescription(AlarmType type) {
     switch (type) {
       case AlarmType.guidedAudio:
-        return 'Al sonar se abre el rosario y empieza la voz guiada automáticamente sólo con la pantalla en bloqueo. Si la pantalla está encendida, solo muestra una notificación, que al presionarla se abre el rosario y empieza la voz guiada.';
+        return 'Al sonar se abre el rosario y empieza la voz guiada automáticamente sólo con la pantalla en bloqueo o apagada. Si la pantalla está encendida, solo muestra una notificación, que al presionarla se abre el rosario y empieza la voz guiada.';
       case AlarmType.fullScreenAlarm:
-        return 'Al sonar muestra la pantalla de alarma con sonido.';
+        return 'Al sonar muestra la pantalla de alarma con sonido sólo con la pantalla en bloqueo o apagada. Si la pantalla está encendida, solo muestra una notificación, que al presionarla suena la alarma.';
       case AlarmType.notificationOnly:
         return 'Solo muestra una notificación. Puedes posponerla 10 min o descartarla.';
     }
