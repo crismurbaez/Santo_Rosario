@@ -51,7 +51,7 @@ class _PrayScreenState extends State<PrayScreen>
   int _oldCounter = 0;
 
   Map<String, String> rosaryprayersSounds = Data.prayersSounds;
-  late String prayerSound;
+  String? prayerSound;
   final _audioService = AudioService();
   final _preferencesService = PreferencesService();
   bool _isplaying = false; //variable para controlar el audio
@@ -698,22 +698,37 @@ class _PrayScreenState extends State<PrayScreen>
         return;
       }
       final prayerLabel = _safeCurrentPrayerLabel;
+      String? nextSound;
+
       if (rosaryprayersSounds[prayerLabel] != null) {
-        prayerSound = rosaryprayersSounds[prayerLabel]!;
+        nextSound = rosaryprayersSounds[prayerLabel];
       }
 
       if (prayerLabel == 'Misterio') {
         String soundMystery = '${widget.mystery}${_orderMystery.toString()}';
-        prayerSound = rosaryprayersSounds[soundMystery]!;
+        nextSound = rosaryprayersSounds[soundMystery];
       }
 
+      // Si no hay sonido definido, no intentamos reproducir nada
+      if (nextSound == null) {
+        _isIncrementingInProgress = false;
+        return;
+      }
+
+      prayerSound = nextSound;
+
       if (_isplaying) {
-        //retraso de 15 segundos si el sonido es 'Señal de la Cruz' y la música de fondo está activa
-        prayerSound == AppAssets.soundSignalOfTheCross &&
-                _isBackgroundMusicPlaying
-            ? await Future.delayed(AppDelays.delayMusic)
-            : null;
-        await _audioService.playPrayer(prayerSound);
+        // retraso de 15 segundos si el sonido es 'Señal de la Cruz' y la música de fondo está activa
+        if (prayerSound == AppAssets.soundSignalOfTheCross && _isBackgroundMusicPlaying) {
+          await Future.delayed(AppDelays.delayMusic);
+        }
+
+        // Verificamos de nuevo el requestId tras el posible delay de la música
+        if (requestId != _audioRequestId || !_isplaying) {
+          return;
+        }
+
+        await _audioService.playPrayer(prayerSound!);
 
         if (mounted && requestId == _audioRequestId && _isplaying) {
           _trustPrayerPlaybackCompleted = true;
@@ -752,7 +767,8 @@ class _PrayScreenState extends State<PrayScreen>
   bool _isExpectedAudioInterruption(Object error) {
     final text = error.toString().toLowerCase();
     return text.contains('loading interrupted') ||
-        text.contains('playerinterruptedexception');
+        text.contains('playerinterruptedexception') ||
+        text.contains('connection aborted');
   }
 
   void _dismissError() {
