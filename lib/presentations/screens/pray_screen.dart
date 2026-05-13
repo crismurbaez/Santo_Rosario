@@ -166,6 +166,10 @@ class _PrayScreenState extends ConsumerState<PrayScreen>
     _audioSessionButtonDebounceTimer = null;
     _tutorialArrowPulseController.dispose();
     WakelockPlus.disable(); // Desactiva el wakelock (pantalla se apagará)
+    
+    // Detener el audio al salir de la pantalla (botón atrás)
+    ref.read(audioHandlerProvider).stop();
+    
     super.dispose();
   }
 
@@ -173,8 +177,12 @@ class _PrayScreenState extends ConsumerState<PrayScreen>
   void didChangeAppLifecycleState(AppLifecycleState state) {
     switch (state) {
       case AppLifecycleState.paused:
+        _persistProgressSnapshotFromState();
+        break;
       case AppLifecycleState.detached:
         _persistProgressSnapshotFromState();
+        // Detener el audio completamente cuando la app se cierra
+        ref.read(audioHandlerProvider).stop();
         break;
       case AppLifecycleState.resumed:
       case AppLifecycleState.inactive:
@@ -624,31 +632,7 @@ class _PrayScreenState extends ConsumerState<PrayScreen>
 
 
 
-  void _onAudioStateChanged(MediaItem? item, PlaybackState state) {
-    if (item == null) return;
-    
-    final int? hCounter = item.extras?['counter'];
-    final int? hOrderPrayer = item.extras?['orderPrayer'];
-    final int? hOrderMystery = item.extras?['orderMystery'];
 
-    if (hCounter != null && hOrderPrayer != null) {
-      if (hCounter != _counter || hOrderPrayer != _orderPrayer) {
-        setState(() {
-          _counter = hCounter;
-          _orderPrayer = hOrderPrayer;
-          if (hOrderMystery != null) _orderMystery = hOrderMystery;
-          _maybeUpdateMysteryGlassLabelFromPill();
-        });
-        _savePrefs();
-      }
-    }
-
-    if (state.playing != _isplaying) {
-      setState(() {
-        _isplaying = state.playing;
-      });
-    }
-  }
 
   void _dismissError() {
     setState(() {
@@ -729,7 +713,7 @@ class _PrayScreenState extends ConsumerState<PrayScreen>
 
     final handler = ref.read(audioHandlerProvider);
     if (_isplaying) {
-      handler.pause();
+      handler.stop();
     } else {
       _syncHandlerParams();
       handler.play();
@@ -755,62 +739,42 @@ class _PrayScreenState extends ConsumerState<PrayScreen>
   }
 
   void _incrementCounter() {
-    setState(() {
-      if (_orderPrayer < _currentPrayers.length - 1) {
-        _orderPrayer++;
-        _isDecrement = false;
-      } else {
-        if (_counter < rosaryBeadCount - 1) {
-          _counter++; // Incrementa el contador
-          _orderPrayer = 0;
-          _isDecrement = false;
-        }
-      }
-    });
-
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (!mounted || !_hasMeaningfulPrayers()) return;
-      _syncHandlerParams();
-      if (_isRosaryComplete()) {
-        Future.microtask(() async {
-          await _preferencesService.clearPrayerProgressSnapshot();
-        });
-      }
-    });
+    // Usamos el handler como fuente de verdad única para evitar desincronización
+    ref.read(audioHandlerProvider).skipToNext();
   }
 
   void _decrementCounter() {
-    setState(() {
-      if (_orderPrayer > 0) {
-        _orderPrayer--; // Decrementa el orden de oración
-        _isDecrement = true;
-      } else if (_counter > 0 && _orderPrayer == 0) {
-        _counter--; // Disminuye el contador
-        _orderPrayer = 0;
-        _isDecrement = true;
-      }
-    });
-    _syncHandlerParams();
+    // Usamos el handler como fuente de verdad única
+    ref.read(audioHandlerProvider).skipToPrevious();
   }
 
   // Esta función se llama cuando una cuenta es resaltada
   // y actualiza las oraciones actuales y el orden del misterio.
   void _handleCuentaHighlighted(List<String> prayers, int orderMystery) {
-    // Solo actualizamos si las oraciones son diferentes para evitar redibujados innecesarios
-    if (_currentPrayers.toString() != prayers.toString() ||
-        (_orderMystery != orderMystery)) {
-      // Usamos addPostFrameCallback para posponer la llamada a setState
-      // hasta después de que el frame actual haya terminado de construirse.
+    // Si venimos de un salto explícito, debemos resetear el flag y ajustar la oración
+    // independientemente de si los arrays de oraciones son idénticos o no.
+    if (_explicitOrderPrayerAfterHighlight) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted) return;
         setState(() {
-          _currentPrayers = prayers; // Actualiza las oraciones actuales
-          _orderMystery = orderMystery; // Actualiza el orden del misterio
-          if (_explicitOrderPrayerAfterHighlight) {
-            final maxPrayer = prayers.isEmpty ? 0 : prayers.length - 1;
-            _orderPrayer = _explicitOrderPrayerTargetIndex.clamp(0, maxPrayer);
-            _explicitOrderPrayerAfterHighlight = false;
-            _isDecrement = false;
-          } else if (_pendingProgressRestore &&
+          _currentPrayers = prayers;
+          _orderMystery = orderMystery;
+          final maxPrayer = prayers.isEmpty ? 0 : prayers.length - 1;
+          _orderPrayer = _explicitOrderPrayerTargetIndex.clamp(0, maxPrayer);
+          _explicitOrderPrayerAfterHighlight = false;
+          _isDecrement = false;
+          _maybeUpdateMysteryGlassLabelFromPill();
+        });
+      });
+    } else if (_currentPrayers.toString() != prayers.toString() ||
+        (_orderMystery != orderMystery)) {
+      // Cambio normal de cuenta por navegación manual o automática
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted) return;
+        setState(() {
+          _currentPrayers = prayers;
+          _orderMystery = orderMystery;
+          if (_pendingProgressRestore &&
               prayers.isNotEmpty &&
               (prayers.length > 1 || prayers.first.trim().isNotEmpty)) {
             final maxPrayer = prayers.length - 1;
@@ -826,9 +790,9 @@ class _PrayScreenState extends ConsumerState<PrayScreen>
         });
       });
     }
+
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      //si cambia el orden de la oración en el array _currentPrayers
-      // o si cambia el contador de avance de perla _counter
+      if (!mounted) return;
       if (_oldOrderPrayer != _orderPrayer || _oldCounter != _counter) {
         _syncHandlerParams();
         setState(() {
@@ -927,8 +891,16 @@ class _PrayScreenState extends ConsumerState<PrayScreen>
       setState(() {
         final maxIx = _currentPrayers.isEmpty ? 0 : _currentPrayers.length - 1;
         _orderPrayer = anchor.misterioPrayerIndex.clamp(0, maxIx);
+        _orderMystery = Data.rosaryBeadSteps[anchor.beadIndex].orderMystery;
         _isDecrement = false;
         _pendingProgressRestore = false;
+      });
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted) return;
+        _syncHandlerParams();
+        if (_isplaying) {
+          ref.read(audioHandlerProvider).play();
+        }
       });
       return;
     }
@@ -938,8 +910,17 @@ class _PrayScreenState extends ConsumerState<PrayScreen>
     setState(() {
       _counter = anchor.beadIndex.clamp(0, rosaryBeadCount - 1);
       _orderPrayer = anchor.misterioPrayerIndex;
+      _orderMystery = Data.rosaryBeadSteps[_counter].orderMystery;
       _isDecrement = false;
       _pendingProgressRestore = false;
+    });
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      _syncHandlerParams();
+      if (_isplaying) {
+        ref.read(audioHandlerProvider).play();
+      }
     });
   }
 
@@ -1071,18 +1052,6 @@ class _PrayScreenState extends ConsumerState<PrayScreen>
 
   @override
   Widget build(BuildContext context) {
-    // Sincronizar el estado de la UI con el servicio de audio de fondo
-    ref.listen(playbackStateProvider, (previous, next) {
-      if (next.hasValue) {
-        _onAudioStateChanged(ref.read(currentMediaItemProvider).value, next.value!);
-      }
-    });
-
-    ref.listen(currentMediaItemProvider, (previous, next) {
-      if (next.hasValue) {
-        _onAudioStateChanged(next.value, ref.read(playbackStateProvider).value ?? PlaybackState());
-      }
-    });
 
     final double topBelowAppBarGlobal =
         MediaQuery.paddingOf(context).top + AppLayout.appBarToolbarHeight + 8;
@@ -1106,6 +1075,40 @@ class _PrayScreenState extends ConsumerState<PrayScreen>
       }
     }
 
+    // Escuchar cambios en el estado de reproducción (play/pause)
+    ref.listen<AsyncValue<PlaybackState>>(playbackStateProvider, (previous, next) {
+      if (next.hasValue) {
+        final state = next.value!;
+        if (state.playing != _isplaying) {
+          setState(() {
+            _isplaying = state.playing;
+          });
+        }
+      }
+    });
+
+    // Escuchar cambios en el elemento actual (posición del rosario)
+    ref.listen<AsyncValue<MediaItem?>>(currentMediaItemProvider, (previous, next) {
+      if (next.hasValue && next.value != null) {
+        final item = next.value!;
+        final int? hCounter = item.extras?['counter'];
+        final int? hOrderPrayer = item.extras?['orderPrayer'];
+        final int? hOrderMystery = item.extras?['orderMystery'];
+
+        if (hCounter != null && hOrderPrayer != null) {
+          if (hCounter != _counter || hOrderPrayer != _orderPrayer) {
+            setState(() {
+              _counter = hCounter;
+              _orderPrayer = hOrderPrayer;
+              if (hOrderMystery != null) _orderMystery = hOrderMystery;
+              _maybeUpdateMysteryGlassLabelFromPill();
+            });
+            _savePrefs();
+          }
+        }
+      }
+    });
+
     final bool mysteryNavAnchorsAllowed =
         widget.mystery != null &&
         _loadedImages != null &&
@@ -1121,10 +1124,15 @@ class _PrayScreenState extends ConsumerState<PrayScreen>
     final bool canJumpNextMisterio =
         mysteryNavAnchorsAllowed && nextMysteryAnchorNav != null;
 
-    return Scaffold(
-      // Permite que el [body] (imagen de la Virgen) dibuje detrás del AppBar;
-      // así el blur del flexibleSpace ve el mismo fondo que el resto de la pantalla.
-      extendBodyBehindAppBar: true,
+    return WillPopScope(
+      onWillPop: () async {
+        ref.read(audioHandlerProvider).stop();
+        return true;
+      },
+      child: Scaffold(
+        // Permite que el [body] (imagen de la Virgen) dibuje detrás del AppBar;
+        // así el blur del flexibleSpace ve el mismo fondo que el resto de la pantalla.
+        extendBodyBehindAppBar: true,
       appBar: AppBar(
         // Sin color sólido: el “vidrio” lo pinta [flexibleSpace].
         backgroundColor: Colors.transparent,
@@ -1137,7 +1145,10 @@ class _PrayScreenState extends ConsumerState<PrayScreen>
         leading: IconButton(
           icon: const Icon(Icons.arrow_back_ios_new, size: 20),
           color: AppPrayGlass.onGlassText,
-          onPressed: () => Navigator.maybePop(context),
+          onPressed: () {
+            ref.read(audioHandlerProvider).stop();
+            Navigator.maybePop(context);
+          },
         ),
         // Capa bajo los iconos y títulos: blur + degradé + línea inferior.
         flexibleSpace: ClipRect(
@@ -1607,6 +1618,7 @@ class _PrayScreenState extends ConsumerState<PrayScreen>
               ),
             ),
         ],
+        ),
       ),
     );
   }

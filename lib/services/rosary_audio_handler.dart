@@ -48,6 +48,10 @@ class RosaryAudioHandler extends BaseAudioHandler {
   Future<void> stop() async {
     await _prayerPlayer.stop();
     await _backgroundPlayer.stop();
+    playbackState.add(playbackState.value.copyWith(
+      playing: false,
+      processingState: AudioProcessingState.idle,
+    ));
     return super.stop();
   }
 
@@ -137,7 +141,9 @@ class RosaryAudioHandler extends BaseAudioHandler {
       _orderPrayer--;
     } else if (_counter > 0) {
       _counter--;
-      _orderPrayer = 0;
+      // Al volver atrás, empezamos por la última oración de la cuenta anterior
+      final prevStep = Data.rosaryBeadSteps[_counter];
+      _orderPrayer = prevStep.prayers.length - 1;
     }
     _updateMediaItem();
   }
