@@ -60,14 +60,8 @@ class _CalendarScreenState extends State<CalendarScreen> {
   }
 
   int _compareAlarms(RosaryAlarm a, RosaryAlarm b) {
-    final svc = AlarmNotificationService.instance;
-    final da = svc.nextFireAsDateTime(a);
-    final db = svc.nextFireAsDateTime(b);
-    if (da == null && db == null) return a.id.compareTo(b.id);
-    if (da == null) return 1;
-    if (db == null) return -1;
-    final c = da.compareTo(db);
-    if (c != 0) return c;
+    if (a.hour != b.hour) return a.hour.compareTo(b.hour);
+    if (a.minute != b.minute) return a.minute.compareTo(b.minute);
     return a.id.compareTo(b.id);
   }
 
