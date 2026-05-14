@@ -7,6 +7,7 @@ import '../../data/models/data.dart';
 import '../widgets/mystery_list_item.dart';
 import 'package:santo_rosario/constants/app_constants.dart';
 import 'package:santo_rosario/services/preferences_service.dart';
+import '../../utils/snack_bar_utils.dart';
 
 class HomeScreen extends ConsumerStatefulWidget {
   const HomeScreen(
@@ -235,20 +236,10 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                               Navigator.of(sheetContext).pop();
                               await _preferencesService
                                   .resetPrayScreenHelpTips();
-                              if (!mounted || !context.mounted) return;
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                SnackBar(
-                                  behavior: SnackBarBehavior.floating,
-                                  backgroundColor: AppHomeColors.titleText,
-                                  content: const Text(
-                                    'La próxima vez que entres en la pantalla de oración verás de nuevo el tutorial de la aplicación.',
-                                    style: TextStyle(
-                                      fontFamily: 'Poppins',
-                                      color: Colors.white,
-                                      fontSize: 14,
-                                    ),
-                                  ),
-                                ),
+                               if (!mounted || !context.mounted) return;
+                              SnackBarUtils.showInfo(
+                                context,
+                                'La próxima vez que entres en la pantalla de oración verás de nuevo el tutorial de la aplicación.',
                               );
                             },
                             child: Ink(
@@ -529,24 +520,13 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                               await _preferencesService
                                   .clearPrayerProgressSnapshot();
                               if (!sheetContext.mounted) return;
+                              Navigator.of(sheetContext).pop();
                               progressClearPressed = false;
                               setModalState(() {});
                               if (!mounted || !context.mounted) return;
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                SnackBar(
-                                  behavior: SnackBarBehavior.floating,
-                                  backgroundColor: AppHomeColors.titleText,
-                                  content: const Text(
-                                    'Se borró el avance guardado. La próxima '
-                                    'vez que entres en la oración comenzarás '
-                                    'desde el inicio de la secuencia.',
-                                    style: TextStyle(
-                                      fontFamily: 'Poppins',
-                                      color: Colors.white,
-                                      fontSize: 14,
-                                    ),
-                                  ),
-                                ),
+                              SnackBarUtils.showInfo(
+                                context,
+                                'Se borró el avance guardado. Comenzarás desde el inicio.',
                               );
                             },
                             child: Ink(

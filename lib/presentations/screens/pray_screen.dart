@@ -16,6 +16,7 @@ import '../../data/models/data.dart';
 import '../widgets/rosary_painter.dart';
 import '../widgets/prayer_dialog.dart';
 import 'package:wakelock_plus/wakelock_plus.dart';
+import '../../utils/snack_bar_utils.dart';
 
 class PrayScreen extends ConsumerStatefulWidget {
   const PrayScreen({
@@ -65,9 +66,6 @@ class _PrayScreenState extends ConsumerState<PrayScreen>
   Timer? _audioSessionButtonDebounceTimer;
 
   AppError? _currentError;
-
-  String? _currentInfoMessage;
-  Timer? _infoMessageTimer;
   final List<_HelpMessageDefinition> _helpMessageQueue = [];
   _HelpMessageDefinition? _activeHelpMessage;
   bool _didBuildHelpQueue = false;
@@ -161,7 +159,6 @@ class _PrayScreenState extends ConsumerState<PrayScreen>
   void dispose() {
     WidgetsBinding.instance.removeObserver(this);
     _persistProgressSnapshotFromState();
-    _infoMessageTimer?.cancel();
     _audioSessionButtonDebounceTimer?.cancel();
     _audioSessionButtonDebounceTimer = null;
     _tutorialArrowPulseController.dispose();
@@ -433,19 +430,6 @@ class _PrayScreenState extends ConsumerState<PrayScreen>
     }
   }
 
-  void _showTopInfoMessage(String text) {
-    _infoMessageTimer?.cancel();
-    if (!mounted) return;
-    setState(() {
-      _currentInfoMessage = text;
-    });
-    _infoMessageTimer = Timer(const Duration(seconds: 4), () {
-      if (!mounted) return;
-      setState(() {
-        _currentInfoMessage = null;
-      });
-    });
-  }
 
   /// Posición Y en el [Stack] del body equivalente a una Y en coordenadas globales.
   double _yGlobalToPrayBodyStack(BuildContext context, double yGlobal) {
@@ -620,12 +604,13 @@ class _PrayScreenState extends ConsumerState<PrayScreen>
       _isBatterySaverActive = !_isBatterySaverActive;
       if (_isBatterySaverActive) {
         WakelockPlus.disable(); // Desactiva el wakelock (ahorro de batería)
-        _showTopInfoMessage(
+        SnackBarUtils.showTopInfo(
+          context,
           'Modo ahorro de bateria activado (la pantalla puede apagarse).',
         );
       } else {
         WakelockPlus.enable(); // Activa el wakelock (pantalla siempre encendida)
-        _showTopInfoMessage('Modo pantalla siempre encendida activado.');
+        SnackBarUtils.showTopInfo(context, 'Modo pantalla siempre encendida activado.');
       }
     });
   }
@@ -659,27 +644,14 @@ class _PrayScreenState extends ConsumerState<PrayScreen>
       if (!mounted) return;
       _dismissError();
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Información técnica enviada al desarrollador.'),
-          behavior: SnackBarBehavior.floating,
-          duration: Duration(seconds: 5),
-        ),
-      );
+      SnackBarUtils.showSuccess(context, 'Información técnica enviada al desarrollador.');
     } on ErrorReporterException catch (e) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(e.message), behavior: SnackBarBehavior.floating),
-      );
+      SnackBarUtils.showError(context, e.message);
     } catch (e, st) {
       debugPrint('[sendErrorReportToDeveloper] $e\n$st');
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('No se pudo enviar el reporte. ${e.toString()}'),
-          behavior: SnackBarBehavior.floating,
-        ),
-      );
+      SnackBarUtils.showError(context, 'No se pudo enviar el reporte.');
     }
   }
 
@@ -687,14 +659,12 @@ class _PrayScreenState extends ConsumerState<PrayScreen>
     if (!mounted) return;
     _errorLogService.logError(error, screen: 'PrayScreen');
     if (error.severity == ErrorSeverity.error) {
-      _infoMessageTimer?.cancel();
       setState(() {
         _currentError = error;
-        _currentInfoMessage = null;
       });
       return;
     }
-    _showTopInfoMessage(error.userMessage);
+    SnackBarUtils.showInfo(context, error.userMessage);
   }
 
   void playPause() {
@@ -1493,49 +1463,6 @@ class _PrayScreenState extends ConsumerState<PrayScreen>
             ),
           ),
           ..._buildTutorialArrowOverlays(context),
-          Positioned(
-            top: tutorialTop,
-            left: AppLayout.errorBannerInset,
-            right: AppLayout.errorBannerInset,
-            child: IgnorePointer(
-              ignoring:
-                  _currentInfoMessage == null || _activeHelpMessage != null,
-              child: AnimatedOpacity(
-                opacity:
-                    (_currentInfoMessage == null || _activeHelpMessage != null)
-                    ? 0
-                    : 1,
-                duration: const Duration(milliseconds: 180),
-                child: Material(
-                  color: Colors.transparent,
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 12,
-                      vertical: 10,
-                    ),
-                    decoration: BoxDecoration(
-                      color: AppPrayGlass.navBarGradientBottom.withValues(
-                        alpha: 0.95,
-                      ),
-                      borderRadius: BorderRadius.circular(14),
-                      border: Border.all(
-                        color: AppPrayGlass.borderLight.withValues(alpha: 0.45),
-                      ),
-                    ),
-                    child: Text(
-                      _currentInfoMessage ?? '',
-                      style: const TextStyle(
-                        color: AppPrayGlass.onGlassText,
-                        fontFamily: 'Poppins',
-                        fontSize: 13,
-                        fontWeight: FontWeight.w500,
-                      ),
-                    ),
-                  ),
-                ),
-              ),
-            ),
-          ),
           if (_currentError != null &&
               _currentError!.severity == ErrorSeverity.error)
             Positioned(

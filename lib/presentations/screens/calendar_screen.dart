@@ -7,6 +7,7 @@ import 'package:santo_rosario/services/alarm_notification_service.dart';
 import 'package:santo_rosario/services/alarm_storage_service.dart';
 import 'package:santo_rosario/services/preferences_service.dart';
 import 'package:uuid/uuid.dart';
+import '../../utils/snack_bar_utils.dart';
 
 class CalendarScreen extends StatefulWidget {
   const CalendarScreen({super.key});
@@ -251,16 +252,8 @@ class _CalendarScreenState extends State<CalendarScreen> {
     if (_editingId == a.id) _editingId = null;
     setState(() {});
     if (!mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        behavior: SnackBarBehavior.floating,
-        backgroundColor: AppHomeColors.titleText,
-        content: const Text(
-          'Alarma eliminada.',
-          style: TextStyle(fontFamily: 'Poppins', color: Colors.white),
-        ),
-      ),
-    );
+    if (!mounted) return;
+    SnackBarUtils.showInfo(context, 'Alarma eliminada.');
   }
 
   Future<void> _toggleEnabled(RosaryAlarm a, bool value) async {
@@ -297,16 +290,10 @@ class _CalendarScreenState extends State<CalendarScreen> {
     } catch (e, st) {
       debugPrint('[CalendarScreen] sync alarmas: $e\n$st');
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          behavior: SnackBarBehavior.floating,
-          backgroundColor: AppHomeColors.titleText,
-          content: Text(
-            'Las alarmas se guardaron, pero hubo un problema al programarlas '
-            '([$e]). Verificá permisos de notificación y alarmas exactas.',
-            style: const TextStyle(fontFamily: 'Poppins', color: Colors.white),
-          ),
-        ),
+      if (!mounted) return;
+      SnackBarUtils.showError(
+        context,
+        'Hubo un problema al programar las alarmas.',
       );
     }
   }
@@ -317,50 +304,24 @@ class _CalendarScreenState extends State<CalendarScreen> {
 
     if (alarm.openRosaryWithGuidedAudio && !_prayersAudioEnabled) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          behavior: SnackBarBehavior.floating,
-          backgroundColor: Colors.red.shade400,
-          content: const Text(
-            'Para usar el modo Voz, debes activar el "Audio de oraciones" en las opciones de abajo.',
-            style: TextStyle(
-              fontFamily: 'Poppins',
-              color: Colors.white,
-              fontSize: 13,
-            ),
-          ),
-        ),
+      if (!mounted) return;
+      SnackBarUtils.showError(
+        context,
+        'Activá el "Audio de oraciones" en las opciones.',
       );
       return;
     }
     if (!AlarmNotificationService.supportsNativeSchedule) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          behavior: SnackBarBehavior.floating,
-          backgroundColor: AppHomeColors.titleText,
-          content: const Text(
-            'Las alarmas programadas están pensadas para Android e iOS. '
-            'En esta plataforma no se pueden activar.',
-            style: TextStyle(fontFamily: 'Poppins', color: Colors.white),
-          ),
-        ),
-      );
+      if (!mounted) return;
+      SnackBarUtils.showInfo(context, 'No disponible en esta plataforma.');
     }
 
     final next = AlarmNotificationService.instance.nextFireAsDateTime(alarm);
     if (!alarm.repeatWeekly && next == null) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          behavior: SnackBarBehavior.floating,
-          backgroundColor: AppHomeColors.titleText,
-          content: const Text(
-            'Elegí una fecha y hora futuras para alarmas sin repetición.',
-            style: TextStyle(fontFamily: 'Poppins', color: Colors.white),
-          ),
-        ),
-      );
+      if (!mounted) return;
+      SnackBarUtils.showError(context, 'Elegí una fecha y hora futuras.');
       return;
     }
 
@@ -390,15 +351,9 @@ class _CalendarScreenState extends State<CalendarScreen> {
         _voiceDelay = 0;
       }
     });
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        behavior: SnackBarBehavior.floating,
-        backgroundColor: AppHomeColors.titleText,
-        content: Text(
-          wasEditing ? 'Cambios guardados.' : 'Alarma guardada.',
-          style: const TextStyle(fontFamily: 'Poppins', color: Colors.white),
-        ),
-      ),
+    SnackBarUtils.showSuccess(
+      context,
+      wasEditing ? 'Cambios guardados.' : 'Alarma guardada.',
     );
   }
 
