@@ -144,7 +144,9 @@ class _PrayScreenState extends ConsumerState<PrayScreen>
 
   void _syncHandlerParams() {
     if (!mounted) return;
-    ref.read(audioHandlerProvider).updateParams(
+    ref
+        .read(audioHandlerProvider)
+        .updateParams(
           counter: _counter,
           orderPrayer: _orderPrayer,
           orderMystery: _orderMystery,
@@ -163,10 +165,10 @@ class _PrayScreenState extends ConsumerState<PrayScreen>
     _audioSessionButtonDebounceTimer = null;
     _tutorialArrowPulseController.dispose();
     WakelockPlus.disable(); // Desactiva el wakelock (pantalla se apagará)
-    
+
     // Detener el audio al salir de la pantalla (botón atrás)
     ref.read(audioHandlerProvider).stop();
-    
+
     super.dispose();
   }
 
@@ -311,7 +313,7 @@ class _PrayScreenState extends ConsumerState<PrayScreen>
     _alarmGuidedVoiceAutoStartApplied = true;
     WidgetsBinding.instance.addPostFrameCallback((_) async {
       if (!mounted) return;
-      
+
       // Aplicar retardo si existe
       if (widget.voiceDelay > 0) {
         await Future.delayed(Duration(seconds: widget.voiceDelay));
@@ -354,7 +356,7 @@ class _PrayScreenState extends ConsumerState<PrayScreen>
         text:
             'Tip: usa los botones «Misterio anterior» y «Siguiente misterio» para saltar entre misterios. Y haz click en el botón central en forma de libro para leer el misterio.',
       ),
-            const _HelpMessageDefinition(
+      const _HelpMessageDefinition(
         id: AppHelpMessageIds.prayKeepScreenOn,
         text:
             'Tip: esta pantalla queda siempre activa para acompañar la oración. Puedes cambiarlo con el ícono de bombilla, y se apagará la pantalla de acuerdo a tu configuración.',
@@ -429,7 +431,6 @@ class _PrayScreenState extends ConsumerState<PrayScreen>
       scheduleRebuild();
     }
   }
-
 
   /// Posición Y en el [Stack] del body equivalente a una Y en coordenadas globales.
   double _yGlobalToPrayBodyStack(BuildContext context, double yGlobal) {
@@ -610,14 +611,13 @@ class _PrayScreenState extends ConsumerState<PrayScreen>
         );
       } else {
         WakelockPlus.enable(); // Activa el wakelock (pantalla siempre encendida)
-        SnackBarUtils.showTopInfo(context, 'Modo pantalla siempre encendida activado.');
+        SnackBarUtils.showTopInfo(
+          context,
+          'Modo pantalla siempre encendida activado.',
+        );
       }
     });
   }
-
-
-
-
 
   void _dismissError() {
     setState(() {
@@ -644,7 +644,10 @@ class _PrayScreenState extends ConsumerState<PrayScreen>
       if (!mounted) return;
       _dismissError();
       if (!mounted) return;
-      SnackBarUtils.showSuccess(context, 'Información técnica enviada al desarrollador.');
+      SnackBarUtils.showSuccess(
+        context,
+        'Información técnica enviada al desarrollador.',
+      );
     } on ErrorReporterException catch (e) {
       if (!mounted) return;
       SnackBarUtils.showError(context, e.message);
@@ -1022,7 +1025,8 @@ class _PrayScreenState extends ConsumerState<PrayScreen>
 
   @override
   Widget build(BuildContext context) {
-
+    final mediaQuery = MediaQuery.of(context);
+    final isLandscape = mediaQuery.size.width > mediaQuery.size.height;
     final double topBelowAppBarGlobal =
         MediaQuery.paddingOf(context).top + AppLayout.appBarToolbarHeight + 8;
     final double tutorialTop = _yGlobalToPrayBodyStack(
@@ -1046,7 +1050,10 @@ class _PrayScreenState extends ConsumerState<PrayScreen>
     }
 
     // Escuchar cambios en el estado de reproducción (play/pause)
-    ref.listen<AsyncValue<PlaybackState>>(playbackStateProvider, (previous, next) {
+    ref.listen<AsyncValue<PlaybackState>>(playbackStateProvider, (
+      previous,
+      next,
+    ) {
       if (next.hasValue) {
         final state = next.value!;
         if (state.playing != _isplaying) {
@@ -1058,7 +1065,10 @@ class _PrayScreenState extends ConsumerState<PrayScreen>
     });
 
     // Escuchar cambios en el elemento actual (posición del rosario)
-    ref.listen<AsyncValue<MediaItem?>>(currentMediaItemProvider, (previous, next) {
+    ref.listen<AsyncValue<MediaItem?>>(currentMediaItemProvider, (
+      previous,
+      next,
+    ) {
       if (next.hasValue && next.value != null) {
         final item = next.value!;
         final int? hCounter = item.extras?['counter'];
@@ -1103,449 +1113,579 @@ class _PrayScreenState extends ConsumerState<PrayScreen>
         // Permite que el [body] (imagen de la Virgen) dibuje detrás del AppBar;
         // así el blur del flexibleSpace ve el mismo fondo que el resto de la pantalla.
         extendBodyBehindAppBar: true,
-      appBar: AppBar(
-        // Sin color sólido: el “vidrio” lo pinta [flexibleSpace].
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-        scrolledUnderElevation: 0,
-        toolbarHeight: AppLayout.appBarToolbarHeight,
-        centerTitle: true,
-        // Iconos de estado (batería, hora…) en claro sobre fondo oscuro.
-        systemOverlayStyle: SystemUiOverlayStyle.light,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios_new, size: 20),
-          color: AppPrayGlass.onGlassText,
-          onPressed: () {
-            ref.read(audioHandlerProvider).stop();
-            Navigator.maybePop(context);
-          },
-        ),
-        // Capa bajo los iconos y títulos: blur + degradé + línea inferior.
-        flexibleSpace: ClipRect(
-          // Evita que el blur se “salga” del rectángulo del AppBar.
-          child: BackdropFilter(
-            filter: ui.ImageFilter.blur(
-              sigmaX: AppPrayGlass.blurSigma,
-              sigmaY: AppPrayGlass.blurSigma,
-            ),
-            child: Container(
-              alignment: Alignment.bottomCenter,
-              decoration: BoxDecoration(
-                border: Border(
-                  bottom: BorderSide(
-                    color: AppPrayGlass.borderLight.withValues(alpha: 0.45),
-                  ),
-                ),
-                gradient: const LinearGradient(
-                  begin: Alignment.topCenter,
-                  end: Alignment.bottomCenter,
-                  colors: [
-                    AppPrayGlass.navBarGradientTop,
-                    AppPrayGlass.navBarGradientBottom,
-                  ],
-                ),
-              ),
-            ),
+        appBar: AppBar(
+          backgroundColor: Colors.transparent,
+          elevation: 0,
+          scrolledUnderElevation: 0,
+          toolbarHeight: isLandscape ? 46.0 : AppLayout.appBarToolbarHeight,
+          centerTitle: !isLandscape,
+          // Iconos de estado (batería, hora…) en claro sobre fondo oscuro.
+          systemOverlayStyle: SystemUiOverlayStyle.light,
+          leading: IconButton(
+            icon: const Icon(Icons.arrow_back_ios_new, size: 20),
+            color: AppPrayGlass.onGlassText,
+            onPressed: () {
+              ref.read(audioHandlerProvider).stop();
+              Navigator.maybePop(context);
+            },
           ),
-        ),
-        title: Column(
-          mainAxisSize: MainAxisSize.min,
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Text(
-              'Santo Rosario',
-              textAlign: TextAlign.center,
-              style: TextStyle(
-                fontFamily: 'PlayfairDisplay',
-                fontSize: 20,
-                fontWeight: FontWeight.w700,
-                height: 1.15,
-                color: AppColors.colorCircularProgressIndicator,
+          // Capa bajo los iconos y títulos: blur + degradé + línea inferior.
+          flexibleSpace: ClipRect(
+            // Evita que el blur se “salga” del rectángulo del AppBar.
+            child: BackdropFilter(
+              filter: ui.ImageFilter.blur(
+                sigmaX: AppPrayGlass.blurSigma,
+                sigmaY: AppPrayGlass.blurSigma,
               ),
-            ),
-            const SizedBox(height: 2),
-            Text(
-              'Misterios ${widget.mystery}',
-              textAlign: TextAlign.center,
-              style: const TextStyle(
-                fontFamily: 'Poppins',
-                fontSize: 13,
-                fontWeight: FontWeight.w400,
-                height: 1.2,
-                color: AppPrayGlass.onGlassTextMuted,
-              ),
-            ),
-          ],
-        ),
-        actions: [
-          IconButton(
-            key: _wakelockButtonKey,
-            icon: Icon(
-              _isBatterySaverActive ? Icons.battery_saver : Icons.highlight,
-              color: AppPrayGlass.onGlassText,
-            ),
-            onPressed: _toggleWakelock, // Cambia el estado del wakelock
-            tooltip: _isBatterySaverActive
-                ? 'Activar Ahorro Batería'
-                : 'Pantalla Siempre Encendida',
-          ),
-          IconButton(
-            key: _prayAudioMenuButtonKey,
-            icon: const Icon(Icons.menu, color: AppPrayGlass.onGlassText),
-            tooltip: 'Opciones de audio',
-            onPressed: _showPrayGlassAudioMenu,
-          ),
-        ],
-      ),
-      // Fondo + rosario + controles en capas. El orden importa: lo primero queda detrás.
-      body: Stack(
-        key: _prayBodyStackKey,
-        clipBehavior: Clip.none,
-        children: <Widget>[
-          Container(color: AppColors.colorBackgroundBody),
-          Container(
-            decoration: const BoxDecoration(
-              image: DecorationImage(
-                image: AssetImage(AppAssets.imageVirgenLourdes),
-                fit: BoxFit.fitHeight,
-              ),
-            ),
-          ),
-          // Reserva espacio bajo el AppBar transparente para que el rosario no quede tapado.
-          Padding(
-            padding: EdgeInsets.only(
-              top:
-                  MediaQuery.paddingOf(context).top +
-                  AppLayout.appBarToolbarHeight,
-            ),
-            child: Center(
-              child: LayoutBuilder(
-                builder: (BuildContext context, BoxConstraints constraints) {
-                  // Muestra un indicador de carga si las imágenes aún no se han cargado
-                  if (_loadedImages == null) {
-                    return const CircularProgressIndicator(
-                      color: AppColors.colorCircularProgressIndicator,
-                    );
-                  }
-
-                  // se obtienen las dimensiones de la pantalla
-                  //y se saca un porcentaje que se considera el margen adaptable a todas las pantallas
-                  final double width =
-                      AppLayout.rosaryWidthFactor * constraints.maxWidth;
-                  final double height =
-                      AppLayout.rosaryHeightFactor * constraints.maxHeight;
-
-                  return SizedBox(
-                    width: width,
-                    height: height,
-                    child: CustomPaint(
-                      painter: CuentasPainter(
-                        cuentas: _loadedImages!,
-                        counter: _counter,
-                        rosaryBeadCount: rosaryBeadCount,
-                        rosaryCircleBeadCount: rosaryCircleBeadCount,
-                        onCuentaHighlighted: _handleCuentaHighlighted,
-                        orderPrayer: _orderPrayer,
-                        onDrawingError: _handleDrawingError,
-                      ),
-                    ),
-                  );
-                },
-              ),
-            ),
-          ),
-          // Controles inferiores: mismo lenguaje visual glass que la AppBar.
-          Align(
-            alignment: Alignment.bottomCenter,
-            child: SafeArea(
-              child: Column(
-                // Solo ocupa el espacio que necesitan sus hijos.
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Padding(
-                    padding: EdgeInsets.only(
-                      left: AppLayout.sectionPadding,
-                      right: AppLayout.sectionPadding,
-                      top: AppLayout.prayScreenGlassControlsRowPaddingV,
-                      bottom: AppLayout.prayScreenGlassControlsRowPaddingV,
-                    ),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      crossAxisAlignment: CrossAxisAlignment.end,
-                      children: [
-                        Opacity(
-                          opacity: widget.mystery != null ? 1 : 0.45,
-                          child: IgnorePointer(
-                            ignoring: widget.mystery == null,
-                            child: _prayGlassMysteryTripleBar(
-                              widgetKey: _mysteryNavTripleButtonKey,
-                              clusterEnabled:
-                                  widget.mystery != null &&
-                                  _loadedImages != null,
-                              bottomCaption: _mysteryGlassLabelReady
-                                  ? '$_mysteryGlassLabelOrderº misterio'
-                                  : null,
-                              canGoPrevious: canJumpPreviousMisterio,
-                              canGoNext: canJumpNextMisterio,
-                              onPrevious: canJumpPreviousMisterio
-                                  ? () => _onJumpToAdjacentMisterio(-1)
-                                  : null,
-                              onBook: () => _showDecadeMysteryDialog(context),
-                              onNext: canJumpNextMisterio
-                                  ? () => _onJumpToAdjacentMisterio(1)
-                                  : null,
-                            ),
-                          ),
-                        ),
-                        Opacity(
-                          opacity: _audioSessionButtonLocked ? 0.45 : 1,
-                          child: AbsorbPointer(
-                            absorbing: _audioSessionButtonLocked,
-                            child: _prayGlassRoundButton(
-                              widgetKey: _playPauseButtonKey,
-                              onPressed: playPause,
-                              child: Icon(
-                                _isplaying
-                                    ? Icons.stop_rounded
-                                    : Icons.play_arrow_rounded,
-                              ),
-                            ),
-                          ),
-                        ),
-                      ],
+              child: Container(
+                alignment: Alignment.bottomCenter,
+                decoration: BoxDecoration(
+                  border: Border(
+                    bottom: BorderSide(
+                      color: AppPrayGlass.borderLight.withValues(alpha: 0.45),
                     ),
                   ),
-                  Padding(
-                    padding: EdgeInsets.only(
-                      left: AppLayout.sectionPadding,
-                      right: AppLayout.sectionPadding,
-                      top: AppLayout.prayScreenGlassControlsRowPaddingV,
-                      bottom: AppLayout.prayScreenGlassControlsRowPaddingV,
-                    ),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        _prayGlassRoundButton(
-                          widgetKey: _prevButtonKey,
-                          onPressed: _decrementCounter,
-                          child: const Icon(Icons.arrow_back),
-                        ),
-                        _prayGlassRoundButton(
-                          widgetKey: _nextButtonKey,
-                          onPressed: _incrementCounter,
-                          child: const Icon(Icons.arrow_forward),
-                        ),
-                      ],
-                    ),
-                  ),
-                  Padding(
-                    padding: EdgeInsets.only(
-                      left: AppLayout.sectionPadding,
-                      right: AppLayout.sectionPadding,
-                      top: AppLayout.prayScreenGlassControlsRowPaddingV,
-                      bottom: AppLayout.prayScreenGlassControlsBottomInset,
-                    ),
-                    // Mismo ancho interior que la fila de flechas: de borde a borde
-                    // de los dos círculos (LayoutBuilder = ancho tras el padding).
-                    child: LayoutBuilder(
-                      builder: (BuildContext context, BoxConstraints constraints) {
-                        return _prayGlassPillButton(
-                          widgetKey: _pillButtonKey,
-                          width: constraints.maxWidth,
-                          label: _safeCurrentPrayerLabel.isEmpty
-                              ? '…'
-                              : _safeCurrentPrayerLabel,
-                          onPressed: () {
-                            // Muestra el diálogo con las oraciones actuales
-                            showDialog(
-                              context: context,
-                              builder: (BuildContext dialogContext) {
-                                final label = _safeCurrentPrayerLabel;
-                                final isMisterio = label == 'Misterio';
-                                return PrayerDialog(
-                                  prayer: label.isEmpty ? '…' : label,
-                                  mystery: widget.mystery,
-                                  currentMysteryOrder:
-                                      isMisterio && widget.mystery != null
-                                      ? _effectiveMeditationOrderForMysteryGlass()
-                                      : null,
-                                  errorMessage:
-                                      _currentError?.userMessage ?? '',
-                                );
-                              },
-                            );
-                          },
-                          trailing: const Icon(
-                            Icons.info_outline,
-                            size: AppLayout.infoIconSize,
-                            // Mismo color que el texto del botón inferior.
-                            color: AppColors.colorCircularProgressIndicator,
-                          ),
-                        );
-                      },
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
-          Positioned(
-            top: helpPanelTop,
-            left: AppLayout.errorBannerInset,
-            right: AppLayout.errorBannerInset,
-            child: IgnorePointer(
-              ignoring: _activeHelpMessage == null,
-              child: AnimatedOpacity(
-                opacity: _activeHelpMessage == null ? 0 : 1,
-                duration: const Duration(milliseconds: 180),
-                child: _activeHelpMessage == null
-                    ? const SizedBox.shrink()
-                    : Material(
-                        color: Colors.transparent,
-                        child: Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 12,
-                            vertical: 10,
-                          ),
-                          decoration: BoxDecoration(
-                            // Mismo fondo que el dialogo de oraciones.
-                            color: const Color.fromRGBO(29, 64, 76, 0.7),
-                            borderRadius: BorderRadius.circular(14),
-                            border: Border.all(
-                              color: AppPrayGlass.borderLight.withValues(
-                                alpha: 0.55,
-                              ),
-                            ),
-                          ),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                _activeHelpMessage!.text,
-                                style: const TextStyle(
-                                  color: AppPrayGlass.onGlassText,
-                                  fontFamily: 'Poppins',
-                                  fontSize: 13,
-                                  fontWeight: FontWeight.w500,
-                                ),
-                              ),
-                              const SizedBox(height: 8),
-                              Row(
-                                mainAxisAlignment: MainAxisAlignment.end,
-                                children: [
-                                  TextButton(
-                                    style: TextButton.styleFrom(
-                                      foregroundColor: AppColors
-                                          .colorCircularProgressIndicator,
-                                    ),
-                                    onPressed: () => _dismissActiveHelpMessage(
-                                      disablePermanently: false,
-                                    ),
-                                    child: const Text('Cerrar'),
-                                  ),
-                                  TextButton(
-                                    style: TextButton.styleFrom(
-                                      foregroundColor: AppColors
-                                          .colorCircularProgressIndicator,
-                                    ),
-                                    onPressed: () => _dismissActiveHelpMessage(
-                                      disablePermanently: true,
-                                    ),
-                                    child: const Text('No mostrar de nuevo'),
-                                  ),
-                                ],
-                              ),
-                            ],
-                          ),
-                        ),
-                      ),
-              ),
-            ),
-          ),
-          ..._buildTutorialArrowOverlays(context),
-          if (_currentError != null &&
-              _currentError!.severity == ErrorSeverity.error)
-            Positioned(
-              top: tutorialTop,
-              left: AppLayout.errorBannerInset,
-              right: AppLayout.errorBannerInset,
-              child: Material(
-                elevation: 8,
-                shadowColor: Colors.black45,
-                borderRadius: BorderRadius.circular(14),
-                color: AppColors.colorBackgroundDialogError,
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 12,
-                    vertical: 10,
-                  ),
-                  child: Row(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      const Padding(
-                        padding: EdgeInsets.only(top: 2),
-                        child: Icon(
-                          Icons.error_outline,
-                          color: Colors.white,
-                          size: 20,
-                        ),
-                      ),
-                      const SizedBox(width: 8),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              _currentError!.userMessage,
-                              style: const TextStyle(
-                                color: Colors.white,
-                                fontWeight: FontWeight.w600,
-                                fontSize: 14,
-                              ),
-                            ),
-                            const SizedBox(height: 6),
-                            Text(
-                              'Para colaborar con el desarrollador para mejorar esta aplicación, pulse el ícono de enviar.',
-                              style: TextStyle(
-                                color: Colors.white.withValues(alpha: 0.88),
-                                fontSize: 12,
-                                height: 1.25,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                      IconButton(
-                        style: IconButton.styleFrom(
-                          foregroundColor: Colors.white,
-                          tapTargetSize: MaterialTapTargetSize.padded,
-                          minimumSize: const Size(48, 48),
-                          padding: const EdgeInsets.all(8),
-                        ),
-                        icon: const Icon(Icons.send_outlined, size: 22),
-                        onPressed: () {
-                          _sendErrorReportToDeveloper();
-                        },
-                        tooltip: 'Enviar información técnica al desarrollador',
-                      ),
-                      IconButton(
-                        style: IconButton.styleFrom(
-                          foregroundColor: Colors.white,
-                          tapTargetSize: MaterialTapTargetSize.padded,
-                          minimumSize: const Size(48, 48),
-                          padding: const EdgeInsets.all(8),
-                        ),
-                        icon: const Icon(Icons.close, size: 22),
-                        onPressed: _dismissError,
-                        tooltip: 'Cerrar',
-                      ),
+                  gradient: const LinearGradient(
+                    begin: Alignment.topCenter,
+                    end: Alignment.bottomCenter,
+                    colors: [
+                      AppPrayGlass.navBarGradientTop,
+                      AppPrayGlass.navBarGradientBottom,
                     ],
                   ),
                 ),
               ),
             ),
-        ],
+          ),
+          title: isLandscape
+              ? Row(
+                  children: [
+                    Text(
+                      'Santo Rosario',
+                      style: TextStyle(
+                        fontFamily: 'PlayfairDisplay',
+                        fontSize: 17,
+                        fontWeight: FontWeight.w700,
+                        color: AppColors.colorCircularProgressIndicator,
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    Text(
+                      '—  Misterios ${widget.mystery}',
+                      style: const TextStyle(
+                        fontFamily: 'Poppins',
+                        fontSize: 12,
+                        fontWeight: FontWeight.w400,
+                        color: AppPrayGlass.onGlassTextMuted,
+                      ),
+                    ),
+                  ],
+                )
+              : Column(
+                  mainAxisSize: MainAxisSize.min,
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Text(
+                      'Santo Rosario',
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        fontFamily: 'PlayfairDisplay',
+                        fontSize: 20,
+                        fontWeight: FontWeight.w700,
+                        height: 1.15,
+                        color: AppColors.colorCircularProgressIndicator,
+                      ),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      'Misterios ${widget.mystery}',
+                      textAlign: TextAlign.center,
+                      style: const TextStyle(
+                        fontFamily: 'Poppins',
+                        fontSize: 13,
+                        fontWeight: FontWeight.w400,
+                        height: 1.2,
+                        color: AppPrayGlass.onGlassTextMuted,
+                      ),
+                    ),
+                  ],
+                ),
+          actions: [
+            IconButton(
+              key: _wakelockButtonKey,
+              icon: Icon(
+                _isBatterySaverActive ? Icons.battery_saver : Icons.highlight,
+                color: AppPrayGlass.onGlassText,
+              ),
+              onPressed: _toggleWakelock, // Cambia el estado del wakelock
+              tooltip: _isBatterySaverActive
+                  ? 'Activar Ahorro Batería'
+                  : 'Pantalla Siempre Encendida',
+            ),
+            IconButton(
+              key: _prayAudioMenuButtonKey,
+              icon: const Icon(Icons.menu, color: AppPrayGlass.onGlassText),
+              tooltip: 'Opciones de audio',
+              onPressed: _showPrayGlassAudioMenu,
+            ),
+          ],
         ),
+        body: LayoutBuilder(
+          builder: (context, constraints) {
+            return Stack(
+              key: _prayBodyStackKey,
+              clipBehavior: Clip.none,
+              children: <Widget>[
+                Container(color: AppColors.colorBackgroundBody),
+                Container(
+                  decoration: const BoxDecoration(
+                    image: DecorationImage(
+                      image: AssetImage(AppAssets.imageVirgenLourdes),
+                      fit: BoxFit.fitHeight,
+                    ),
+                  ),
+                ),
+                // Area de contenido principal
+                Padding(
+                  padding: EdgeInsets.only(
+                    top:
+                        MediaQuery.paddingOf(context).top +
+                        (isLandscape
+                            ? AppLayout.appBarToolbarHeight * .25
+                            : AppLayout.appBarToolbarHeight * .5),
+                    bottom: 8.0,
+                    left: 8.0,
+                    right: 8.0,
+                  ),
+                  child: isLandscape
+                      ? Row(
+                          crossAxisAlignment: CrossAxisAlignment.center,
+                          children: [
+                            // LADO IZQUIERDO: Controles
+                            Expanded(
+                              child: Center(
+                                child: SingleChildScrollView(
+                                  child: _buildControlsLayer(
+                                    isLandscape: true,
+                                    canJumpPreviousMisterio:
+                                        canJumpPreviousMisterio,
+                                    canJumpNextMisterio: canJumpNextMisterio,
+                                  ),
+                                ),
+                              ),
+                            ),
+                            // LADO DERECHO: Rosario
+                            Expanded(
+                              child: LayoutBuilder(
+                                builder: (context, contentConstraints) {
+                                  // El rosario ocupa el máximo espacio posible (94%) del hueco SEGURO disponible
+                                  final size =
+                                      contentConstraints.maxWidth <
+                                          contentConstraints.maxHeight
+                                      ? contentConstraints.maxWidth
+                                      : contentConstraints.maxHeight;
+                                  return Center(
+                                    child: _buildRosaryArea(
+                                      width: size * 0.94,
+                                      height: size * 0.94,
+                                    ),
+                                  );
+                                },
+                              ),
+                            ),
+                          ],
+                        )
+                      : Stack(
+                          children: [
+                            // Rosario centrado en vertical (dentro del área segura)
+                            Center(
+                              child: _buildRosaryArea(
+                                width:
+                                    AppLayout.rosaryWidthFactor *
+                                    constraints.maxWidth,
+                                height:
+                                    AppLayout.rosaryHeightFactor *
+                                    constraints.maxHeight,
+                              ),
+                            ),
+                            // Controles abajo
+                            Align(
+                              alignment: Alignment.bottomCenter,
+                              child: _buildControlsLayer(
+                                isLandscape: false,
+                                canJumpPreviousMisterio:
+                                    canJumpPreviousMisterio,
+                                canJumpNextMisterio: canJumpNextMisterio,
+                              ),
+                            ),
+                          ],
+                        ),
+                ),
+                Positioned(
+                  top: helpPanelTop,
+                  left: 0,
+                  right: 0,
+                  child: Center(
+                    child: ConstrainedBox(
+                      constraints: BoxConstraints(
+                        maxWidth: isLandscape
+                            ? 450
+                            : mediaQuery.size.width - 32,
+                      ),
+                      child: IgnorePointer(
+                        ignoring: _activeHelpMessage == null,
+                        child: AnimatedOpacity(
+                          opacity: _activeHelpMessage == null ? 0 : 1,
+                          duration: const Duration(milliseconds: 180),
+                          child: _activeHelpMessage == null
+                              ? const SizedBox.shrink()
+                              : Material(
+                                  color: Colors.transparent,
+                                  child: Container(
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 12,
+                                      vertical: 10,
+                                    ),
+                                    decoration: BoxDecoration(
+                                      color: const Color.fromRGBO(
+                                        29,
+                                        64,
+                                        76,
+                                        0.7,
+                                      ),
+                                      borderRadius: BorderRadius.circular(14),
+                                      border: Border.all(
+                                        color: AppPrayGlass.borderLight
+                                            .withValues(alpha: 0.55),
+                                      ),
+                                    ),
+                                    child: Column(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
+                                      children: [
+                                        Text(
+                                          _activeHelpMessage!.text,
+                                          style: const TextStyle(
+                                            color: AppPrayGlass.onGlassText,
+                                            fontFamily: 'Poppins',
+                                            fontSize: 13,
+                                            fontWeight: FontWeight.w500,
+                                          ),
+                                        ),
+                                        const SizedBox(height: 8),
+                                        Row(
+                                          mainAxisAlignment:
+                                              MainAxisAlignment.end,
+                                          children: [
+                                            TextButton(
+                                              style: TextButton.styleFrom(
+                                                foregroundColor: AppColors
+                                                    .colorCircularProgressIndicator,
+                                              ),
+                                              onPressed: () =>
+                                                  _dismissActiveHelpMessage(
+                                                    disablePermanently: false,
+                                                  ),
+                                              child: const Text('Cerrar'),
+                                            ),
+                                            TextButton(
+                                              style: TextButton.styleFrom(
+                                                foregroundColor: AppColors
+                                                    .colorCircularProgressIndicator,
+                                              ),
+                                              onPressed: () =>
+                                                  _dismissActiveHelpMessage(
+                                                    disablePermanently: true,
+                                                  ),
+                                              child: const Text(
+                                                'No mostrar de nuevo',
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ),
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+                ..._buildTutorialArrowOverlays(context),
+                if (_currentError != null &&
+                    _currentError!.severity == ErrorSeverity.error)
+                  Positioned(
+                    top: tutorialTop,
+                    left: 0,
+                    right: 0,
+                    child: Center(
+                      child: ConstrainedBox(
+                        constraints: BoxConstraints(
+                          maxWidth: isLandscape
+                              ? 550
+                              : mediaQuery.size.width - 32,
+                        ),
+                        child: Material(
+                          elevation: 8,
+                          shadowColor: Colors.black45,
+                          borderRadius: BorderRadius.circular(14),
+                          color: AppColors.colorBackgroundDialogError,
+                          child: Padding(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 12,
+                              vertical: 10,
+                            ),
+                            child: Row(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                const Padding(
+                                  padding: EdgeInsets.only(top: 2),
+                                  child: Icon(
+                                    Icons.error_outline,
+                                    color: Colors.white,
+                                    size: 20,
+                                  ),
+                                ),
+                                const SizedBox(width: 8),
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      Text(
+                                        _currentError!.userMessage,
+                                        style: const TextStyle(
+                                          color: Colors.white,
+                                          fontWeight: FontWeight.w600,
+                                          fontSize: 14,
+                                        ),
+                                      ),
+                                      const SizedBox(height: 6),
+                                      Text(
+                                        'Si quieres colaborar con el desarrollador para mejorar esta aplicación, pulse el ícono de enviar.',
+                                        style: TextStyle(
+                                          color: Colors.white.withValues(
+                                            alpha: 0.88,
+                                          ),
+                                          fontSize: 12,
+                                          height: 1.25,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                                IconButton(
+                                  style: IconButton.styleFrom(
+                                    foregroundColor: Colors.white,
+                                    tapTargetSize: MaterialTapTargetSize.padded,
+                                    minimumSize: const Size(48, 48),
+                                    padding: const EdgeInsets.all(8),
+                                  ),
+                                  icon: const Icon(
+                                    Icons.send_outlined,
+                                    size: 22,
+                                  ),
+                                  onPressed: () {
+                                    _sendErrorReportToDeveloper();
+                                  },
+                                  tooltip:
+                                      'Enviar información técnica al desarrollador',
+                                ),
+                                IconButton(
+                                  style: IconButton.styleFrom(
+                                    foregroundColor: Colors.white,
+                                    tapTargetSize: MaterialTapTargetSize.padded,
+                                    minimumSize: const Size(48, 48),
+                                    padding: const EdgeInsets.all(8),
+                                  ),
+                                  icon: const Icon(Icons.close, size: 22),
+                                  onPressed: _dismissError,
+                                  tooltip: 'Cerrar',
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+              ],
+            );
+          },
+        ),
+      ),
+    );
+  }
+
+  /// Área central del rosario dibujado.
+  Widget _buildRosaryArea({required double width, required double height}) {
+    if (_loadedImages == null) {
+      return const CircularProgressIndicator(
+        color: AppColors.colorCircularProgressIndicator,
+      );
+    }
+    return SizedBox(
+      width: width,
+      height: height,
+      child: CustomPaint(
+        painter: CuentasPainter(
+          cuentas: _loadedImages!,
+          counter: _counter,
+          rosaryBeadCount: rosaryBeadCount,
+          rosaryCircleBeadCount: rosaryCircleBeadCount,
+          onCuentaHighlighted: _handleCuentaHighlighted,
+          orderPrayer: _orderPrayer,
+          onDrawingError: _handleDrawingError,
+        ),
+      ),
+    );
+  }
+
+  /// Capa de controles (botones de navegación y progreso).
+  Widget _buildControlsLayer({
+    required bool isLandscape,
+    required bool canJumpPreviousMisterio,
+    required bool canJumpNextMisterio,
+  }) {
+    final horizontalPadding = isLandscape ? 12.0 : AppLayout.sectionPadding;
+    final verticalPadding = isLandscape
+        ? 8.0
+        : AppLayout.prayScreenGlassControlsRowPaddingV;
+
+    return SafeArea(
+      top: false,
+      bottom: true,
+      left: isLandscape,
+      right: isLandscape,
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Padding(
+            padding: EdgeInsets.symmetric(
+              horizontal: horizontalPadding,
+              vertical: verticalPadding,
+            ),
+            child: Row(
+              mainAxisAlignment: isLandscape
+                  ? MainAxisAlignment.center
+                  : MainAxisAlignment.spaceBetween,
+              crossAxisAlignment: CrossAxisAlignment.end,
+              children: [
+                Opacity(
+                  opacity: widget.mystery != null ? 1 : 0.45,
+                  child: IgnorePointer(
+                    ignoring: widget.mystery == null,
+                    child: _prayGlassMysteryTripleBar(
+                      widgetKey: _mysteryNavTripleButtonKey,
+                      clusterEnabled:
+                          widget.mystery != null && _loadedImages != null,
+                      bottomCaption: _mysteryGlassLabelReady
+                          ? '$_mysteryGlassLabelOrderº misterio'
+                          : null,
+                      canGoPrevious: canJumpPreviousMisterio,
+                      canGoNext: canJumpNextMisterio,
+                      onPrevious: canJumpPreviousMisterio
+                          ? () => _onJumpToAdjacentMisterio(-1)
+                          : null,
+                      onBook: () => _showDecadeMysteryDialog(context),
+                      onNext: canJumpNextMisterio
+                          ? () => _onJumpToAdjacentMisterio(1)
+                          : null,
+                    ),
+                  ),
+                ),
+                if (isLandscape) const SizedBox(width: 16),
+                Opacity(
+                  opacity: _audioSessionButtonLocked ? 0.45 : 1,
+                  child: AbsorbPointer(
+                    absorbing: _audioSessionButtonLocked,
+                    child: _prayGlassRoundButton(
+                      widgetKey: _playPauseButtonKey,
+                      onPressed: playPause,
+                      child: Icon(
+                        _isplaying
+                            ? Icons.stop_rounded
+                            : Icons.play_arrow_rounded,
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          Padding(
+            padding: EdgeInsets.symmetric(
+              horizontal: horizontalPadding,
+              vertical: verticalPadding,
+            ),
+            child: Row(
+              mainAxisAlignment: isLandscape
+                  ? MainAxisAlignment.center
+                  : MainAxisAlignment.spaceBetween,
+              children: [
+                _prayGlassRoundButton(
+                  widgetKey: _prevButtonKey,
+                  onPressed: _decrementCounter,
+                  child: const Icon(Icons.arrow_back),
+                ),
+                if (isLandscape) const SizedBox(width: 16),
+                _prayGlassRoundButton(
+                  widgetKey: _nextButtonKey,
+                  onPressed: _incrementCounter,
+                  child: const Icon(Icons.arrow_forward),
+                ),
+              ],
+            ),
+          ),
+          Padding(
+            padding: EdgeInsets.fromLTRB(
+              horizontalPadding,
+              verticalPadding,
+              horizontalPadding,
+              isLandscape
+                  ? verticalPadding
+                  : AppLayout.prayScreenGlassControlsBottomInset,
+            ),
+            child: LayoutBuilder(
+              builder: (BuildContext context, BoxConstraints constraints) {
+                final double pillWidth = isLandscape
+                    ? 220
+                    : constraints.maxWidth;
+                return _prayGlassPillButton(
+                  widgetKey: _pillButtonKey,
+                  width: pillWidth,
+                  label: _safeCurrentPrayerLabel.isEmpty
+                      ? '…'
+                      : _safeCurrentPrayerLabel,
+                  onPressed: () {
+                    showDialog(
+                      context: context,
+                      builder: (BuildContext dialogContext) {
+                        final label = _safeCurrentPrayerLabel;
+                        final isMisterio = label == 'Misterio';
+                        return PrayerDialog(
+                          prayer: label.isEmpty ? '…' : label,
+                          mystery: widget.mystery,
+                          currentMysteryOrder:
+                              isMisterio && widget.mystery != null
+                              ? _effectiveMeditationOrderForMysteryGlass()
+                              : null,
+                          errorMessage: _currentError?.userMessage ?? '',
+                        );
+                      },
+                    );
+                  },
+                  trailing: const Icon(
+                    Icons.info_outline,
+                    size: AppLayout.infoIconSize,
+                    color: AppColors.colorCircularProgressIndicator,
+                  ),
+                );
+              },
+            ),
+          ),
+        ],
       ),
     );
   }
