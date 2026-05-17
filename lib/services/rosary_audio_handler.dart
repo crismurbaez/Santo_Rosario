@@ -57,14 +57,20 @@ class RosaryAudioHandler extends BaseAudioHandler {
 
   @override
   Future<void> skipToNext() async {
+    final wasPlaying = _prayerPlayer.playing;
     _incrementCounter();
-    await _playCurrentStep();
+    if (wasPlaying && _isPrayersAudioPlaying) {
+      await _playCurrentStep();
+    }
   }
 
   @override
   Future<void> skipToPrevious() async {
+    final wasPlaying = _prayerPlayer.playing;
     _decrementCounter();
-    await _playCurrentStep();
+    if (wasPlaying && _isPrayersAudioPlaying) {
+      await _playCurrentStep();
+    }
   }
 
   // --- Lógica Interna del Rosario ---
@@ -132,8 +138,9 @@ class RosaryAudioHandler extends BaseAudioHandler {
         _orderPrayer = 0;
       }
     }
+    // Sincronizar el misterio con la nueva cuenta
+    _orderMystery = Data.rosaryBeadSteps[_counter].orderMystery;
     _updateMediaItem();
-    // Notificar a la UI mediante un stream personalizado o custom event si es necesario
   }
 
   void _decrementCounter() {
@@ -145,6 +152,8 @@ class RosaryAudioHandler extends BaseAudioHandler {
       final prevStep = Data.rosaryBeadSteps[_counter];
       _orderPrayer = prevStep.prayers.length - 1;
     }
+    // Sincronizar el misterio con la nueva cuenta
+    _orderMystery = Data.rosaryBeadSteps[_counter].orderMystery;
     _updateMediaItem();
   }
 

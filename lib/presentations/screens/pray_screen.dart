@@ -71,6 +71,7 @@ class _PrayScreenState extends ConsumerState<PrayScreen>
   bool _didBuildHelpQueue = false;
 
   bool _isBatterySaverActive = false; // Variable para controlar el wakelock
+  late final dynamic _audioHandler;
 
   /// Tras cargar estado guardado; la primera cuenta resaltada no debe pisar `_orderPrayer`.
   bool _pendingProgressRestore = false;
@@ -124,6 +125,7 @@ class _PrayScreenState extends ConsumerState<PrayScreen>
   @override
   void initState() {
     super.initState();
+    _audioHandler = ref.read(audioHandlerProvider);
     WidgetsBinding.instance.addObserver(this);
     _tutorialArrowPulseController = AnimationController(
       vsync: this,
@@ -167,7 +169,7 @@ class _PrayScreenState extends ConsumerState<PrayScreen>
     WakelockPlus.disable(); // Desactiva el wakelock (pantalla se apagará)
 
     // Detener el audio al salir de la pantalla (botón atrás)
-    ref.read(audioHandlerProvider).stop();
+    _audioHandler.stop();
 
     super.dispose();
   }
@@ -181,7 +183,7 @@ class _PrayScreenState extends ConsumerState<PrayScreen>
       case AppLifecycleState.detached:
         _persistProgressSnapshotFromState();
         // Detener el audio completamente cuando la app se cierra
-        ref.read(audioHandlerProvider).stop();
+        _audioHandler.stop();
         break;
       case AppLifecycleState.resumed:
       case AppLifecycleState.inactive:
