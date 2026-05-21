@@ -7,7 +7,7 @@ import 'package:santo_rosario/data/models/data.dart';
 class RosaryAudioHandler extends BaseAudioHandler {
   final _prayerPlayer = AudioPlayer();
   final _backgroundPlayer = AudioPlayer();
-  
+
   // Estado local para la secuencia
   int _counter = 0;
   int _orderPrayer = 0;
@@ -48,10 +48,12 @@ class RosaryAudioHandler extends BaseAudioHandler {
   Future<void> stop() async {
     await _prayerPlayer.stop();
     await _backgroundPlayer.stop();
-    playbackState.add(playbackState.value.copyWith(
-      playing: false,
-      processingState: AudioProcessingState.idle,
-    ));
+    playbackState.add(
+      playbackState.value.copyWith(
+        playing: false,
+        processingState: AudioProcessingState.idle,
+      ),
+    );
     return super.stop();
   }
 
@@ -87,9 +89,11 @@ class RosaryAudioHandler extends BaseAudioHandler {
     if (orderPrayer != null) _orderPrayer = orderPrayer;
     if (orderMystery != null) _orderMystery = orderMystery;
     if (mystery != null) _mystery = mystery;
-    if (isBackgroundMusicPlaying != null) _isBackgroundMusicPlaying = isBackgroundMusicPlaying;
-    if (isPrayersAudioPlaying != null) _isPrayersAudioPlaying = isPrayersAudioPlaying;
-    
+    if (isBackgroundMusicPlaying != null)
+      _isBackgroundMusicPlaying = isBackgroundMusicPlaying;
+    if (isPrayersAudioPlaying != null)
+      _isPrayersAudioPlaying = isPrayersAudioPlaying;
+
     _updateMediaItem();
   }
 
@@ -97,7 +101,7 @@ class RosaryAudioHandler extends BaseAudioHandler {
     final step = Data.rosaryBeadSteps[_counter];
     final prayers = step.prayers;
     final prayerLabel = prayers[_orderPrayer.clamp(0, prayers.length - 1)];
-    
+
     String? assetPath;
     if (Data.prayersSounds.containsKey(prayerLabel)) {
       assetPath = Data.prayersSounds[prayerLabel];
@@ -137,12 +141,11 @@ class RosaryAudioHandler extends BaseAudioHandler {
     // Si estamos en la última cuenta y última oración, detenemos solo la oración.
     // Mantenemos la música de fondo activa.
     final step = Data.rosaryBeadSteps[_counter];
-    if (_counter >= Data.rosaryBeadSteps.length - 1 && _orderPrayer >= step.prayers.length - 1) {
-      _prayerPlayer.stop();
-      playbackState.add(playbackState.value.copyWith(
-        playing: false,
-        processingState: AudioProcessingState.completed,
-      ));
+    // SI el contador es mayor o igual a la longitud total de rosario y
+    // además el orden de la oración es mayor o igual a la longitud del array que hay en esa cuenta (step)
+    // quiere decir que llegamos al final del rosario
+    if (_counter >= Data.rosaryBeadSteps.length - 1 &&
+        _orderPrayer >= step.prayers.length - 1) {
       return;
     }
 
@@ -181,48 +184,53 @@ class RosaryAudioHandler extends BaseAudioHandler {
 
   void _updateMediaItem({String? title}) {
     final step = Data.rosaryBeadSteps[_counter];
-    final label = title ?? step.prayers[_orderPrayer.clamp(0, step.prayers.length - 1)];
-    
-    mediaItem.add(MediaItem(
-      id: 'rosary_step_$_counter\_$_orderPrayer',
-      album: 'Santo Rosario - $_mystery',
-      title: label,
-      artist: 'Santo Rosario',
-      duration: _prayerPlayer.duration,
-      extras: {
-        'counter': _counter,
-        'orderPrayer': _orderPrayer,
-        'orderMystery': _orderMystery,
-      },
-    ));
+    final label =
+        title ?? step.prayers[_orderPrayer.clamp(0, step.prayers.length - 1)];
+
+    mediaItem.add(
+      MediaItem(
+        id: 'rosary_step_$_counter\_$_orderPrayer',
+        album: 'Santo Rosario - $_mystery',
+        title: label,
+        artist: 'Santo Rosario',
+        duration: _prayerPlayer.duration,
+        extras: {
+          'counter': _counter,
+          'orderPrayer': _orderPrayer,
+          'orderMystery': _orderMystery,
+        },
+      ),
+    );
   }
 
   void _broadcastState(PlaybackEvent event) {
-    playbackState.add(playbackState.value.copyWith(
-      controls: [
-        MediaControl.skipToPrevious,
-        if (_prayerPlayer.playing) MediaControl.pause else MediaControl.play,
-        MediaControl.stop,
-        MediaControl.skipToNext,
-      ],
-      systemActions: const {
-        MediaAction.seek,
-        MediaAction.seekForward,
-        MediaAction.seekBackward,
-      },
-      androidCompactActionIndices: const [0, 1, 3],
-      processingState: const {
-        ProcessingState.idle: AudioProcessingState.idle,
-        ProcessingState.loading: AudioProcessingState.loading,
-        ProcessingState.buffering: AudioProcessingState.buffering,
-        ProcessingState.ready: AudioProcessingState.ready,
-        ProcessingState.completed: AudioProcessingState.completed,
-      }[_prayerPlayer.processingState]!,
-      playing: _prayerPlayer.playing,
-      updatePosition: _prayerPlayer.position,
-      bufferedPosition: _prayerPlayer.bufferedPosition,
-      speed: _prayerPlayer.speed,
-      queueIndex: event.currentIndex,
-    ));
+    playbackState.add(
+      playbackState.value.copyWith(
+        controls: [
+          MediaControl.skipToPrevious,
+          if (_prayerPlayer.playing) MediaControl.pause else MediaControl.play,
+          MediaControl.stop,
+          MediaControl.skipToNext,
+        ],
+        systemActions: const {
+          MediaAction.seek,
+          MediaAction.seekForward,
+          MediaAction.seekBackward,
+        },
+        androidCompactActionIndices: const [0, 1, 3],
+        processingState: const {
+          ProcessingState.idle: AudioProcessingState.idle,
+          ProcessingState.loading: AudioProcessingState.loading,
+          ProcessingState.buffering: AudioProcessingState.buffering,
+          ProcessingState.ready: AudioProcessingState.ready,
+          ProcessingState.completed: AudioProcessingState.completed,
+        }[_prayerPlayer.processingState]!,
+        playing: _prayerPlayer.playing,
+        updatePosition: _prayerPlayer.position,
+        bufferedPosition: _prayerPlayer.bufferedPosition,
+        speed: _prayerPlayer.speed,
+        queueIndex: event.currentIndex,
+      ),
+    );
   }
 }
