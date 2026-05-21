@@ -134,10 +134,15 @@ class RosaryAudioHandler extends BaseAudioHandler {
   }
 
   void _handlePlaybackCompleted() {
-    // Si estamos en la última cuenta y última oración, detenemos el rosario.
+    // Si estamos en la última cuenta y última oración, detenemos solo la oración.
+    // Mantenemos la música de fondo activa.
     final step = Data.rosaryBeadSteps[_counter];
     if (_counter >= Data.rosaryBeadSteps.length - 1 && _orderPrayer >= step.prayers.length - 1) {
-      stop();
+      _prayerPlayer.stop();
+      playbackState.add(playbackState.value.copyWith(
+        playing: false,
+        processingState: AudioProcessingState.completed,
+      ));
       return;
     }
 
