@@ -109,9 +109,19 @@ class RosaryAudioHandler extends BaseAudioHandler {
     }
 
     if (assetPath != null) {
-      await _prayerPlayer.setAsset(assetPath);
+      await _prayerPlayer.stop();
+      try {
+        await _prayerPlayer.setAsset(assetPath);
+        await _prayerPlayer.seek(Duration.zero);
+        _updateMediaItem(title: prayerLabel);
+        _prayerPlayer.play();
+      } catch (e) {
+        print('Error setting asset: $e');
+      }
+    } else {
+      // Si no hay asset, detener el audio y actualizar media item
+      await _prayerPlayer.stop();
       _updateMediaItem(title: prayerLabel);
-      _prayerPlayer.play();
     }
   }
 
@@ -124,6 +134,13 @@ class RosaryAudioHandler extends BaseAudioHandler {
   }
 
   void _handlePlaybackCompleted() {
+    // Si estamos en la última cuenta y última oración, detenemos el rosario.
+    final step = Data.rosaryBeadSteps[_counter];
+    if (_counter >= Data.rosaryBeadSteps.length - 1 && _orderPrayer >= step.prayers.length - 1) {
+      stop();
+      return;
+    }
+
     _incrementCounter();
     _playCurrentStep();
   }
