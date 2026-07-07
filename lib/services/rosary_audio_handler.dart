@@ -1,5 +1,4 @@
 import 'package:audio_service/audio_service.dart';
-import 'package:flutter/foundation.dart';
 import 'package:just_audio/just_audio.dart';
 import 'package:santo_rosario/constants/app_constants.dart';
 import 'package:santo_rosario/data/models/data.dart';
