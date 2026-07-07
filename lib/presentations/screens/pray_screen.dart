@@ -1097,6 +1097,7 @@ class _PrayScreenState extends ConsumerState<PrayScreen>
               _counter = hCounter;
               _orderPrayer = hOrderPrayer;
               if (hOrderMystery != null) _orderMystery = hOrderMystery;
+              _currentPrayers = Data.rosaryBeadSteps[hCounter].prayers;
               _maybeUpdateMysteryGlassLabelFromPill();
             });
             _savePrefs();
