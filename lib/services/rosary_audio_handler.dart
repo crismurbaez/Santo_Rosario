@@ -112,7 +112,6 @@ class RosaryAudioHandler extends BaseAudioHandler {
     }
 
     if (assetPath != null) {
-      await _prayerPlayer.stop();
       try {
         await _prayerPlayer.setAsset(assetPath);
         await _prayerPlayer.seek(Duration.zero);
