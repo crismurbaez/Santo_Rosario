@@ -186,6 +186,24 @@ class _PrayScreenState extends ConsumerState<PrayScreen>
         _audioHandler.stop();
         break;
       case AppLifecycleState.resumed:
+        final currentItem = _audioHandler.mediaItem.value;
+        if (currentItem != null && currentItem.extras != null) {
+          final hCounter = currentItem.extras!['counter'] as int?;
+          final hOrderPrayer = currentItem.extras!['orderPrayer'] as int?;
+          final hOrderMystery = currentItem.extras!['orderMystery'] as int?;
+          if (hCounter != null && hOrderPrayer != null) {
+            if (hCounter != _counter || hOrderPrayer != _orderPrayer) {
+              setState(() {
+                _counter = hCounter;
+                _orderPrayer = hOrderPrayer;
+                if (hOrderMystery != null) _orderMystery = hOrderMystery;
+                _currentPrayers = Data.rosaryBeadSteps[hCounter].prayers;
+                _maybeUpdateMysteryGlassLabelFromPill();
+              });
+            }
+          }
+        }
+        break;
       case AppLifecycleState.inactive:
       case AppLifecycleState.hidden:
         break;
@@ -784,15 +802,16 @@ class _PrayScreenState extends ConsumerState<PrayScreen>
   /// Si en la cuenta actual estamos antes del ítem «Misterio», se considera aún
   /// el misterio anterior (útil al retroceder por oraciones dentro de la misma cuenta).
   int _mysteryOrderFromCurrentPrayerPosition() {
-    final step = Data.rosaryBeadSteps[_counter.clamp(0, Data.rosaryBeadSteps.length - 1)];
+    final step = Data
+        .rosaryBeadSteps[_counter.clamp(0, Data.rosaryBeadSteps.length - 1)];
     final currentPrayers = step.prayers;
     final decadeOrder = _decadeMeditationOrder();
-    
+
     if (currentPrayers.isEmpty) return decadeOrder;
-    
+
     final mysteryPrayerIndex = currentPrayers.indexOf('Misterio');
     if (mysteryPrayerIndex == -1) return decadeOrder;
-    
+
     final safeOrder = _orderPrayer.clamp(0, currentPrayers.length - 1);
     if (safeOrder < mysteryPrayerIndex) {
       return max(1, decadeOrder - 1);
@@ -807,17 +826,18 @@ class _PrayScreenState extends ConsumerState<PrayScreen>
       _mysteryGlassLabelOrder = visibleOrder;
       return;
     }
-    
-    final step = Data.rosaryBeadSteps[_counter.clamp(0, Data.rosaryBeadSteps.length - 1)];
+
+    final step = Data
+        .rosaryBeadSteps[_counter.clamp(0, Data.rosaryBeadSteps.length - 1)];
     final currentPrayers = step.prayers;
-    
+
     if (currentPrayers.isEmpty) return;
-    
+
     final safeOrder = _orderPrayer.clamp(0, currentPrayers.length - 1);
     final currentLabel = currentPrayers[safeOrder];
 
     if (currentLabel != 'Misterio') return;
-    
+
     _mysteryGlassLabelOrder = visibleOrder;
     _mysteryGlassLabelReady = true;
   }
@@ -1101,6 +1121,7 @@ class _PrayScreenState extends ConsumerState<PrayScreen>
               _maybeUpdateMysteryGlassLabelFromPill();
             });
             _savePrefs();
+            _persistProgressSnapshotFromState();
           }
         }
       }
