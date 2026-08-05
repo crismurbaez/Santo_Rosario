@@ -14,6 +14,7 @@ class RosaryAudioHandler extends BaseAudioHandler {
   String? _mystery;
   bool _isBackgroundMusicPlaying = true;
   bool _isPrayersAudioPlaying = true;
+  bool _isSessionActive = false;
 
   RosaryAudioHandler() {
     // Escuchar cambios en el estado del reproductor de oraciones
@@ -29,22 +30,27 @@ class RosaryAudioHandler extends BaseAudioHandler {
 
   @override
   Future<void> play() async {
+    _isSessionActive = true;
     if (_isPrayersAudioPlaying) {
       await _playCurrentStep();
     }
     if (_isBackgroundMusicPlaying) {
       await _startBackgroundMusic();
     }
+    _updatePlaybackState();
   }
 
   @override
   Future<void> pause() async {
+    _isSessionActive = false;
     await _prayerPlayer.pause();
     await _backgroundPlayer.pause();
+    _updatePlaybackState();
   }
 
   @override
   Future<void> stop() async {
+    _isSessionActive = false;
     await _prayerPlayer.stop();
     await _backgroundPlayer.stop();
     playbackState.add(
@@ -88,10 +94,22 @@ class RosaryAudioHandler extends BaseAudioHandler {
     if (orderPrayer != null) _orderPrayer = orderPrayer;
     if (orderMystery != null) _orderMystery = orderMystery;
     if (mystery != null) _mystery = mystery;
-    if (isBackgroundMusicPlaying != null)
+    if (isBackgroundMusicPlaying != null && isBackgroundMusicPlaying != _isBackgroundMusicPlaying) {
       _isBackgroundMusicPlaying = isBackgroundMusicPlaying;
-    if (isPrayersAudioPlaying != null)
+      if (!_isBackgroundMusicPlaying) {
+        _backgroundPlayer.pause();
+      } else if (_isSessionActive) {
+        _startBackgroundMusic();
+      }
+    }
+    if (isPrayersAudioPlaying != null && isPrayersAudioPlaying != _isPrayersAudioPlaying) {
       _isPrayersAudioPlaying = isPrayersAudioPlaying;
+      if (!_isPrayersAudioPlaying) {
+        _prayerPlayer.pause();
+      } else if (_isSessionActive) {
+        _playCurrentStep();
+      }
+    }
 
     _updateMediaItem();
   }
@@ -201,12 +219,16 @@ class RosaryAudioHandler extends BaseAudioHandler {
     );
   }
 
+  void _updatePlaybackState() {
+    _broadcastState(_prayerPlayer.playbackEvent);
+  }
+
   void _broadcastState(PlaybackEvent event) {
     playbackState.add(
       playbackState.value.copyWith(
         controls: [
           MediaControl.skipToPrevious,
-          if (_prayerPlayer.playing) MediaControl.pause else MediaControl.play,
+          if (_isSessionActive) MediaControl.pause else MediaControl.play,
           MediaControl.stop,
           MediaControl.skipToNext,
         ],
@@ -223,7 +245,7 @@ class RosaryAudioHandler extends BaseAudioHandler {
           ProcessingState.ready: AudioProcessingState.ready,
           ProcessingState.completed: AudioProcessingState.completed,
         }[_prayerPlayer.processingState]!,
-        playing: _prayerPlayer.playing,
+        playing: _isSessionActive,
         updatePosition: _prayerPlayer.position,
         bufferedPosition: _prayerPlayer.bufferedPosition,
         speed: _prayerPlayer.speed,
