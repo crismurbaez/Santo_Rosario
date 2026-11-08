@@ -33,6 +33,10 @@ class Data {
         'Dios te salve Reina y Madre de Misericordia, vida dulzura y esperanza nuestra. Dios te salve, a ti clamamos los desterrados hijos de Eva, a tí suspiramos gimiendo y llorando en este valle de lágrimas. Ea, pues, Señora abogada nuestra, vuelve a nosotros esos tus ojos misericordiosos; y después de este destierro muéstranos a Jesús, fruto bendito de tu vientre. Oh! Clementísima, Oh! Piadosa, Oh! Dulce Virgen María! Ruega por nosostros Santa Madre de Dios, para que seamos dignos de alcanzar las promesas y Gracias, de Nuestro Señor Jesucristo. Amén.',
     'Santo Dios':
         'Santo Dios, Santo Fuerte, Santo Inmortal, ten piedad de nosotros y del mundo entero.',
+    'Padre líbranos':
+        'Padre, líbranos de todo mal; con tu Santa Sabiduría, Señor, sálvanos de todo pecado. En nombre de cuantos te queremos, Señor, llévcanos por el camino del bien. Amén.',
+    'Ven Espíritu Santo':
+        'Ven Espíritu Santo, ven por medio de la poderosa intercesión del Corazón Inmaculado de María, Tu amadísima Esposa',
   };
   static const Map<String, String> prayersSounds = {
     'Señal de la Cruz': 'assets/sounds/Senal_de_la_cruz.mp3',
@@ -45,6 +49,8 @@ class Data {
     'María Madre de Gracia': 'assets/sounds/Maria_Madre_de_Gracia.mp3',
     'Intenciones del Papa': 'assets/sounds/Intenciones_del_papa.mp3',
     'Dios te Salve': 'assets/sounds/Dios_te_Salve.mp3',
+    'Padre líbranos': 'assets/sounds/Padre_libranos.mp3',
+    'Ven Espíritu Santo': 'assets/sounds/Ven_Espiritu_Santo.mp3',
     'gozosos1': 'assets/sounds/gozosos1.mp3',
     'gozosos2': 'assets/sounds/gozosos2.mp3',
     'gozosos3': 'assets/sounds/gozosos3.mp3',
@@ -258,7 +264,8 @@ class Data {
   ];
   //TODO: para que se pueda cambiar el rosario de acuerdo a la configuración
   //TODO: agregar otra capa donde ponga cada elemeto que va a ser parte del rosario
-  static int get rosaryCircleBeadCount => rosaryDetailsCircle.fold(0, (sum, item) => sum + item.count);
+  static int get rosaryCircleBeadCount =>
+      rosaryDetailsCircle.fold(0, (sum, item) => sum + item.count);
   static const List<RosaryBeadGroup> rosaryDetailsCircle = [
     RosaryBeadGroup(
       cuenta: 'medalla',
@@ -268,8 +275,9 @@ class Data {
       height: 'large',
       prayers: [
         'Señal de la Cruz',
-        'Credo',
         'Pésame',
+        'Credo',
+        'Ven Espíritu Santo',
         'Misterio',
         'Padre Nuestro',
       ],
@@ -291,6 +299,7 @@ class Data {
       prayers: [
         'Gloria',
         'Oh Jesús Mío',
+        'Padre líbranos',
         'María Madre de Gracia',
         'Misterio',
         'Padre Nuestro',
@@ -313,6 +322,7 @@ class Data {
       prayers: [
         'Gloria',
         'Oh Jesús Mío',
+        'Padre líbranos',
         'María Madre de Gracia',
         'Misterio',
         'Padre Nuestro',
@@ -335,6 +345,7 @@ class Data {
       prayers: [
         'Gloria',
         'Oh Jesús Mío',
+        'Padre líbranos',
         'María Madre de Gracia',
         'Misterio',
         'Padre Nuestro',
@@ -357,6 +368,7 @@ class Data {
       prayers: [
         'Gloria',
         'Oh Jesús Mío',
+        'Padre líbranos',
         'María Madre de Gracia',
         'Misterio',
         'Padre Nuestro',
@@ -371,7 +383,8 @@ class Data {
       prayers: ['Ave María'],
     ),
   ];
-  static int get rosaryExtensionBeadCount => rosaryDetailsExtension.fold(0, (sum, item) => sum + item.count);
+  static int get rosaryExtensionBeadCount =>
+      rosaryDetailsExtension.fold(0, (sum, item) => sum + item.count);
   static const List<RosaryBeadGroup> rosaryDetailsExtension = [
     RosaryBeadGroup(
       cuenta: 'rosa',
@@ -382,6 +395,7 @@ class Data {
       prayers: [
         'Gloria',
         'Oh Jesús Mío',
+        'Padre líbranos',
         'María Madre de Gracia',
         'Intenciones del Papa',
         'Padre Nuestro',
@@ -487,7 +501,6 @@ class RosaryBeadGroup {
     required this.prayers,
   });
 }
-
 
 /// Una cuenta del rosario (misma secuencia que expande `CuentasPainter`).
 class RosaryBeadStepInfo {

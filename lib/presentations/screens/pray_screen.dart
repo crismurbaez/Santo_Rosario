@@ -708,6 +708,12 @@ class _PrayScreenState extends ConsumerState<PrayScreen>
     if (_isplaying) {
       handler.stop();
     } else {
+      if (!_isPrayersAudioPlaying && !_isBackgroundMusicPlaying) {
+        SnackBarUtils.showInfo(
+          context,
+          'Atención: La voz y la música están desactivadas en el menú.',
+        );
+      }
       _syncHandlerParams();
       handler.play();
     }
