@@ -1,6 +1,6 @@
 import 'dart:ui' as ui;
 import 'dart:async';
-import 'dart:math' show max, sin, pi;
+import 'dart:math' show max, sin, pi, sqrt;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -97,6 +97,7 @@ class _PrayScreenState extends ConsumerState<PrayScreen>
   final GlobalKey _nextButtonKey = GlobalKey();
   final GlobalKey _pillButtonKey = GlobalKey();
   final GlobalKey _mysteryNavTripleButtonKey = GlobalKey();
+  final GlobalKey _playbackTripleButtonKey = GlobalKey();
 
   /// Clave fijada al botón del menú (☰) para calcular dónde abrir [showMenu]:
   /// se usa el [RenderBox] del botón y el del [Overlay] y así el panel queda
@@ -1339,30 +1340,10 @@ class _PrayScreenState extends ConsumerState<PrayScreen>
                             ),
                           ],
                         )
-                      : Stack(
-                          children: [
-                            // Rosario centrado en vertical (dentro del área segura)
-                            Center(
-                              child: _buildRosaryArea(
-                                width:
-                                    AppLayout.rosaryWidthFactor *
-                                    constraints.maxWidth,
-                                height:
-                                    AppLayout.rosaryHeightFactor *
-                                    constraints.maxHeight,
-                              ),
-                            ),
-                            // Controles abajo
-                            Align(
-                              alignment: Alignment.bottomCenter,
-                              child: _buildControlsLayer(
-                                isLandscape: false,
-                                canJumpPreviousMisterio:
-                                    canJumpPreviousMisterio,
-                                canJumpNextMisterio: canJumpNextMisterio,
-                              ),
-                            ),
-                          ],
+                      : _buildPortraitRosaryStack(
+                          constraints: constraints,
+                          canJumpPreviousMisterio: canJumpPreviousMisterio,
+                          canJumpNextMisterio: canJumpNextMisterio,
                         ),
                 ),
                 Positioned(
@@ -1586,6 +1567,128 @@ class _PrayScreenState extends ConsumerState<PrayScreen>
     );
   }
 
+  /// Stack del rosario en modo retrato con la pastilla de la oración actual
+  /// ubicada en el **hueco vacío del aro**, de modo que nunca tape perlas,
+  /// medalla ni rosa.
+  ///
+  /// La geometría replica la de [CuentasPainter] en orientación vertical:
+  /// - `radius = min(anchoRosario / 2, 0.33 * altoRosario)`
+  /// - el centro del aro está desplazado hacia arriba `radius` respecto del
+  ///   centro del área del rosario.
+  /// El rosario se dibuja centrado en el Stack, por lo que el centro del aro
+  /// en coordenadas del Stack es `(W/2, H/2 - radius)`. La pastilla se coloca
+  /// centrada en ese punto, dentro del aro y por encima de la medalla.
+  Widget _buildPortraitRosaryStack({
+    required BoxConstraints constraints,
+    required bool canJumpPreviousMisterio,
+    required bool canJumpNextMisterio,
+  }) {
+    final double rosaryW = AppLayout.rosaryWidthFactor * constraints.maxWidth;
+    final double rosaryH = AppLayout.rosaryHeightFactor * constraints.maxHeight;
+
+    // Misma fórmula que el painter para el radio del aro en vertical.
+    final double radius = rosaryW / 2 < rosaryH * 0.33
+        ? rosaryW / 2
+        : rosaryH * 0.33;
+
+    // Centro del aro en coordenadas del Stack (el rosario va centrado).
+    final double loopCenterY = constraints.maxHeight / 2 - radius;
+
+    // Radio de las cuentas básicas (igual que el painter: 0.20 * radius) y
+    // radio interior del aro (borde interno de las cuentas).
+    final double beadR = radius * 0.20;
+    final double innerR = radius - beadR;
+
+    // Altura fija de la pastilla.
+    final double pillHeight = 90.0;
+
+    // Ubicamos la pastilla lo más abajo posible dentro del aro, dejando su
+    // borde inferior a una fracción del radio interior (justo por encima de la
+    // medalla). A partir de ahí derivamos el centro vertical de la pastilla.
+    final double pillBottomOffset = innerR * 0.56; // debajo del centro del aro
+    double pillCenterOffset = pillBottomOffset - pillHeight / 2;
+
+    // El centro de la pastilla no puede subir por encima del centro del aro ni
+    // acercarse tanto al borde que la altura no quepa.
+    final double maxCenterOffset = innerR - pillHeight / 2;
+    if (pillCenterOffset > maxCenterOffset) {
+      pillCenterOffset = maxCenterOffset;
+    }
+    if (pillCenterOffset < 0) {
+      pillCenterOffset = 0;
+    }
+
+    // Ancho = cuerda interior a la altura del centro de la pastilla, de modo
+    // que sus costados queden pegados a las cuentas (sin espacio).
+    final double halfChord = sqrt(
+      max(0, innerR * innerR - pillCenterOffset * pillCenterOffset),
+    );
+
+    // 👇 AJUSTE DEL ANCHO 👇
+    // Factor aplicado al ancho calculado (cuerda interior).
+    // 1.0 = pegado a las cuentas; 0.9 = 10% más angosto (valor actual).
+    // Cambiá este número para probar otros anchos (p. ej. 0.85, 0.95, 1.0).
+    const double pillWidthFactor = 0.8;
+    final double pillWidth = (halfChord * 2 * pillWidthFactor).clamp(
+      120.0,
+      320.0,
+    );
+
+    return Stack(
+      children: [
+        // Rosario centrado en vertical (dentro del área segura).
+        Center(
+          child: _buildRosaryArea(width: rosaryW, height: rosaryH),
+        ),
+        // Pastilla de la oración actual, ubicada en la parte baja del hueco del
+        // aro, con sus costados pegados a las cuentas (sin espacio).
+        Positioned(
+          left: (constraints.maxWidth - pillWidth) / 2,
+          top: loopCenterY + pillCenterOffset - pillHeight / 2,
+          child: _prayGlassPillButton(
+            widgetKey: _pillButtonKey,
+            width: pillWidth,
+            height: pillHeight,
+            label: _safeCurrentPrayerLabel.isEmpty
+                ? '…'
+                : _safeCurrentPrayerLabel,
+            onPressed: () {
+              showDialog(
+                context: context,
+                builder: (BuildContext dialogContext) {
+                  final label = _safeCurrentPrayerLabel;
+                  final isMisterio = label == 'Misterio';
+                  return PrayerDialog(
+                    prayer: label.isEmpty ? '…' : label,
+                    mystery: widget.mystery,
+                    currentMysteryOrder: isMisterio && widget.mystery != null
+                        ? _effectiveMeditationOrderForMysteryGlass()
+                        : null,
+                    errorMessage: _currentError?.userMessage ?? '',
+                  );
+                },
+              );
+            },
+            trailing: const Icon(
+              Icons.info_outline,
+              size: AppLayout.infoIconSize,
+              color: AppColors.colorCircularProgressIndicator,
+            ),
+          ),
+        ),
+        // Controles abajo.
+        Align(
+          alignment: Alignment.bottomCenter,
+          child: _buildControlsLayer(
+            isLandscape: false,
+            canJumpPreviousMisterio: canJumpPreviousMisterio,
+            canJumpNextMisterio: canJumpNextMisterio,
+          ),
+        ),
+      ],
+    );
+  }
+
   /// Capa de controles (botones de navegación y progreso).
   Widget _buildControlsLayer({
     required bool isLandscape,
@@ -1606,9 +1709,13 @@ class _PrayScreenState extends ConsumerState<PrayScreen>
         mainAxisSize: MainAxisSize.min,
         children: [
           Padding(
-            padding: EdgeInsets.symmetric(
-              horizontal: horizontalPadding,
-              vertical: verticalPadding,
+            padding: EdgeInsets.fromLTRB(
+              horizontalPadding,
+              verticalPadding,
+              horizontalPadding,
+              isLandscape
+                  ? verticalPadding
+                  : AppLayout.prayScreenGlassControlsBottomInset,
             ),
             child: Row(
               mainAxisAlignment: isLandscape
@@ -1616,6 +1723,7 @@ class _PrayScreenState extends ConsumerState<PrayScreen>
                   : MainAxisAlignment.spaceBetween,
               crossAxisAlignment: CrossAxisAlignment.end,
               children: [
+                // Grupo de misterios a la IZQUIERDA.
                 Opacity(
                   opacity: widget.mystery != null ? 1 : 0.45,
                   child: IgnorePointer(
@@ -1624,9 +1732,11 @@ class _PrayScreenState extends ConsumerState<PrayScreen>
                       widgetKey: _mysteryNavTripleButtonKey,
                       clusterEnabled:
                           widget.mystery != null && _loadedImages != null,
+                      // Antes de empezar cualquier misterio muestra «Misterios»;
+                      // al avanzar al 1, 2, 3… se reemplaza por «Nº misterio».
                       bottomCaption: _mysteryGlassLabelReady
                           ? '$_mysteryGlassLabelOrderº misterio'
-                          : null,
+                          : 'Misterios',
                       canGoPrevious: canJumpPreviousMisterio,
                       canGoNext: canJumpNextMisterio,
                       onPrevious: canJumpPreviousMisterio
@@ -1640,93 +1750,26 @@ class _PrayScreenState extends ConsumerState<PrayScreen>
                   ),
                 ),
                 if (isLandscape) const SizedBox(width: 16),
+                // Grupo de reproducción a la DERECHA.
                 Opacity(
                   opacity: _audioSessionButtonLocked ? 0.45 : 1,
                   child: AbsorbPointer(
                     absorbing: _audioSessionButtonLocked,
-                    child: _prayGlassRoundButton(
-                      widgetKey: _playPauseButtonKey,
-                      onPressed: playPause,
-                      child: Icon(
-                        _isplaying
-                            ? Icons.stop_rounded
-                            : Icons.play_arrow_rounded,
-                      ),
+                    child: _prayGlassPlaybackTripleBar(
+                      widgetKey: _playbackTripleButtonKey,
+                      prevButtonKey: _prevButtonKey,
+                      playButtonKey: _playPauseButtonKey,
+                      nextButtonKey: _nextButtonKey,
+                      isPlaying: _isplaying,
+                      // Mismo estilo y altura que el grupo de misterios.
+                      bottomCaption: 'Oraciones',
+                      onPrevious: _decrementCounter,
+                      onPlayPause: playPause,
+                      onNext: _incrementCounter,
                     ),
                   ),
                 ),
               ],
-            ),
-          ),
-          Padding(
-            padding: EdgeInsets.symmetric(
-              horizontal: horizontalPadding,
-              vertical: verticalPadding,
-            ),
-            child: Row(
-              mainAxisAlignment: isLandscape
-                  ? MainAxisAlignment.center
-                  : MainAxisAlignment.spaceBetween,
-              children: [
-                _prayGlassRoundButton(
-                  widgetKey: _prevButtonKey,
-                  onPressed: _decrementCounter,
-                  child: const Icon(Icons.arrow_back),
-                ),
-                if (isLandscape) const SizedBox(width: 16),
-                _prayGlassRoundButton(
-                  widgetKey: _nextButtonKey,
-                  onPressed: _incrementCounter,
-                  child: const Icon(Icons.arrow_forward),
-                ),
-              ],
-            ),
-          ),
-          Padding(
-            padding: EdgeInsets.fromLTRB(
-              horizontalPadding,
-              verticalPadding,
-              horizontalPadding,
-              isLandscape
-                  ? verticalPadding
-                  : AppLayout.prayScreenGlassControlsBottomInset,
-            ),
-            child: LayoutBuilder(
-              builder: (BuildContext context, BoxConstraints constraints) {
-                final double pillWidth = isLandscape
-                    ? 220
-                    : constraints.maxWidth;
-                return _prayGlassPillButton(
-                  widgetKey: _pillButtonKey,
-                  width: pillWidth,
-                  label: _safeCurrentPrayerLabel.isEmpty
-                      ? '…'
-                      : _safeCurrentPrayerLabel,
-                  onPressed: () {
-                    showDialog(
-                      context: context,
-                      builder: (BuildContext dialogContext) {
-                        final label = _safeCurrentPrayerLabel;
-                        final isMisterio = label == 'Misterio';
-                        return PrayerDialog(
-                          prayer: label.isEmpty ? '…' : label,
-                          mystery: widget.mystery,
-                          currentMysteryOrder:
-                              isMisterio && widget.mystery != null
-                              ? _effectiveMeditationOrderForMysteryGlass()
-                              : null,
-                          errorMessage: _currentError?.userMessage ?? '',
-                        );
-                      },
-                    );
-                  },
-                  trailing: const Icon(
-                    Icons.info_outline,
-                    size: AppLayout.infoIconSize,
-                    color: AppColors.colorCircularProgressIndicator,
-                  ),
-                );
-              },
             ),
           ),
         ],
@@ -1883,14 +1926,14 @@ Widget _prayGlassMysteryTripleBar({
 }) {
   final double h = _prayGlassMysteryTripleBarSize;
   final double w = _prayGlassMysteryTripleTotalWidth;
-  final double r = h / 2;
   final double slot = _prayGlassMysteryTripleChevronSlot;
   final double gap = _prayGlassMysteryTripleBookGap;
   final bool showCaption =
       bottomCaption != null && bottomCaption.trim().isNotEmpty;
-  final BorderRadius outerClip = showCaption
-      ? BorderRadius.circular(AppPrayGlass.pillRadius)
-      : BorderRadius.circular(r);
+  // Tamaño constante: el contenedor reserva siempre el espacio del texto inferior
+  // («Nº misterio») y usa siempre [AppPrayGlass.pillRadius], de modo que mide lo
+  // mismo desde el inicio que cuando muestra la etiqueta.
+  final BorderRadius outerClip = BorderRadius.circular(AppPrayGlass.pillRadius);
 
   Widget sideTap({
     required String tooltip,
@@ -1962,11 +2005,9 @@ Widget _prayGlassMysteryTripleBar({
                       icon: Icons.chevron_left,
                       active: canGoPrevious,
                       onTap: onPrevious,
-                      splashRadius: BorderRadius.only(
-                        topLeft: showCaption ? Radius.zero : Radius.circular(r),
-                        bottomLeft: showCaption
-                            ? Radius.zero
-                            : Radius.circular(r),
+                      splashRadius: const BorderRadius.only(
+                        topLeft: Radius.circular(AppPrayGlass.pillRadius),
+                        bottomLeft: Radius.zero,
                         topRight: Radius.zero,
                         bottomRight: Radius.zero,
                       ),
@@ -2004,13 +2045,9 @@ Widget _prayGlassMysteryTripleBar({
                       icon: Icons.chevron_right,
                       active: canGoNext,
                       onTap: onNext,
-                      splashRadius: BorderRadius.only(
-                        topRight: showCaption
-                            ? Radius.zero
-                            : Radius.circular(r),
-                        bottomRight: showCaption
-                            ? Radius.zero
-                            : Radius.circular(r),
+                      splashRadius: const BorderRadius.only(
+                        topRight: Radius.circular(AppPrayGlass.pillRadius),
+                        bottomRight: Radius.zero,
                         topLeft: Radius.zero,
                         bottomLeft: Radius.zero,
                       ),
@@ -2019,11 +2056,216 @@ Widget _prayGlassMysteryTripleBar({
                   ],
                 ),
               ),
-              if (showCaption)
+              // Siempre reservamos el espacio del texto inferior para que el
+              // contenedor mida lo mismo con o sin la etiqueta «Nº misterio».
+              Padding(
+                padding: const EdgeInsets.fromLTRB(6, 0, 6, 6),
+                child: SizedBox(
+                  width: w,
+                  // Alto fijo para 2 líneas (13px × 1.08 × 2 ≈ 28px): así el
+                  // contenedor mide igual aunque no haya etiqueta.
+                  height: 28,
+                  child: Text(
+                    showCaption ? bottomCaption : '',
+                    textAlign: TextAlign.center,
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(
+                      fontFamily: 'PlayfairDisplay',
+                      fontSize: 13,
+                      fontWeight: FontWeight.w700,
+                      height: 1.08,
+                      color: AppColors.colorCircularProgressIndicator,
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    ),
+  );
+}
+
+/// Contenedor glass unificado de reproducción: anterior · play/stop · siguiente.
+///
+/// Replica **exactamente** el estilo del contenedor de misterios
+/// ([_prayGlassMysteryTripleBar]): mismo ancho ([_prayGlassMysteryTripleTotalWidth]),
+/// alto ([AppPrayGlass.roundButtonSize]), [AppPrayGlass.pillRadius], tinte
+/// [AppPrayGlass.frostedTint], borde [AppPrayGlass.borderLight] y el mismo
+/// [BackdropFilter] con [AppPrayGlass.blurSigma]. Así ambos contenedores quedan
+/// simétricos a izquierda y derecha de la fila inferior.
+///
+/// Los iconos van **sin fondo circular individual** (transparentes), centrados y
+/// distribuidos con [MainAxisAlignment.spaceEvenly].
+Widget _prayGlassPlaybackTripleBar({
+  Key? widgetKey,
+  required Key prevButtonKey,
+  required Key playButtonKey,
+  required Key nextButtonKey,
+  required bool isPlaying,
+  String? bottomCaption,
+  required VoidCallback onPrevious,
+  required VoidCallback onPlayPause,
+  required VoidCallback onNext,
+}) {
+  final double h = _prayGlassMysteryTripleBarSize;
+  final double w = _prayGlassMysteryTripleTotalWidth;
+  final BorderRadius outerClip = BorderRadius.circular(AppPrayGlass.pillRadius);
+
+  final double slot = _prayGlassMysteryTripleChevronSlot;
+  final double gap = _prayGlassMysteryTripleBookGap;
+
+  // Mismo esquema que el grupo de misterios: slots laterales estrechos
+  // ([slot]) para las flechas y un slot central para play/stop. Así no hay
+  // overflow dentro del ancho fijo ([w]) del contenedor.
+  Widget sideTap({
+    required Key key,
+    required String tooltip,
+    required IconData icon,
+    required VoidCallback onTap,
+    required BorderRadius splashRadius,
+    required Alignment iconAlignment,
+  }) {
+    return Tooltip(
+      message: tooltip,
+      child: SizedBox(
+        width: slot,
+        height: h,
+        child: Material(
+          key: key,
+          color: Colors.transparent,
+          child: InkWell(
+            onTap: onTap,
+            borderRadius: splashRadius,
+            child: Align(
+              alignment: iconAlignment,
+              child: IconTheme(
+                data: const IconThemeData(
+                  color: AppPrayGlass.onGlassText,
+                  size: 24,
+                ),
+                child: Icon(icon),
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget centerTap({
+    required Key key,
+    required String tooltip,
+    required IconData icon,
+    required VoidCallback onTap,
+  }) {
+    return SizedBox(
+      width: h - 30,
+      height: h,
+      child: Tooltip(
+        message: tooltip,
+        child: Material(
+          key: key,
+          color: Colors.transparent,
+          child: InkWell(
+            customBorder: const CircleBorder(),
+            onTap: onTap,
+            child: Center(
+              child: IconTheme(
+                data: const IconThemeData(
+                  color: AppPrayGlass.onGlassText,
+                  size: 22,
+                ),
+                child: Icon(icon),
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  return Material(
+    key: widgetKey,
+    color: Colors.transparent,
+    child: ClipRRect(
+      borderRadius: outerClip,
+      child: BackdropFilter(
+        filter: ui.ImageFilter.blur(
+          sigmaX: AppPrayGlass.blurSigma,
+          sigmaY: AppPrayGlass.blurSigma,
+        ),
+        // Sin altura fija: el contenedor se ajusta a su [Column] igual que el
+        // de misterios (fila de iconos h + texto 28 + padding 6), evitando
+        // cualquier overflow vertical y quedando simétrico.
+        child: Container(
+          width: w,
+          decoration: BoxDecoration(
+            color: AppPrayGlass.frostedTint,
+            borderRadius: outerClip,
+            border: Border.all(color: AppPrayGlass.borderLight),
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              SizedBox(
+                height: h,
+                width: w,
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    sideTap(
+                      key: prevButtonKey,
+                      tooltip: 'Oración anterior',
+                      icon: Icons.chevron_left,
+                      onTap: onPrevious,
+                      splashRadius: const BorderRadius.only(
+                        topLeft: Radius.circular(AppPrayGlass.pillRadius),
+                        bottomLeft: Radius.zero,
+                        topRight: Radius.zero,
+                        bottomRight: Radius.zero,
+                      ),
+                      iconAlignment: Alignment.centerRight,
+                    ),
+                    SizedBox(width: gap),
+                    centerTap(
+                      key: playButtonKey,
+                      tooltip: isPlaying ? 'Detener' : 'Reproducir',
+                      icon: isPlaying
+                          ? Icons.stop_rounded
+                          : Icons.play_arrow_rounded,
+                      onTap: onPlayPause,
+                    ),
+                    SizedBox(width: gap),
+                    sideTap(
+                      key: nextButtonKey,
+                      tooltip: 'Oración siguiente',
+                      icon: Icons.chevron_right,
+                      onTap: onNext,
+                      splashRadius: const BorderRadius.only(
+                        topRight: Radius.circular(AppPrayGlass.pillRadius),
+                        bottomRight: Radius.zero,
+                        topLeft: Radius.zero,
+                        bottomLeft: Radius.zero,
+                      ),
+                      iconAlignment: Alignment.centerLeft,
+                    ),
+                  ],
+                ),
+              ),
+              // Etiqueta inferior opcional. Si no se pasa [bottomCaption] el
+              // contenedor queda con la altura justa de los botones (h), sin
+              // reservar espacio de texto.
+              if (bottomCaption != null)
                 Padding(
                   padding: const EdgeInsets.fromLTRB(6, 0, 6, 6),
                   child: SizedBox(
                     width: w,
+                    height: 28,
                     child: Text(
                       bottomCaption,
                       textAlign: TextAlign.center,
@@ -2040,55 +2282,6 @@ Widget _prayGlassMysteryTripleBar({
                   ),
                 ),
             ],
-          ),
-        ),
-      ),
-    ),
-  );
-}
-
-/// Botón circular glass (play/stop de sesión audio, flechas, etc.).
-///
-/// Estructura: [Material] transparente → [InkWell] con hitTest circular → [ClipOval]
-/// → [BackdropFilter] (desenfoque del contenido detrás) → [Container] con tinte y borde.
-/// Los iconos heredan color y tamaño vía [IconTheme].
-///
-/// **Para modificar**
-/// - Tamaño: [AppPrayGlass.roundButtonSize].
-/// - Intensidad del efecto: [AppPrayGlass.blurSigma], [frostedTint], [borderLight].
-Widget _prayGlassRoundButton({
-  Key? widgetKey,
-  required VoidCallback onPressed,
-  required Widget child,
-}) {
-  return Material(
-    key: widgetKey,
-    color: Colors.transparent,
-    child: InkWell(
-      onTap: onPressed,
-      customBorder: const CircleBorder(),
-      child: ClipOval(
-        child: BackdropFilter(
-          filter: ui.ImageFilter.blur(
-            sigmaX: AppPrayGlass.blurSigma,
-            sigmaY: AppPrayGlass.blurSigma,
-          ),
-          child: Container(
-            width: AppPrayGlass.roundButtonSize,
-            height: AppPrayGlass.roundButtonSize,
-            alignment: Alignment.center,
-            decoration: BoxDecoration(
-              color: AppPrayGlass.frostedTint,
-              shape: BoxShape.circle,
-              border: Border.all(color: AppPrayGlass.borderLight),
-            ),
-            child: IconTheme(
-              data: const IconThemeData(
-                color: AppPrayGlass.onGlassText,
-                size: 24,
-              ),
-              child: child,
-            ),
           ),
         ),
       ),
@@ -2114,6 +2307,7 @@ Widget _prayGlassPillButton({
   required VoidCallback onPressed,
   Widget? trailing,
   double? width,
+  double? height,
 }) {
   const TextStyle pillTextStyle = TextStyle(
     fontFamily: 'PlayfairDisplay',
@@ -2178,8 +2372,9 @@ Widget _prayGlassPillButton({
           ),
           child: Container(
             width: width != null ? double.infinity : null,
-            // Igualamos la altura del pill con los botones circulares.
-            height: AppPrayGlass.roundButtonSize,
+            // Altura configurable: por defecto la de los botones circulares;
+            // se puede igualar a la columna de grupos (play + misterios).
+            height: height ?? AppPrayGlass.roundButtonSize,
             padding: const EdgeInsets.symmetric(horizontal: 24),
             decoration: BoxDecoration(
               borderRadius: BorderRadius.circular(AppPrayGlass.pillRadius),
