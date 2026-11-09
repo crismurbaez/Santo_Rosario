@@ -360,7 +360,7 @@ class _PrayScreenState extends ConsumerState<PrayScreen>
       const _HelpMessageDefinition(
         id: AppHelpMessageIds.prayNavigation,
         text:
-            'Tip: usa las flechas para avanzar o volver cuenta por cuenta, y haz click en el botón inferior para leer la oración.',
+            'Tip: Haz click en el botón central para leer la oración y usa las flechas para avanzar o volver cuenta por cuenta.',
       ),
       const _HelpMessageDefinition(
         id: AppHelpMessageIds.prayAudioBehavior,
@@ -375,7 +375,7 @@ class _PrayScreenState extends ConsumerState<PrayScreen>
       const _HelpMessageDefinition(
         id: AppHelpMessageIds.prayMysteryNavigation,
         text:
-            'Tip: usa los botones «Misterio anterior» y «Siguiente misterio» para saltar entre misterios. Y haz click en el botón central en forma de libro para leer el misterio.',
+            'Tip: usa los botones «Misterio anterior» y «Misterio siguiente » para saltar entre misterios. Y haz click en el botón central en forma de libro para leer el misterio en cualquier momento.',
       ),
       const _HelpMessageDefinition(
         id: AppHelpMessageIds.prayKeepScreenOn,
@@ -1675,17 +1675,152 @@ class _PrayScreenState extends ConsumerState<PrayScreen>
             ),
           ),
         ),
-        // Controles abajo.
-        Align(
-          alignment: Alignment.bottomCenter,
-          child: _buildControlsLayer(
-            isLandscape: false,
-            canJumpPreviousMisterio: canJumpPreviousMisterio,
-            canJumpNextMisterio: canJumpNextMisterio,
-          ),
+        // Controles a la altura de la medalla, uno a cada lado (simétricos),
+        // sin tapar las perlas del aro.
+        ..._buildPortraitMedalSideControls(
+          stackWidth: constraints.maxWidth,
+          loopCenterY: loopCenterY,
+          radius: radius,
+          beadR: beadR,
+          canJumpPreviousMisterio: canJumpPreviousMisterio,
+          canJumpNextMisterio: canJumpNextMisterio,
         ),
       ],
     );
+  }
+
+  /// Coloca los grupos de misterios (izquierda) y reproducción (derecha) a la
+  /// altura de la medalla, simétricos respecto al centro horizontal, fuera del
+  /// aro para no tapar las perlas.
+  ///
+  /// Los **bordes externos** de cada grupo se alinean con los **bordes externos
+  /// de la cadena del rosario** (el borde más externo de las perlas del aro),
+  /// igual que la cadena se adapta para no tocar los bordes de la pantalla.
+  /// Cada grupo se envuelve en un [FittedBox] con [BoxFit.scaleDown] y se le da
+  /// como ancho máximo el espacio disponible entre el borde externo de la
+  /// cadena y el borde interior junto a la medalla. Así, en pantallas angostas
+  /// los grupos se reducen proporcionalmente en lugar de recortarse.
+  List<Widget> _buildPortraitMedalSideControls({
+    required double stackWidth,
+    required double loopCenterY,
+    required double radius,
+    required double beadR,
+    required bool canJumpPreviousMisterio,
+    required bool canJumpNextMisterio,
+  }) {
+    // ┌──────────────────────────────────────────────────────────────────────┐
+    // │ 👇 AJUSTE MANUAL DE LA UBICACIÓN DE LOS GRUPOS 👇                     │
+    // │ Cambiá estos dos valores para mover los grupos a mano:                │
+    // │  • groupsVerticalOffset:  + baja los grupos, - los sube (px).         │
+    // │  • groupsHorizontalOffset: - los acerca al centro, + los aleja (px).  │
+    // │    (se aplica simétricamente a ambos grupos).                         │
+    // └──────────────────────────────────────────────────────────────────────┘
+    const double groupsVerticalOffset = -30.0; // px (vertical)
+    const double groupsHorizontalOffset = -30.0; // px (horizontal, simétrico)
+
+    // La medalla está en el punto inferior del aro, desplazada hacia abajo
+    // `beadR` (igual que el painter en vertical).
+    final double medalY = loopCenterY + radius + beadR;
+
+    // Altura de los grupos (botones + leyenda): 70 + 28 + 6 = 104.
+    const double groupHeight = _prayGlassMysteryTripleBarSize + 28 + 6;
+    // Posición vertical final de los grupos (centrados en la medalla + ajuste).
+    final double groupTop = medalY - groupHeight / 2 + groupsVerticalOffset;
+
+    // Ancho aproximado de la medalla y separación respecto a ella.
+    final double medalHalfWidth = beadR * 1.6;
+    const double medalGap = 8.0;
+
+    // Centro horizontal del Stack (el rosario va centrado).
+    final double centerX = stackWidth / 2;
+
+    // Borde interior de cada grupo respecto al centro: mitad de la medalla +
+    // separación + ajuste horizontal manual. Los grupos se anclan a ese borde y
+    // crecen hacia afuera.
+    final double innerEdge = medalHalfWidth + medalGap + groupsHorizontalOffset;
+
+    // Borde EXTERNO de la cadena del rosario respecto al centro: radio del aro
+    // más el radio de la perla (borde más externo de las perlas). Los grupos se
+    // alinean a este borde, igual que la cadena se adapta a la pantalla.
+    final double chainOuterEdge = radius + beadR;
+
+    // Espacio horizontal disponible para cada grupo (desde el borde externo de
+    // la cadena hasta el borde interior junto a la medalla).
+    final double availablePerSide = (chainOuterEdge - innerEdge).clamp(
+      0.0,
+      double.infinity,
+    );
+
+    // Envuelve un grupo para que se reduzca si no cabe en [availablePerSide].
+    Widget fitGroup({required Widget child, required Alignment alignment}) {
+      return SizedBox(
+        width: availablePerSide,
+        child: FittedBox(
+          fit: BoxFit.scaleDown,
+          alignment: alignment,
+          child: child,
+        ),
+      );
+    }
+
+    return [
+      // Grupo de misterios a la IZQUIERDA de la medalla. Su borde externo
+      // izquierdo queda alineado con el borde externo izquierdo de la cadena.
+      Positioned(
+        top: groupTop,
+        right: stackWidth - (centerX - innerEdge),
+        child: fitGroup(
+          alignment: Alignment.centerRight,
+          child: Opacity(
+            opacity: widget.mystery != null ? 1 : 0.45,
+            child: IgnorePointer(
+              ignoring: widget.mystery == null,
+              child: _prayGlassMysteryTripleBar(
+                widgetKey: _mysteryNavTripleButtonKey,
+                clusterEnabled: widget.mystery != null && _loadedImages != null,
+                bottomCaption: _mysteryGlassLabelReady
+                    ? '$_mysteryGlassLabelOrderº misterio'
+                    : 'Misterios',
+                canGoPrevious: canJumpPreviousMisterio,
+                canGoNext: canJumpNextMisterio,
+                onPrevious: canJumpPreviousMisterio
+                    ? () => _onJumpToAdjacentMisterio(-1)
+                    : null,
+                onBook: () => _showDecadeMysteryDialog(context),
+                onNext: canJumpNextMisterio
+                    ? () => _onJumpToAdjacentMisterio(1)
+                    : null,
+              ),
+            ),
+          ),
+        ),
+      ),
+      // Grupo de reproducción a la DERECHA de la medalla.
+      Positioned(
+        top: groupTop,
+        left: centerX + innerEdge,
+        child: fitGroup(
+          alignment: Alignment.centerLeft,
+          child: Opacity(
+            opacity: _audioSessionButtonLocked ? 0.45 : 1,
+            child: AbsorbPointer(
+              absorbing: _audioSessionButtonLocked,
+              child: _prayGlassPlaybackTripleBar(
+                widgetKey: _playbackTripleButtonKey,
+                prevButtonKey: _prevButtonKey,
+                playButtonKey: _playPauseButtonKey,
+                nextButtonKey: _nextButtonKey,
+                isPlaying: _isplaying,
+                bottomCaption: 'Oraciones',
+                onPrevious: _decrementCounter,
+                onPlayPause: playPause,
+                onNext: _incrementCounter,
+              ),
+            ),
+          ),
+        ),
+      ),
+    ];
   }
 
   /// Controles en horizontal: los grupos de misterios y reproducción en una
@@ -2097,7 +2232,7 @@ Widget _prayGlassMysteryTripleBar({
                     ),
                     SizedBox(width: gap),
                     sideTap(
-                      tooltip: 'Siguiente misterio',
+                      tooltip: 'Misterio siguiente',
                       icon: Icons.chevron_right,
                       active: canGoNext,
                       onTap: onNext,
