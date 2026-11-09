@@ -1306,12 +1306,11 @@ class _PrayScreenState extends ConsumerState<PrayScreen>
                       ? Row(
                           crossAxisAlignment: CrossAxisAlignment.center,
                           children: [
-                            // LADO IZQUIERDO: Controles
+                            // LADO IZQUIERDO: Controles + pastilla de la oración.
                             Expanded(
                               child: Center(
                                 child: SingleChildScrollView(
-                                  child: _buildControlsLayer(
-                                    isLandscape: true,
+                                  child: _buildLandscapeControlsColumn(
                                     canJumpPreviousMisterio:
                                         canJumpPreviousMisterio,
                                     canJumpNextMisterio: canJumpNextMisterio,
@@ -1683,6 +1682,63 @@ class _PrayScreenState extends ConsumerState<PrayScreen>
             isLandscape: false,
             canJumpPreviousMisterio: canJumpPreviousMisterio,
             canJumpNextMisterio: canJumpNextMisterio,
+          ),
+        ),
+      ],
+    );
+  }
+
+  /// Controles en horizontal: los grupos de misterios y reproducción en una
+  /// fila, y debajo la pastilla con la oración actual, del mismo ancho que
+  /// ambos grupos juntos. Todo el conjunto queda centrado.
+  Widget _buildLandscapeControlsColumn({
+    required bool canJumpPreviousMisterio,
+    required bool canJumpNextMisterio,
+  }) {
+    // Ancho total = misterios + separación + reproducción.
+    const double groupsGap = 16.0;
+    const double pillWidth = _prayGlassMysteryTripleTotalWidth * 2 + groupsGap;
+
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: CrossAxisAlignment.center,
+      children: [
+        // Fila con los dos grupos (mismos widgets que en vertical).
+        _buildControlsLayer(
+          isLandscape: true,
+          canJumpPreviousMisterio: canJumpPreviousMisterio,
+          canJumpNextMisterio: canJumpNextMisterio,
+        ),
+        const SizedBox(height: 8),
+        // Pastilla de la oración actual, del ancho de ambos grupos juntos.
+        _prayGlassPillButton(
+          widgetKey: _pillButtonKey,
+          width: pillWidth,
+          height: 56,
+          label: _safeCurrentPrayerLabel.isEmpty
+              ? '…'
+              : _safeCurrentPrayerLabel,
+          onPressed: () {
+            showDialog(
+              context: context,
+              builder: (BuildContext dialogContext) {
+                final label = _safeCurrentPrayerLabel;
+                final isMisterio = label == 'Misterio';
+                return PrayerDialog(
+                  prayer: label.isEmpty ? '…' : label,
+                  mystery: widget.mystery,
+                  currentMysteryOrder: isMisterio && widget.mystery != null
+                      ? _effectiveMeditationOrderForMysteryGlass()
+                      : null,
+                  errorMessage: _currentError?.userMessage ?? '',
+                );
+              },
+            );
+          },
+          trailing: const Icon(
+            Icons.info_outline,
+            size: AppLayout.infoIconSize,
+            color: AppColors.colorCircularProgressIndicator,
           ),
         ),
       ],
