@@ -1306,19 +1306,7 @@ class _PrayScreenState extends ConsumerState<PrayScreen>
                       ? Row(
                           crossAxisAlignment: CrossAxisAlignment.center,
                           children: [
-                            // LADO IZQUIERDO: Controles + pastilla de la oración.
-                            Expanded(
-                              child: Center(
-                                child: SingleChildScrollView(
-                                  child: _buildLandscapeControlsColumn(
-                                    canJumpPreviousMisterio:
-                                        canJumpPreviousMisterio,
-                                    canJumpNextMisterio: canJumpNextMisterio,
-                                  ),
-                                ),
-                              ),
-                            ),
-                            // LADO DERECHO: Rosario
+                            // LADO IZQUIERDO: Rosario.
                             Expanded(
                               child: LayoutBuilder(
                                 builder: (context, contentConstraints) {
@@ -1335,6 +1323,18 @@ class _PrayScreenState extends ConsumerState<PrayScreen>
                                     ),
                                   );
                                 },
+                              ),
+                            ),
+                            // LADO DERECHO: Grupo de botones (misterios + play).
+                            Expanded(
+                              child: Center(
+                                child: SingleChildScrollView(
+                                  child: _buildLandscapeControlsColumn(
+                                    canJumpPreviousMisterio:
+                                        canJumpPreviousMisterio,
+                                    canJumpNextMisterio: canJumpNextMisterio,
+                                  ),
+                                ),
                               ),
                             ),
                           ],
@@ -1846,10 +1846,11 @@ class _PrayScreenState extends ConsumerState<PrayScreen>
         ),
         const SizedBox(height: 8),
         // Pastilla de la oración actual, del ancho de ambos grupos juntos.
+        // Misma altura que en vertical (90) para que entren dos líneas de texto.
         _prayGlassPillButton(
           widgetKey: _pillButtonKey,
           width: pillWidth,
-          height: 56,
+          height: 90,
           label: _safeCurrentPrayerLabel.isEmpty
               ? '…'
               : _safeCurrentPrayerLabel,
