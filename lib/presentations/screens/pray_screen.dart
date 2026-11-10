@@ -1290,59 +1290,62 @@ class _PrayScreenState extends ConsumerState<PrayScreen>
                     ),
                   ),
                 ),
-                // Area de contenido principal
-                Padding(
-                  padding: EdgeInsets.only(
-                    top:
-                        MediaQuery.paddingOf(context).top +
-                        (isLandscape
-                            ? AppLayout.appBarToolbarHeight * .25
-                            : AppLayout.appBarToolbarHeight * .5),
-                    bottom: 8.0,
-                    left: 8.0,
-                    right: 8.0,
-                  ),
+                // Area de contenido principal: exactamente desde la base del AppBar hasta la base de la pantalla
+                Positioned(
+                  top:
+                      MediaQuery.paddingOf(context).top +
+                      (isLandscape ? 46.0 : AppLayout.appBarToolbarHeight),
+                  bottom: MediaQuery.paddingOf(context).bottom,
+                  left: 0,
+                  right: 0,
                   child: isLandscape
-                      ? Row(
-                          crossAxisAlignment: CrossAxisAlignment.center,
-                          children: [
-                            // LADO IZQUIERDO: Rosario.
-                            Expanded(
-                              child: LayoutBuilder(
-                                builder: (context, contentConstraints) {
-                                  // El rosario ocupa el máximo espacio posible (94%) del hueco SEGURO disponible
-                                  final size =
-                                      contentConstraints.maxWidth <
-                                          contentConstraints.maxHeight
-                                      ? contentConstraints.maxWidth
-                                      : contentConstraints.maxHeight;
-                                  return Center(
-                                    child: _buildRosaryArea(
-                                      width: size * 0.94,
-                                      height: size * 0.94,
-                                    ),
-                                  );
-                                },
+                      ? Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 8.0),
+                          child: Row(
+                            crossAxisAlignment: CrossAxisAlignment.center,
+                            children: [
+                              // LADO IZQUIERDO: Rosario.
+                              Expanded(
+                                child: LayoutBuilder(
+                                  builder: (context, contentConstraints) {
+                                    // El rosario ocupa el máximo espacio posible (94%) del hueco SEGURO disponible
+                                    final size =
+                                        contentConstraints.maxWidth <
+                                            contentConstraints.maxHeight
+                                        ? contentConstraints.maxWidth
+                                        : contentConstraints.maxHeight;
+                                    return Center(
+                                      child: _buildRosaryArea(
+                                        width: size * 0.94,
+                                        height: size * 0.94,
+                                      ),
+                                    );
+                                  },
+                                ),
                               ),
-                            ),
-                            // LADO DERECHO: Grupo de botones (misterios + play).
-                            Expanded(
-                              child: Center(
-                                child: SingleChildScrollView(
-                                  child: _buildLandscapeControlsColumn(
-                                    canJumpPreviousMisterio:
-                                        canJumpPreviousMisterio,
-                                    canJumpNextMisterio: canJumpNextMisterio,
+                              // LADO DERECHO: Grupo de botones (misterios + play).
+                              Expanded(
+                                child: Center(
+                                  child: SingleChildScrollView(
+                                    child: _buildLandscapeControlsColumn(
+                                      canJumpPreviousMisterio:
+                                          canJumpPreviousMisterio,
+                                      canJumpNextMisterio: canJumpNextMisterio,
+                                    ),
                                   ),
                                 ),
                               ),
-                            ),
-                          ],
+                            ],
+                          ),
                         )
-                      : _buildPortraitRosaryStack(
-                          constraints: constraints,
-                          canJumpPreviousMisterio: canJumpPreviousMisterio,
-                          canJumpNextMisterio: canJumpNextMisterio,
+                      : LayoutBuilder(
+                          builder: (context, contentConstraints) {
+                            return _buildPortraitRosaryStack(
+                              constraints: contentConstraints,
+                              canJumpPreviousMisterio: canJumpPreviousMisterio,
+                              canJumpNextMisterio: canJumpNextMisterio,
+                            );
+                          },
                         ),
                 ),
                 Positioned(
@@ -1582,21 +1585,23 @@ class _PrayScreenState extends ConsumerState<PrayScreen>
     required bool canJumpPreviousMisterio,
     required bool canJumpNextMisterio,
   }) {
-    final double rosaryW = AppLayout.rosaryWidthFactor * constraints.maxWidth;
-    final double rosaryH = AppLayout.rosaryHeightFactor * constraints.maxHeight;
+    final double rosaryW = constraints.maxWidth;
+    final double rosaryH = constraints.maxHeight;
 
     // Misma fórmula que el painter para el radio del aro en vertical.
-    final double radius = rosaryW / 2 < rosaryH * 0.33
-        ? rosaryW / 2
-        : rosaryH * 0.33;
-
-    // Centro del aro en coordenadas del Stack (el rosario va centrado).
-    final double loopCenterY = constraints.maxHeight / 2 - radius;
+    final double maxRadiusByWidth = (rosaryW / 2) * 0.88;
+    final double maxRadiusByHeight = (rosaryH - 16.0) / 4.0;
+    final double radius = maxRadiusByWidth < maxRadiusByHeight
+        ? maxRadiusByWidth
+        : maxRadiusByHeight;
 
     // Radio de las cuentas básicas (igual que el painter: 0.20 * radius) y
     // radio interior del aro (borde interno de las cuentas).
     final double beadR = radius * 0.20;
     final double innerR = radius - beadR;
+
+    // Centro del aro en coordenadas del Stack (igual que en CuentasPainter).
+    final double loopCenterY = radius + (beadR / 2) + 4.0;
 
     // Altura fija de la pastilla.
     final double pillHeight = 90.0;
@@ -1634,9 +1639,11 @@ class _PrayScreenState extends ConsumerState<PrayScreen>
     );
 
     return Stack(
+      clipBehavior: Clip.none,
       children: [
-        // Rosario centrado en vertical (dentro del área segura).
-        Center(
+        // Rosario alineado en la parte superior (justo debajo del AppBar).
+        Align(
+          alignment: Alignment.topCenter,
           child: _buildRosaryArea(width: rosaryW, height: rosaryH),
         ),
         // Pastilla de la oración actual, ubicada en la parte baja del hueco del

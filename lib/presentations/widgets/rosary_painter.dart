@@ -65,10 +65,14 @@ class CuentasPainter extends CustomPainter {
       // si el ancho es menor que el alto se hace la resta y se cambia la ubicación y la orientación .
 
       // obtiene el menor radio entre el ancho y el alto de la pantalla,
-      if (size.width<size.height) {
-        //se desplaza el centro hacia arriba para que entre la extensión y no salga de la pantalla
-        cuentasAdicionales = size.height * 0.34;
-        radius = min((size.width / 2),((size.height - cuentasAdicionales) / 2)); 
+      if (size.width < size.height) {
+        // En modo vertical, el radio se calcula para que:
+        // 1. En ancho: las cuentas no toquen los bordes laterales (margen del 88%).
+        // 2. En alto: quepan el aro completo más la extensión inferior (cruz) en size.height.
+        final double maxRadiusByWidth = (size.width / 2) * 0.88;
+        final double maxRadiusByHeight = (size.height - 16.0) / 4.0;
+        radius = min(maxRadiusByWidth, maxRadiusByHeight);
+
         imageWidthBasic = radius * 0.20;
         imageHeightBasic = radius * 0.20;
         imageWidthMedium = radius * 0.21;
@@ -77,8 +81,10 @@ class CuentasPainter extends CustomPainter {
         imageHeightLarge = radius * 0.50;
         imageWidthLargest = radius * 0.80;
         imageHeightLargest = radius * 0.80;
-        cuentasAdicionales = 5 * imageHeightBasic;
-        center = Offset(center.dx, center.dy - cuentasAdicionales);
+
+        // Ubica el centro para que la cuenta superior comience justo 4 px debajo del AppBar
+        center = Offset(size.width / 2, radius + (imageHeightBasic / 2) + 4.0);
+
         //la extensión se dibuja debajo del rosario
         location = 1; 
         //se dibuja en sentido anti horario
