@@ -1290,11 +1290,9 @@ class _PrayScreenState extends ConsumerState<PrayScreen>
                     ),
                   ),
                 ),
-                // Area de contenido principal: exactamente desde la base del AppBar hasta la base de la pantalla
+                // Area de contenido principal: exactamente desde el borde donde termina el AppBar hasta la base de la pantalla
                 Positioned(
-                  top:
-                      MediaQuery.paddingOf(context).top +
-                      (isLandscape ? 46.0 : AppLayout.appBarToolbarHeight),
+                  top: isLandscape ? 46.0 : AppLayout.appBarToolbarHeight,
                   bottom: MediaQuery.paddingOf(context).bottom,
                   left: 0,
                   right: 0,
@@ -1588,9 +1586,18 @@ class _PrayScreenState extends ConsumerState<PrayScreen>
     final double rosaryW = constraints.maxWidth;
     final double rosaryH = constraints.maxHeight;
 
-    // Misma fórmula que el painter para el radio del aro en vertical.
+    // Factores geométricos del conjunto completo (aro + extensión):
+    // - Distancia hacia arriba (centro -> borde superior del aro): 1.10 * radius
+    // - Distancia hacia abajo (centro -> base inferior de la cruz): 2.942 * radius
+    const double topSpanFactor = 1.10;
+    const double bottomSpanFactor = 2.942;
+    const double totalVerticalFactor =
+        topSpanFactor + bottomSpanFactor; // 4.042
+
+    // 1. En horizontal se tiene en cuenta el círculo solamente:
     final double maxRadiusByWidth = (rosaryW / 2) * 0.88;
-    final double maxRadiusByHeight = (rosaryH - 16.0) / 4.0;
+    // 2. En vertical se considera el conjunto completo (círculo + extensión):
+    final double maxRadiusByHeight = (rosaryH - 16.0) / totalVerticalFactor;
     final double radius = maxRadiusByWidth < maxRadiusByHeight
         ? maxRadiusByWidth
         : maxRadiusByHeight;
@@ -1600,39 +1607,33 @@ class _PrayScreenState extends ConsumerState<PrayScreen>
     final double beadR = radius * 0.20;
     final double innerR = radius - beadR;
 
-    // Centro del aro en coordenadas del Stack (igual que en CuentasPainter).
-    final double loopCenterY = radius + (beadR / 2) + 4.0;
+    // Centro del aro en coordenadas del Stack (centrado vertical de todo el conjunto):
+    final double loopCenterY =
+        rosaryH / 2 - ((bottomSpanFactor - topSpanFactor) / 2) * radius;
 
     // Altura fija de la pastilla.
     final double pillHeight = 90.0;
 
-    // Ubicamos la pastilla lo más abajo posible dentro del aro, dejando su
-    // borde inferior a una fracción del radio interior (justo por encima de la
-    // medalla). A partir de ahí derivamos el centro vertical de la pastilla.
-    final double pillBottomOffset = innerR * 0.56; // debajo del centro del aro
-    double pillCenterOffset = pillBottomOffset - pillHeight / 2;
-
-    // El centro de la pastilla no puede subir por encima del centro del aro ni
-    // acercarse tanto al borde que la altura no quepa.
-    final double maxCenterOffset = innerR - pillHeight / 2;
-    if (pillCenterOffset > maxCenterOffset) {
-      pillCenterOffset = maxCenterOffset;
-    }
-    if (pillCenterOffset < 0) {
-      pillCenterOffset = 0;
-    }
+    // ┌──────────────────────────────────────────────────────────────────────┐
+    // │ 👇 AJUSTE MANUAL DE LA PASTILLA DE ORACIÓN (BOTÓN CENTRAL) 👇         │
+    // │ Cambiá estos dos valores para modificar la pastilla a mano:          │
+    // │  • pillVerticalOffsetPercentage: desplazamiento vertical respecto al │
+    // │    centro vertical del aro del rosario.                              │
+    // │    0.20 = 20% hacia abajo del centro vertical (valor solicitado).    │
+    // │    (0.0 = centrado vertical exacto; + baja la pastilla, - la sube).   │
+    // │  • pillWidthFactor: ancho de la pastilla (0.8 = 80% de la cuerda).   │
+    // └──────────────────────────────────────────────────────────────────────┘
+    const double pillVerticalOffsetPercentage =
+        0.40; // 20% hacia abajo del centro vertical
+    final double pillCenterOffset = radius * pillVerticalOffsetPercentage;
 
     // Ancho = cuerda interior a la altura del centro de la pastilla, de modo
-    // que sus costados queden pegados a las cuentas (sin espacio).
+    // que sus costados queden armónicos respecto a las cuentas.
     final double halfChord = sqrt(
       max(0, innerR * innerR - pillCenterOffset * pillCenterOffset),
     );
 
-    // 👇 AJUSTE DEL ANCHO 👇
-    // Factor aplicado al ancho calculado (cuerda interior).
-    // 1.0 = pegado a las cuentas; 0.9 = 10% más angosto (valor actual).
-    // Cambiá este número para probar otros anchos (p. ej. 0.85, 0.95, 1.0).
-    const double pillWidthFactor = 0.8;
+    const double pillWidthFactor = 0.99;
     final double pillWidth = (halfChord * 2 * pillWidthFactor).clamp(
       120.0,
       320.0,
@@ -1719,20 +1720,19 @@ class _PrayScreenState extends ConsumerState<PrayScreen>
     // │ 👇 AJUSTE MANUAL DE LA UBICACIÓN DE LOS GRUPOS 👇                     │
     // │ Cambiá estos dos valores para mover los grupos a mano:                │
     // │  • groupsVerticalOffset:  + baja los grupos, - los sube (px).         │
+    // │    0.0 = el borde superior del recuadro blur toca exactamente el     │
+    // │    borde inferior del recuadro amarillo que enmarca el círculo.       │
     // │  • groupsHorizontalOffset: - los acerca al centro, + los aleja (px).  │
     // │    (se aplica simétricamente a ambos grupos).                         │
     // └──────────────────────────────────────────────────────────────────────┘
-    const double groupsVerticalOffset = -30.0; // px (vertical)
+    const double groupsVerticalOffset =
+        8.0; // px (0.0 = justo debajo del recuadro amarillo)
     const double groupsHorizontalOffset = -30.0; // px (horizontal, simétrico)
 
-    // La medalla está en el punto inferior del aro, desplazada hacia abajo
-    // `beadR` (igual que el painter en vertical).
-    final double medalY = loopCenterY + radius + beadR;
-
-    // Altura de los grupos (botones + leyenda): 70 + 28 + 6 = 104.
-    const double groupHeight = _prayGlassMysteryTripleBarSize + 28 + 6;
-    // Posición vertical final de los grupos (centrados en la medalla + ajuste).
-    final double groupTop = medalY - groupHeight / 2 + groupsVerticalOffset;
+    // Borde inferior del recuadro amarillo que enmarca el círculo del rosario:
+    // (loopCenterY + radius). Los grupos tocan exactamente esa línea:
+    final double yellowBoxBottom = loopCenterY + radius;
+    final double groupTop = yellowBoxBottom + groupsVerticalOffset;
 
     // Ancho aproximado de la medalla y separación respecto a ella.
     final double medalHalfWidth = beadR * 1.6;
