@@ -18,6 +18,13 @@ import '../widgets/prayer_dialog.dart';
 import 'package:wakelock_plus/wakelock_plus.dart';
 import '../../utils/snack_bar_utils.dart';
 
+/// ============================================================================
+/// 📐 MODO GUÍAS VISUALES DE DIAGNÓSTICO
+/// Cambiá a `true` para ver en pantalla todos los recuadros de colores y dimensiones.
+/// Cambiá a `false` (o comentá) para ocultarlo todo de una sola vez.
+/// ============================================================================
+const bool showRosaryDebugGuides = false;
+
 class PrayScreen extends ConsumerStatefulWidget {
   const PrayScreen({
     super.key,
@@ -1277,6 +1284,13 @@ class _PrayScreenState extends ConsumerState<PrayScreen>
         ),
         body: LayoutBuilder(
           builder: (context, constraints) {
+            final double statusBarTop = MediaQuery.paddingOf(context).top;
+            final double toolbarHeight = isLandscape
+                ? 46.0
+                : AppLayout.appBarToolbarHeight;
+            final double topSafe = statusBarTop + toolbarHeight;
+            final double bottomSafe = MediaQuery.paddingOf(context).bottom;
+
             return Stack(
               key: _prayBodyStackKey,
               clipBehavior: Clip.none,
@@ -1346,6 +1360,108 @@ class _PrayScreenState extends ConsumerState<PrayScreen>
                           },
                         ),
                 ),
+                if (showRosaryDebugGuides) ...[
+                  // 🟧 Recuadro Naranja: Barra superior (Status Bar + AppBar)
+                  Positioned(
+                    top: 0,
+                    left: 0,
+                    right: 0,
+                    height: topSafe,
+                    child: IgnorePointer(
+                      child: Container(
+                        decoration: BoxDecoration(
+                          border: Border.all(
+                            color: const Color(0xFFFF5722),
+                            width: 2.0,
+                          ),
+                          color: const Color(0x33FF5722),
+                        ),
+                        alignment: Alignment.bottomLeft,
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 8,
+                          vertical: 2,
+                        ),
+                        child: Text(
+                          '🟧 APPBAR: ${topSafe.toStringAsFixed(1)} px (Status: ${statusBarTop.toStringAsFixed(1)} + Bar: ${toolbarHeight.toStringAsFixed(1)}) | Ancho: ${mediaQuery.size.width.toStringAsFixed(1)} px',
+                          style: const TextStyle(
+                            color: Color(0xFFFFCCBC),
+                            fontSize: 10,
+                            fontWeight: FontWeight.bold,
+                            fontFamily: 'monospace',
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                  // 📋 HUD de diagnóstico en modo HORIZONTAL
+                  if (isLandscape)
+                    Positioned(
+                      bottom: bottomSafe + 6,
+                      right: 12,
+                      child: IgnorePointer(
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 10,
+                            vertical: 6,
+                          ),
+                          decoration: BoxDecoration(
+                            color: const Color(0xE60D1B2A),
+                            borderRadius: BorderRadius.circular(10),
+                            border: Border.all(
+                              color: const Color(0xFF00E5FF),
+                              width: 1.5,
+                            ),
+                            boxShadow: const [
+                              BoxShadow(color: Colors.black54, blurRadius: 6),
+                            ],
+                          ),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              const Text(
+                                '📐 DIAGNÓSTICO (HORIZONTAL)',
+                                style: TextStyle(
+                                  color: Color(0xFF00E5FF),
+                                  fontSize: 11,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                              const SizedBox(height: 3),
+                              Text(
+                                '📱 Pantalla total: ${mediaQuery.size.width.toStringAsFixed(1)} x ${mediaQuery.size.height.toStringAsFixed(1)} px',
+                                style: const TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 10,
+                                ),
+                              ),
+                              Text(
+                                '🟧 Barra sup: ${topSafe.toStringAsFixed(1)} px (Status: ${statusBarTop.toStringAsFixed(1)} + Bar: ${toolbarHeight.toStringAsFixed(1)})',
+                                style: const TextStyle(
+                                  color: Color(0xFFFFCCBC),
+                                  fontSize: 10,
+                                ),
+                              ),
+                              Text(
+                                'Barra inf (Safe): ${bottomSafe.toStringAsFixed(1)} px',
+                                style: const TextStyle(
+                                  color: Colors.white70,
+                                  fontSize: 10,
+                                ),
+                              ),
+                              Text(
+                                'Alto disp: ${(mediaQuery.size.height - topSafe - bottomSafe).toStringAsFixed(1)} px',
+                                style: const TextStyle(
+                                  color: Color(0xFF00E5FF),
+                                  fontSize: 10,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ),
+                ],
                 Positioned(
                   top: helpPanelTop,
                   left: 0,
@@ -1562,6 +1678,7 @@ class _PrayScreenState extends ConsumerState<PrayScreen>
           onCuentaHighlighted: _handleCuentaHighlighted,
           orderPrayer: _orderPrayer,
           onDrawingError: _handleDrawingError,
+          showDebugGuides: showRosaryDebugGuides,
         ),
       ),
     );
@@ -1639,6 +1756,12 @@ class _PrayScreenState extends ConsumerState<PrayScreen>
       320.0,
     );
 
+    final double conjuntoTop = loopCenterY - radius * topSpanFactor;
+    final double conjuntoBottom = loopCenterY + radius * bottomSpanFactor;
+    final double conjuntoHeight = conjuntoBottom - conjuntoTop;
+    final double margenArriba = conjuntoTop;
+    final double margenAbajo = rosaryH - conjuntoBottom;
+
     return Stack(
       clipBehavior: Clip.none,
       children: [
@@ -1647,6 +1770,89 @@ class _PrayScreenState extends ConsumerState<PrayScreen>
           alignment: Alignment.topCenter,
           child: _buildRosaryArea(width: rosaryW, height: rosaryH),
         ),
+        if (showRosaryDebugGuides)
+          Positioned(
+            top: 4,
+            left: 10,
+            right: 10,
+            child: IgnorePointer(
+              child: Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 10,
+                  vertical: 6,
+                ),
+                decoration: BoxDecoration(
+                  color: const Color(0xE60D1B2A),
+                  borderRadius: BorderRadius.circular(10),
+                  border: Border.all(
+                    color: const Color(0xFF00E5FF),
+                    width: 1.5,
+                  ),
+                  boxShadow: const [
+                    BoxShadow(color: Colors.black54, blurRadius: 6),
+                  ],
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const Text(
+                      '📐 DIAGNÓSTICO VISUAL DE CÁLCULOS (MODO VERTICAL)',
+                      style: TextStyle(
+                        color: Color(0xFF00E5FF),
+                        fontSize: 11,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      '📱 Pantalla total: ${MediaQuery.of(context).size.width.toStringAsFixed(1)} x ${MediaQuery.of(context).size.height.toStringAsFixed(1)} px | Status: ${MediaQuery.paddingOf(context).top.toStringAsFixed(1)} px',
+                      style: const TextStyle(color: Colors.white, fontSize: 10),
+                    ),
+                    Text(
+                      '🟦 Lienzo disponible: ${rosaryW.toStringAsFixed(1)} x ${rosaryH.toStringAsFixed(1)} px',
+                      style: const TextStyle(
+                        color: Color(0xFF00E5FF),
+                        fontSize: 10,
+                      ),
+                    ),
+                    Text(
+                      '🟨 Radio aro: ${radius.toStringAsFixed(1)} px (Lim. ancho: ${maxRadiusByWidth.toStringAsFixed(1)} | Lim. alto: ${maxRadiusByHeight.toStringAsFixed(1)})',
+                      style: const TextStyle(
+                        color: Color(0xFFFFD600),
+                        fontSize: 10,
+                      ),
+                    ),
+                    Text(
+                      '🟨 Centro aro Y: ${loopCenterY.toStringAsFixed(1)} px',
+                      style: const TextStyle(
+                        color: Color(0xFFFFD600),
+                        fontSize: 10,
+                      ),
+                    ),
+                    Text(
+                      '🟪 Conjunto: Top: ${conjuntoTop.toStringAsFixed(1)} | Bottom: ${conjuntoBottom.toStringAsFixed(1)} | Alto: ${conjuntoHeight.toStringAsFixed(1)} px',
+                      style: const TextStyle(
+                        color: Color(0xFFFF4081),
+                        fontSize: 10,
+                      ),
+                    ),
+                    Text(
+                      'Margen arriba: ${margenArriba.toStringAsFixed(1)} px | Margen abajo: ${margenAbajo.toStringAsFixed(1)} px',
+                      style: const TextStyle(color: Colors.white, fontSize: 10),
+                    ),
+                    Text(
+                      '⬜ Mitad vertical lienzo: ${(rosaryH / 2).toStringAsFixed(1)} px',
+                      style: const TextStyle(
+                        color: Colors.white70,
+                        fontSize: 10,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
         // Pastilla de la oración actual, ubicada en la parte baja del hueco del
         // aro, con sus costados pegados a las cuentas (sin espacio).
         Positioned(
@@ -1841,50 +2047,53 @@ class _PrayScreenState extends ConsumerState<PrayScreen>
     const double groupsGap = 16.0;
     const double pillWidth = _prayGlassMysteryTripleTotalWidth * 2 + groupsGap;
 
-    return Column(
-      mainAxisSize: MainAxisSize.min,
-      crossAxisAlignment: CrossAxisAlignment.center,
-      children: [
-        // Fila con los dos grupos (mismos widgets que en vertical).
-        _buildControlsLayer(
-          isLandscape: true,
-          canJumpPreviousMisterio: canJumpPreviousMisterio,
-          canJumpNextMisterio: canJumpNextMisterio,
-        ),
-        const SizedBox(height: 8),
-        // Pastilla de la oración actual, del ancho de ambos grupos juntos.
-        // Misma altura que en vertical (90) para que entren dos líneas de texto.
-        _prayGlassPillButton(
-          widgetKey: _pillButtonKey,
-          width: pillWidth,
-          height: 90,
-          label: _safeCurrentPrayerLabel.isEmpty
-              ? '…'
-              : _safeCurrentPrayerLabel,
-          onPressed: () {
-            showDialog(
-              context: context,
-              builder: (BuildContext dialogContext) {
-                final label = _safeCurrentPrayerLabel;
-                final isMisterio = label == 'Misterio';
-                return PrayerDialog(
-                  prayer: label.isEmpty ? '…' : label,
-                  mystery: widget.mystery,
-                  currentMysteryOrder: isMisterio && widget.mystery != null
-                      ? _effectiveMeditationOrderForMysteryGlass()
-                      : null,
-                  errorMessage: _currentError?.userMessage ?? '',
-                );
-              },
-            );
-          },
-          trailing: const Icon(
-            Icons.info_outline,
-            size: AppLayout.infoIconSize,
-            color: AppColors.colorCircularProgressIndicator,
+    return FittedBox(
+      fit: BoxFit.scaleDown,
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: [
+          // Fila con los dos grupos (mismos widgets que en vertical).
+          _buildControlsLayer(
+            isLandscape: true,
+            canJumpPreviousMisterio: canJumpPreviousMisterio,
+            canJumpNextMisterio: canJumpNextMisterio,
           ),
-        ),
-      ],
+          const SizedBox(height: 8),
+          // Pastilla de la oración actual, del ancho de ambos grupos juntos.
+          // Misma altura que en vertical (90) para que entren dos líneas de texto.
+          _prayGlassPillButton(
+            widgetKey: _pillButtonKey,
+            width: pillWidth,
+            height: 90,
+            label: _safeCurrentPrayerLabel.isEmpty
+                ? '…'
+                : _safeCurrentPrayerLabel,
+            onPressed: () {
+              showDialog(
+                context: context,
+                builder: (BuildContext dialogContext) {
+                  final label = _safeCurrentPrayerLabel;
+                  final isMisterio = label == 'Misterio';
+                  return PrayerDialog(
+                    prayer: label.isEmpty ? '…' : label,
+                    mystery: widget.mystery,
+                    currentMysteryOrder: isMisterio && widget.mystery != null
+                        ? _effectiveMeditationOrderForMysteryGlass()
+                        : null,
+                    errorMessage: _currentError?.userMessage ?? '',
+                  );
+                },
+              );
+            },
+            trailing: const Icon(
+              Icons.info_outline,
+              size: AppLayout.infoIconSize,
+              color: AppColors.colorCircularProgressIndicator,
+            ),
+          ),
+        ],
+      ),
     );
   }
 
@@ -1894,16 +2103,16 @@ class _PrayScreenState extends ConsumerState<PrayScreen>
     required bool canJumpPreviousMisterio,
     required bool canJumpNextMisterio,
   }) {
-    final horizontalPadding = isLandscape ? 12.0 : AppLayout.sectionPadding;
+    final horizontalPadding = isLandscape ? 0.0 : AppLayout.sectionPadding;
     final verticalPadding = isLandscape
-        ? 8.0
+        ? 0.0
         : AppLayout.prayScreenGlassControlsRowPaddingV;
 
     return SafeArea(
       top: false,
-      bottom: true,
-      left: isLandscape,
-      right: isLandscape,
+      bottom: isLandscape ? false : true,
+      left: false,
+      right: false,
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
@@ -1920,6 +2129,7 @@ class _PrayScreenState extends ConsumerState<PrayScreen>
               mainAxisAlignment: isLandscape
                   ? MainAxisAlignment.center
                   : MainAxisAlignment.spaceBetween,
+              mainAxisSize: isLandscape ? MainAxisSize.min : MainAxisSize.max,
               crossAxisAlignment: CrossAxisAlignment.end,
               children: [
                 // Grupo de misterios a la IZQUIERDA.

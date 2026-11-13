@@ -15,6 +15,7 @@ class CuentasPainter extends CustomPainter {
   final int orderPrayer; // <-- Añadido para el orden de oración
   final Function(String message)
   onDrawingError; // Callback para manejar errores de dibujo
+  final bool showDebugGuides; // 👈 Guías visuales de diagnóstico
 
   CuentasPainter({
     required this.cuentas,
@@ -24,6 +25,7 @@ class CuentasPainter extends CustomPainter {
     required this.onCuentaHighlighted,
     required this.orderPrayer,
     required this.onDrawingError,
+    this.showDebugGuides = false,
   });
 
   @override
@@ -107,7 +109,9 @@ class CuentasPainter extends CustomPainter {
       //se dibuja en sentido horario
       orientation = 1;
 
-      radius = min((size.width / 2), ((size.height) / 2));
+      // El aro completo con sus perlas mide 2.20 * radius (1.10 hacia arriba y 1.10 hacia abajo).
+      // Dividiendo por 2.20, el borde superior de las cuentas toca exactamente Y = 0 (bajo el AppBar) sin esconderse:
+      radius = (min(size.width, size.height)) / 2.20;
       imageWidthBasic = radius * 0.20;
       imageHeightBasic = radius * 0.20;
       imageWidthMedium = radius * 0.21;
@@ -363,6 +367,79 @@ class CuentasPainter extends CustomPainter {
         onDrawingError('❌ Error al dibujar la imagen: $cuentaName - Error: $e');
       }
     }
+
+    if (showDebugGuides) {
+      // =======================================================
+      // 📐 CUADROS DE DIAGNÓSTICO VISUAL PROVISORIOS PARA ANÁLISIS
+      // =======================================================
+      final paintDebugCyan = Paint()
+        ..color = const Color(0xFF00E5FF)
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = 2.0;
+
+      final paintDebugYellow = Paint()
+        ..color = const Color(0xFFFFD600)
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = 2.0;
+
+      final paintDebugMagenta = Paint()
+        ..color = const Color(0xFFFF4081)
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = 2.0;
+
+      final paintDebugCenterLine = Paint()
+        ..color = const Color(0x99FFFFFF)
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = 1.0;
+
+      // 1. Cuadro CIAN: Área total del lienzo disponible recibido
+      canvas.drawRect(
+        Rect.fromLTWH(0, 0, size.width, size.height),
+        paintDebugCyan,
+      );
+
+      // Eje central de la pantalla / lienzo (mitad vertical)
+      canvas.drawLine(
+        Offset(0, size.height / 2),
+        Offset(size.width, size.height / 2),
+        paintDebugCenterLine,
+      );
+
+      // 2. Círculo y caja AMARILLA: El aro del rosario
+      canvas.drawCircle(center, radius, paintDebugYellow);
+      canvas.drawRect(
+        Rect.fromCenter(center: center, width: radius * 2, height: radius * 2),
+        paintDebugYellow,
+      );
+
+      // 3. Cuadro MAGENTA: Conjunto completo
+      if (size.width < size.height) {
+        // En vertical: Aro + Extensión / Cruz
+        const double topSpanFactor = 1.10;
+        const double bottomSpanFactor = 2.942;
+        final double conjuntoTop = center.dy - radius * topSpanFactor;
+        final double conjuntoBottom = center.dy + radius * bottomSpanFactor;
+        canvas.drawRect(
+          Rect.fromLTRB(
+            center.dx - radius * topSpanFactor,
+            conjuntoTop,
+            center.dx + radius * topSpanFactor,
+            conjuntoBottom,
+          ),
+          paintDebugMagenta,
+        );
+      } else {
+        // En horizontal: Delimita el aro completo con el grosor de perlas (1.10 * radius)
+        canvas.drawRect(
+          Rect.fromCenter(
+            center: center,
+            width: radius * 2.20,
+            height: radius * 2.20,
+          ),
+          paintDebugMagenta,
+        );
+      }
+    }
   }
 
   @override
@@ -371,6 +448,7 @@ class CuentasPainter extends CustomPainter {
         oldDelegate.counter != counter ||
         oldDelegate.rosaryBeadCount != rosaryBeadCount ||
         oldDelegate.rosaryCircleBeadCount != rosaryCircleBeadCount ||
-        oldDelegate.orderPrayer != orderPrayer;
+        oldDelegate.orderPrayer != orderPrayer ||
+        oldDelegate.showDebugGuides != showDebugGuides;
   }
 }
